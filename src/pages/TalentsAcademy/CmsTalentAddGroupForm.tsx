@@ -10,6 +10,12 @@ import Mascot from "@images/mascot-icons/pose=2.webp";
 import Coution from "@images/mascot-icons/Info Square.png";
 import Chain from "@images/mascot-icons/Link.png";
 
+interface School {
+  id: string | number;
+  nama_sekolah: string;
+  alamat: string;
+}
+
 function CmsTalentAddGroupForm() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isErrorModal, setIsErrorModal] = useState(false);
@@ -17,7 +23,9 @@ function CmsTalentAddGroupForm() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [schoolId, setSchoolId] = useState("");
-  const [schools, setSchools] = useState([]);
+  const [groupName, setGroupName] = useState("");
+  const [groupLink, setGroupLink] = useState("");
+  const [schools, setSchools] = useState<School[]>([]);
   const [deleteMessage] = useState("Yakin untuk menghapus grup?");
 
   const Navigate = useNavigate();

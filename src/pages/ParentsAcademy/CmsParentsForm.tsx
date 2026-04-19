@@ -1,4 +1,5 @@
-import { useEffect, useState, ChangeEvent, FormEvent } from "react";
+import { useEffect, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import skyshareApi from "@utilities/skyshareApi";
 import CmsNavCard from "@components/cms/CmsNavCard";

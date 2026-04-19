@@ -1,15 +1,22 @@
-import React from "react";
-import { Editor } from "primereact/editor";
+import { useState } from "react";
 
 const CmsArticleContenForm = () => {
+  const [editorValue, setEditorValue] = useState("");
+
+  const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditorValue(e.target.value);
+  };
+
   return (
     <>
       <div className="card">
-        <Editor
+        <textarea
           value={editorValue}
           name="contain"
-          onTextChange={handleEditorChange}
-          style={{ height: "320px" }}
+          onChange={handleEditorChange}
+          style={{ height: "320px", width: "100%" }}
+          className="border-2 border-gray-300 rounded-lg p-4 outline-none"
+          placeholder="Tulis konten artikel di sini..."
         />
       </div>
     </>

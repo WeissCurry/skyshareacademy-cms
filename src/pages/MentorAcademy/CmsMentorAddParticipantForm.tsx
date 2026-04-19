@@ -25,7 +25,7 @@ function CmsMentorAddParticipantForm() {
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
-    const handleAddParticipant = async (e) => {
+    const handleAddParticipant = async (e: React.FormEvent) => {
         e.preventDefault();
         const inputData = {
             nama_lengkap: namaLengkap,

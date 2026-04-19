@@ -7,8 +7,12 @@ import IconAddUser from "@images/mascot-icons/Add User.png";
 import IconMedia from "@images/mascot-icons/Image 3.png";
 
 
+interface AdminData {
+  role: string;
+}
+
 function CmsNavCard() {
-  const [dataAdmin, setDataAdmin] = useState(null);
+  const [dataAdmin, setDataAdmin] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

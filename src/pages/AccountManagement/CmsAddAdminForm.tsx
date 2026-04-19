@@ -1,4 +1,5 @@
-import React, { useState, ChangeEvent, FormEvent } from "react";
+import React, { useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import skyshareApi from "@utilities/skyshareApi";
 import { useNavigate } from "react-router-dom";
 import Caution from "@images/mascot-icons/Info Square.png";

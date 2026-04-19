@@ -8,10 +8,18 @@ import Add from "@images/mascot-icons/Plus.png";
 import CmsNavCard from "@components/cms/CmsNavCard";
 import Edit from "@images/mascot-icons/Edit.png";
 
+interface Article {
+  id: string | number;
+  title: string;
+  createdAt: string;
+  category_name: string;
+  category_color: string;
+}
+
 function CmsArticleDashboardTable() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [dataArticles, setDataarticles] = useState([]);
-  const [deleteArticle, setDeleteArticle] = useState(null);
+  const [dataArticles, setDataarticles] = useState<Article[]>([]);
+  const [deleteArticle, setDeleteArticle] = useState<Article | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -33,7 +41,7 @@ function CmsArticleDashboardTable() {
     setIsModalOpen(false);
   }
 
-  function deletArticle(article) {
+  function deletArticle(article: Article) {
     setDeleteArticle(article);
     setIsModalOpen(true);
   }

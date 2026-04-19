@@ -18,6 +18,36 @@ import {
 } from "react-icons/md";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
+interface Task {
+    name: string;
+    isCompleted: boolean;
+}
+
+interface Episode {
+    id: number;
+    isCompleted: boolean;
+    tasks: Task[];
+}
+
+interface Participant {
+    id: number;
+    nama: string;
+    asal: string;
+    email: string;
+    telepon: string;
+    instansi: string;
+    status: string;
+    episodes: Episode[];
+}
+
+interface EventForm {
+    nama_event: string;
+    deskripsi_event: string;
+    total_peserta: string;
+    kategori: string;
+    poster_event: File | null | string;
+}
+
 const COURSE_STRUCTURE = [
     { id: 1, name: "Episode 1", tasks: ["Tugas Rangkuman", "Tugas Video"] },
     { id: 2, name: "Episode 2", tasks: ["Tugas Rangkuman", "Tugas Video"] },
@@ -143,7 +173,7 @@ const DUMMY_PARTICIPANTS = [
     },
 ];
 
-const episodeColors = {
+const episodeColors: Record<string, string> = {
     lulus: "bg-secondary-1",
     "belum lulus": "bg-red-500",
 };
@@ -153,7 +183,7 @@ function CmsMentorEditEventForm() {
     const navigate = useNavigate();
 
     // === State untuk Form Event ===
-    const [eventForm, setEventForm] = useState({
+    const [eventForm, setEventForm] = useState<EventForm>({
         nama_event: "",
         deskripsi_event: "",
         total_peserta: "",
@@ -162,9 +192,9 @@ function CmsMentorEditEventForm() {
     });
 
     // === State untuk Tabel Peserta ===
-    const [participants, setParticipants] = useState([]);
+    const [participants, setParticipants] = useState<Participant[]>([]);
     const [courseStructure] = useState(COURSE_STRUCTURE);
-    const [expandedRows, setExpandedRows] = useState([]);
+    const [expandedRows, setExpandedRows] = useState<number[]>([]);
 
     // === State untuk UI (Modals, Loading, dll) ===
     const [isErrorModal, setIsErrorModal] = useState(false);
@@ -174,7 +204,7 @@ function CmsMentorEditEventForm() {
     const [isUploading, setIsUploading] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [deletingParticipantId, setDeletingParticipantId] = useState(null);
+    const [deletingParticipantId, setDeletingParticipantId] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Mengambil data event yang sudah ada saat komponen dimuat
@@ -215,7 +245,7 @@ function CmsMentorEditEventForm() {
     }, [id]);
 
     // === Handlers untuk Form Event ===
-    const handleEditEvent = async (e) => {
+    const handleEditEvent = async (e: React.MouseEvent | React.FormEvent) => {
         e.preventDefault();
         const formData = new FormData();
         formData.append("nama_event", eventForm.nama_event);
@@ -246,8 +276,8 @@ function CmsMentorEditEventForm() {
         }
     };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
         if (file) {
             setEventForm({ ...eventForm, poster_event: file });
             setImagePreviewUrl(URL.createObjectURL(file));
@@ -255,7 +285,7 @@ function CmsMentorEditEventForm() {
     };
 
     // === Handlers untuk Tabel Peserta ===
-    const toggleRow = (participantId) => {
+    const toggleRow = (participantId: number) => {
         setExpandedRows((prev) =>
             prev.includes(participantId)
                 ? prev.filter((rowId) => rowId !== participantId)
@@ -263,7 +293,7 @@ function CmsMentorEditEventForm() {
         );
     };
 
-    const handleTaskChange = (participantId, episodeId, taskName) => {
+    const handleTaskChange = (participantId: number, episodeId: number, taskName: string) => {
         setParticipants((prevParticipants) => {
             return prevParticipants.map((participant) => {
                 if (participant.id === participantId) {
@@ -301,7 +331,7 @@ function CmsMentorEditEventForm() {
         });
     };
 
-    const handleEpisodeManualCheck = (participantId, episodeId) => {
+    const handleEpisodeManualCheck = (participantId: number, episodeId: number) => {
         setParticipants((prevParticipants) => {
             return prevParticipants.map((participant) => {
                 if (participant.id === participantId) {
@@ -336,7 +366,7 @@ function CmsMentorEditEventForm() {
     };
 
     // --- Fungsi Baru untuk Delete Peserta ---
-    const handleDeleteParticipant = (id) => {
+    const handleDeleteParticipant = (id: number) => {
         setDeletingParticipantId(id);
         setIsDeleteModalOpen(true);
     };
@@ -481,7 +511,7 @@ function CmsMentorEditEventForm() {
                                                             })
                                                         }
                                                         className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
-                                                        rows="4"
+                                                        rows={4}
                                                     ></textarea>
                                                 </div>
                                                 <div>
@@ -667,7 +697,7 @@ function CmsMentorEditEventForm() {
                                                                                 {
                                                                                     courseStructure.find(
                                                                                         (e) => e.id === episode.id
-                                                                                    ).name
+                                                                                    )?.name
                                                                                 }
                                                                             </h5>
                                                                             <div className="flex flex-col gap-2 mt-2">

@@ -19,8 +19,23 @@ import Edit1 from "@images/mascot-icons/Edit Square.png";
 import Delete from "@images/mascot-icons/Delete.png";
 import Add from "@images/mascot-icons/Plus.png";
 
+interface MentorForm {
+  file_booklet?: File | string;
+  gambar_alur_acara?: File | string;
+  gambar_timeline?: File | string;
+  link_cta?: string;
+  link_join_program?: string;
+}
+
+interface Event {
+  id: number;
+  nama_event: string;
+  total_peserta: number;
+  kategori: string;
+}
+
 function CmsMentorForm() {
-  const [mentorForm, setMentorForm] = useState({});
+  const [mentorForm, setMentorForm] = useState<MentorForm>({});
   const [events, setEvents] = useState([
     { id: 1, nama_event: 'Mentor Academy Nusantara Season 1', total_peserta: 100, kategori: 'hybrid' },
     { id: 2, nama_event: 'Graduation Mentor Academy Nusantara Season 1', total_peserta: 20, kategori: 'offline' },
@@ -32,12 +47,12 @@ function CmsMentorForm() {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
-  const [deleteEventById, setDeleteEventById] = useState(null);
+  const [deleteEventById, setDeleteEventById] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [imagePreviewUrlTimeline, setImagePreviewUrlTimeline] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
-  const [dataMentor, setDataMentor] = useState({});
+  const [dataMentor, setDataMentor] = useState<MentorForm>({});
   const [isDeleting, setIsDeleting] = useState(false);
   const Navigate = useNavigate();
 
@@ -70,11 +85,11 @@ function CmsMentorForm() {
 
   const handleAddTalentAcademy = async function () {
     const formData = new FormData();
-    formData.append("file_booklet", mentorForm.file_booklet);
-    formData.append("gambar_alur_acara", mentorForm.gambar_alur_acara);
-    formData.append("gambar_timeline", mentorForm.gambar_timeline);
-    formData.append("link_cta", mentorForm.link_cta);
-    formData.append("link_join_program", mentorForm.link_join_program);
+    if (mentorForm.file_booklet) formData.append("file_booklet", mentorForm.file_booklet);
+    if (mentorForm.gambar_alur_acara) formData.append("gambar_alur_acara", mentorForm.gambar_alur_acara);
+    if (mentorForm.gambar_timeline) formData.append("gambar_timeline", mentorForm.gambar_timeline);
+    if (mentorForm.link_cta) formData.append("link_cta", mentorForm.link_cta);
+    if (mentorForm.link_join_program) formData.append("link_join_program", mentorForm.link_join_program);
 
     setIsUploading(true);
     try {
@@ -97,7 +112,7 @@ function CmsMentorForm() {
     console.log(formData, "data");
   };
 
-  const getCategoryStyle = (category) => {
+  const getCategoryStyle = (category: string) => {
     const baseStyle = 'px-3 py-1 text-sm font-semibold rounded-full text-center';
     switch (category) {
       case 'online': return `${baseStyle} bg-primary-1 text-white`;
@@ -109,7 +124,7 @@ function CmsMentorForm() {
 
   const closeModal = () => setIsModalOpen(false);
   const closeErrorModal = () => {
-    setMentorForm({ school_ids: [] });
+    setMentorForm({});
     setImagePreviewUrl("");
     setImagePreviewUrlTimeline("");
     setIsErrorModal(false);
@@ -123,23 +138,23 @@ function CmsMentorForm() {
   };
   const closeCancelModal = () => setIsCancelModalOpen(false);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setMentorForm({ ...mentorForm, gambar_alur_acara: file });
       setImagePreviewUrl(URL.createObjectURL(file));
     }
   };
 
-  const handleFileChangeTimeline = (e) => {
-    const file = e.target.files[0];
+  const handleFileChangeTimeline = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       setMentorForm({ ...mentorForm, gambar_timeline: file });
       setImagePreviewUrlTimeline(URL.createObjectURL(file));
     }
   };
 
-  const handleDeleteEvent = (id) => {
+  const handleDeleteEvent = (id: number) => {
     setDeleteEventById(id);
     setDeleteMessage("Yakin untuk menghapus event ini?");
     setIsModalOpen(true);
@@ -162,7 +177,7 @@ function CmsMentorForm() {
     }
   }
 
-  function handleNavigate(id) {
+  function handleNavigate(id: number) {
     Navigate(`/cms/mentor/editevent/${id}`);
   }
 
@@ -197,7 +212,7 @@ function CmsMentorForm() {
                     <input
                       placeholder="https://"
                       type="text"
-                      defaultValue={dataMentor.file_booklet}
+                      defaultValue={typeof dataMentor.file_booklet === 'string' ? dataMentor.file_booklet : ''}
                       onChange={(e) => setMentorForm({ ...mentorForm, file_booklet: e.target.value })}
                       className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
                     />

@@ -30,6 +30,14 @@ interface ArticleForm {
   category_id: string;
 }
 
+interface ArticleData {
+  image_heading?: string;
+  title?: string;
+  content?: string;
+  link?: string;
+  category_id?: string;
+}
+
 function CmsArticleEditForm() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownAddOpen, setIsDropdownAddOpen] = useState(false);
@@ -44,7 +52,7 @@ function CmsArticleEditForm() {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [isModalOpenDelCategory, setIsModalOpenDelCategory] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [articleById, setArticleById] = useState<unknown>({});
+  const [articleById, setArticleById] = useState<ArticleData>({});
   const [categoryId, setCategoryId] = useState("");
   const [articleForm, setArticleForm] = useState<ArticleForm>({
     title: "",

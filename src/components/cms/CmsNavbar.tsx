@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -9,7 +8,11 @@ import IconButton from "@images/mascot-icons/Logout.png";
 import { useNavigate } from "react-router-dom";
 
 function CmsNavbar() {
-  const [dataAdmin, setDataAdmin] = useState({});
+  interface AdminData {
+    name: string;
+    role: string;
+  }
+  const [dataAdmin, setDataAdmin] = useState<AdminData | null>(null);
   useEffect(() => {
     const getDataadmin = async function () {
       try {
@@ -41,10 +44,12 @@ function CmsNavbar() {
           </Link>
         </div>
         <div className=" flex gap-2 items-center">
-          <div className="">
-            <h4 className="headline-4">{dataAdmin.name}</h4>
-            <p className="paragraph -mt-1">{dataAdmin.role}</p>
-          </div>
+          {dataAdmin && (
+            <div className="">
+              <h4 className="headline-4">{dataAdmin.name}</h4>
+              <p className="paragraph -mt-1">{dataAdmin.role}</p>
+            </div>
+          )}
           <div className="">
             <button
               onClick={handleLogout}

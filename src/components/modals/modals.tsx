@@ -1,7 +1,15 @@
 import React from 'react';
+import type { ReactNode } from 'react';
 import Xbutton from "@images/mascot-icons/Fill 300.png";
 
-function Modal({ isOpen, onClose, showCloseButton = true, children }) {
+interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    showCloseButton?: boolean;
+    children: ReactNode;
+}
+
+function Modal({ isOpen, onClose, showCloseButton = true, children }: ModalProps) {
     if (!isOpen) {
         return null;
     }

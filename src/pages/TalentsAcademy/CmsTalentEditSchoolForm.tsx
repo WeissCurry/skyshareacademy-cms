@@ -17,19 +17,48 @@ import Mascot2 from "@images/mascot-icons/pose=1.webp";
 import Ceklist from "@images/mascot-icons/Tick Square.png";
 import Coution from "@images/mascot-icons/Info Square.png";
 
+interface SchoolForm {
+  nama_sekolah?: string;
+  alamat?: string;
+  embed_map?: string;
+  gambar_logo_sekolah?: File | string;
+}
+
+interface SchoolData {
+  nama_sekolah?: string;
+  alamat?: string;
+  embed_map?: string;
+  gambar_logo_sekolah?: string;
+}
+
+interface Group {
+  id: string | number;
+  name: string;
+  link?: string;
+  nama_sekolah?: string;
+}
+
+type ModalType = 'delete' | 'saveSuccess' | 'cancel' | 'error' | 'loading' | null;
+
+interface ModalProps {
+  id?: string | number;
+  message?: string;
+  [key: string]: unknown;
+}
+
 function CmsTalentEditSchoolForm() {
-  const [schoolForm, setSchoolForm] = useState({});
+  const [schoolForm, setSchoolForm] = useState<SchoolForm>({});
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [dataGroups, setDataGroups] = useState([]);
-  const [dataSchool, setDataSchool] = useState({});
+  const [dataGroups, setDataGroups] = useState<Group[]>([]);
+  const [dataSchool, setDataSchool] = useState<SchoolData>({});
   const Navigate = useNavigate();
   const { id } = useParams();
 
   // --- HANYA SATU STATE UNTUK SEMUA MODAL ---
-  const [modalState, setModalState] = useState({
+  const [modalState, setModalState] = useState<{ isOpen: boolean; type: ModalType; props: ModalProps }>({
     isOpen: false,
-    type: null, // 'delete', 'saveSuccess', 'cancel', 'error', 'loading'
-    props: {}, // Untuk data tambahan seperti pesan error atau ID item
+    type: null,
+    props: {},
   });
 
   // --- Effect untuk mengambil data sekolah saat komponen dimuat ---
@@ -54,12 +83,12 @@ function CmsTalentEditSchoolForm() {
 
   // --- Effect untuk mengambil data grup berdasarkan nama sekolah ---
   useEffect(() => {
-    const getDataGroups = async (schoolName) => {
+    const getDataGroups = async (schoolName: string) => {
       if (!schoolName) return;
       try {
         const response = await skyshareApi.get("/group");
         const filteredGroups = response.data.data.filter(
-          (group) => group.nama_sekolah === schoolName
+          (group: Group) => group.nama_sekolah === schoolName
         );
         setDataGroups(filteredGroups);
       } catch (error) {
@@ -72,7 +101,7 @@ function CmsTalentEditSchoolForm() {
   }, [dataSchool]);
 
   // --- FUNGSI GENERIK UNTUK MEMBUKA & MENUTUP MODAL ---
-  const openModal = (type, props = {}) => {
+  const openModal = (type: ModalType, props: ModalProps = {}) => {
     setModalState({ isOpen: true, type, props });
   };
 
@@ -87,9 +116,9 @@ function CmsTalentEditSchoolForm() {
     if (schoolForm.gambar_logo_sekolah instanceof File) {
       formData.append("gambar_logo_sekolah", schoolForm.gambar_logo_sekolah);
     }
-    formData.append("nama_sekolah", schoolForm.nama_sekolah);
-    formData.append("alamat", schoolForm.alamat);
-    formData.append("embed_map", schoolForm.embed_map);
+    formData.append("nama_sekolah", schoolForm.nama_sekolah ?? "");
+    formData.append("alamat", schoolForm.alamat ?? "");
+    formData.append("embed_map", schoolForm.embed_map ?? "");
     
     openModal('loading', { message: 'Menyimpan perubahan...' });
 
@@ -107,7 +136,7 @@ function CmsTalentEditSchoolForm() {
   };
 
   // --- Handler untuk menghapus grup ---
-  const deleteGroup = async (groupId) => {
+  const deleteGroup = async (groupId: string | number) => {
     closeModal(); // Tutup modal konfirmasi
     openModal('loading', { message: 'Menghapus grup...' });
     try {
@@ -122,7 +151,7 @@ function CmsTalentEditSchoolForm() {
 
   // --- Handler untuk perubahan file input ---
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       setSchoolForm({ ...schoolForm, gambar_logo_sekolah: file });
       setImagePreviewUrl(URL.createObjectURL(file));
@@ -130,7 +159,7 @@ function CmsTalentEditSchoolForm() {
   };
 
   // --- Fungsi navigasi ---
-  function handleNavigate(id) {
+  function handleNavigate(id: string | number) {
     Navigate(`/cms/talent/editgroup/${id}`);
   }
   
@@ -148,7 +177,7 @@ function CmsTalentEditSchoolForm() {
             <h3 className="mb-5 mt-5 headline-3 text-center">Yakin untuk menghapus Group?</h3>
             <div className="flex justify-center gap-4">
               <button onClick={closeModal} className="bg-gray-300 px-4 py-2 w-1/2 rounded-lg">Batal</button>
-              <button onClick={() => deleteGroup(props.id)} className="bg-red-500 w-1/2 hover:bg-red-400 text-white px-4 py-2 rounded-lg">Hapus</button>
+              <button onClick={() => props.id !== undefined ? deleteGroup(props.id) : undefined} className="bg-red-500 w-1/2 hover:bg-red-400 text-white px-4 py-2 rounded-lg">Hapus</button>
             </div>
           </>
         );
