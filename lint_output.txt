@@ -1,0 +1,24 @@
+
+> skyshareacademy-cms@0.0.0 lint
+> eslint .
+
+
+/Users/curry/Documents/Andere/IdeateCore/MSIM/skyshareacademy-cms/src/pages/cms/ArticlesManagement/CmsArticleAddForm.tsx
+  514:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  514:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/curry/Documents/Andere/IdeateCore/MSIM/skyshareacademy-cms/src/pages/cms/ArticlesManagement/CmsArticleEditForm.tsx
+    1:51  error  'FormEvent' is defined but never used     @typescript-eslint/no-unused-vars
+   47:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  521:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  521:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/curry/Documents/Andere/IdeateCore/MSIM/skyshareacademy-cms/src/pages/cms/TalentsAcademy/CmsTalentForm.tsx
+  20:8   error  'ArrowLeft' is defined but never used     @typescript-eslint/no-unused-vars
+  37:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:48  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 11 problems (11 errors, 0 warnings)
+

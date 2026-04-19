@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+  input {
+    @apply border-0;
+  }
+  p {
+    @apply leading-[150%];
+  }
+  h1 {
+    @apply text-[40px] leading-[150%];
+  }
+}
+
+@layer components {
+  .nav {
+    @apply w-nav px-8 py-4;
+  }
+
+  .button {
+    @apply bg-primary-1 rounded-lg flex justify-center items-center gap-2 shadow-[0_0_3px_0_rgba(0,0,0,0.25)] hover:bg-primary-2;
+  }
+
+  .sec-btn {
+    @apply rounded-[16px] border border-black bg-white shadow-[0_0_3px_0_rgba(0,0,0,0.25)] hover:border-black/25 hover:text-neutral-3;
+  }
+
+  .btn-txt {
+    @apply rotate-[0.148deg];
+  }
+
+  /* Design System Typography */
+  .headline-1 { @apply text-headline-1; }
+  .headline-2 { @apply text-headline-2; }
+  .headline-3 { @apply text-headline-3; }
+  .headline-4 { @apply text-headline-4; }
+  .paragraph { @apply text-paragraph; }
+  .alternative-paragraph { @apply text-alt-paragraph; }
+
+  /* Section specific */
+  .testimoni { @apply h-testimoni; }
+  .bg-testimoni { @apply bg-primary-3; }
+  .home-art { @apply bg-background; }
+  .background { @apply bg-background; }
+  .partner { @apply gap-[3.75rem] bg-background; }
+  .padding { @apply pb-12; }
+  
+  .footer-content { @apply w-footer-content; }
+  .test { @apply flex-1; }
+  
+  .partner3 { @apply px-[23px] pb-[0.55px] pt-0; }
+  .partner3 img { @apply w-[125px] h-[59.45px] shrink-0; }
+  
+  .partner2 { @apply py-[10.533px] px-3; }
+  .partner2 img { @apply w-[146px] h-[38.933px] shrink-0; }
+  
+  .partner1 { @apply pt-1.25 pb-[4.525px] px-[37px]; }
+  .partner1 img { @apply w-[96px] h-[50.475px] shrink-0; }
+
+  .footer-container { @apply flex-1; }
+  .footer-profile { @apply w-[16.625rem]; }
+  .comp-name { @apply h-[6.125rem]; }
+  .logo { @apply h-[3.75rem]; }
+  .logo-box { @apply bg-[#343434]; }
+
+  .card-size { @apply w-[294px] h-[380px]; }
+  .card-size1 { @apply w-[294px]; }
+  .cover-size { @apply w-[100rem] h-[394px]; }
+  .cover-size1 { @apply w-cover-size1 h-[394px]; }
+
+  .mascot { @apply w-[200px] h-[200px]; }
+  
+  .slash { @apply mt-0.8 mr-2 rotate-[170deg]; }
+  .slash1 { @apply rotate-[170deg] -mt-6.5 ml-0.8; }
+  .slash2 { @apply rotate-[187deg] mr-2.5 -mt-8; }
+  .slash3 { @apply rotate-[187deg] ml-1.2 -mt-16.5; }
+  .slash4 { @apply rotate-[174deg] mr-2.5 -mt-5; }
+  
+  .width { @apply w-[45.5rem]; }
+  .width2 { @apply w-[45.5rem] mt-[4.7rem]; }
+
+  .slider-container { @apply w-full; }
+  .swiper-wrapper { @apply !transition-linear; }
+}
+
+@layer utilities {
+  .rotate { @apply rotate-180; }
+  .durasi { @apply transition-500; }
+}

@@ -1,0 +1,15 @@
+
+> skyshareacademy-cms@0.0.0 lint
+> eslint .
+
+
+/Users/curry/Documents/Andere/IdeateCore/MSIM/skyshareacademy-cms/src/pages/cms/ArticlesManagement/CmsArticleAddForm.tsx
+  514:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  514:64  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/curry/Documents/Andere/IdeateCore/MSIM/skyshareacademy-cms/src/pages/cms/ArticlesManagement/CmsArticleEditForm.tsx
+  521:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  521:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 4 problems (4 errors, 0 warnings)
+
