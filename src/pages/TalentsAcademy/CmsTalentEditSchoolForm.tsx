@@ -259,9 +259,14 @@ function CmsTalentEditSchoolForm() {
             <CmsNavCard />
           </div>
           <div className="w-full">
-            <div>
-              <h1 className="headline-1">Edit School</h1>
-              <p className="paragraph">Masukkan data pada field yang tertera</p>
+            <div className="flex gap-4 items-center mb-2">
+              <button onClick={() => Navigate("/cms/talentacademy")} className="hover:scale-110 transition-transform">
+                <img className="w-10 rotate-90 invert" src={ArrowLeft} alt="Back" />
+              </button>
+              <div>
+                <h1 className="headline-1">Edit School</h1>
+                <p className="paragraph">Masukkan data pada field yang tertera</p>
+              </div>
             </div>
             <div className="shadow-md bg-neutral-white mt-10 border-2 border-black rounded-xl pb-5 px-3 w-full">
               <div className="logo-sekolah mt-6">

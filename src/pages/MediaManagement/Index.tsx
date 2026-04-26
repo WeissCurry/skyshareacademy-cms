@@ -231,7 +231,7 @@ const CmsMedia = () => {
                   {images.map((img) => (
                     <div 
                       key={img.asset_id} 
-                      className={`group relative bg-white border-2 rounded-xl overflow-hidden transition-all duration-300 ${isSelectMode && selectedIds.includes(img.public_id) ? 'border-primary-1 ring-4 ring-primary-1/10' : 'border-gray-200 hover:border-black'}`}
+                      className={`group relative bg-white border-2 rounded-xl overflow-hidden transition-all duration-300 ${isSelectMode && selectedIds.includes(img.public_id) ? 'border-primary-1 ring-4 ring-primary-1/10' : 'border-gray-200 hover:border-black hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1'}`}
                       onClick={() => isSelectMode && toggleSelectImage(img.public_id)}
                     >
                       {/* Checkbox overlay for select mode */}
@@ -254,10 +254,10 @@ const CmsMedia = () => {
                               href={img.secure_url}
                               target="_blank"
                               rel="noreferrer"
-                              className="bg-white p-2 rounded-lg shadow-lg hover:scale-110 transition-transform"
+                              className="bg-white p-3 rounded-lg shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <FaExternalLinkAlt className="text-black" />
+                              <FaExternalLinkAlt className="text-black text-lg" />
                             </a>
                             <button
                               onClick={(e) => {
@@ -265,9 +265,9 @@ const CmsMedia = () => {
                                 setDeletePublicId(img.public_id);
                                 setIsDeleteModalOpen(true);
                               }}
-                              className="bg-red-500 p-2 rounded-lg shadow-lg hover:scale-110 transition-transform"
+                              className="bg-red-500 p-3 rounded-lg shadow-lg hover:scale-110 transition-transform flex items-center justify-center"
                             >
-                              <FaTrash className="text-white" />
+                              <FaTrash className="text-white text-lg" />
                             </button>
                           </div>
                         )}
@@ -281,7 +281,7 @@ const CmsMedia = () => {
                             e.stopPropagation();
                             copyToClipboard(img.secure_url);
                           }}
-                          className="w-full bg-gray-100 text-gray-800 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-primary-1 hover:text-white active:translate-y-0.5 transition-all"
+                          className="w-full bg-[#f89e2e] text-white py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#e68d24] active:translate-y-0.5 transition-all shadow-sm"
                         >
                           <FaCopy /> Salin URL
                         </button>

@@ -70,7 +70,7 @@ function CmsTalentAddSchoolForm() {
         <div className="w-full">
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/cms/talentacademy")} className="hover:scale-110 transition-transform">
-              <img className="w-10 rotate-90" src={ArrowLeft} alt="Back" />
+              <img className="w-10 rotate-90 invert" src={ArrowLeft} alt="Back" />
             </button>
             <h1 className="headline-1">Add School</h1>
           </div>

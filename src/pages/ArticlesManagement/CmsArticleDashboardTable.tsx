@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import skyshareApi from "@utilities/skyshareApi";
 import { Link } from "react-router-dom";
-import Edit1 from "@images/mascot-icons/Edit Square.png";
+import EditIcon from "@images/mascot-icons/Edit.png";
+import EditSquare from "@images/mascot-icons/Edit Square.png";
 import Delete from "@images/mascot-icons/Delete.png";
 import Add from "@images/mascot-icons/Plus.png";
 import CmsNavCard from "@components/cms/CmsNavCard";
@@ -80,65 +81,80 @@ function CmsArticleDashboardTable() {
               <h1 className="headline-1">Articles Management</h1>
               <p className="paragraph mt-2">Kelola konten Article Anda di sini.</p>
             </div>
-            <Link to="/cms/article/add" className="bg-primary-1 hover:bg-primary-2 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary-1/20 transition-all active:scale-95">
-              <img className="w-5" src={Add} alt="" /> Add New Article
-            </Link>
           </div>
 
-          <div className="bg-white border-2 border-black rounded-2xl overflow-hidden">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b-2 border-black">
-                  <th className="px-6 py-4 text-left font-bold text-sm tracking-wider">No.</th>
-                  <th className="px-6 py-4 text-left font-bold text-sm tracking-wider">Title</th>
-                  <th className="px-6 py-4 text-left font-bold text-sm tracking-wider">Category</th>
-                  <th className="px-6 py-4 text-left font-bold text-sm tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-center font-bold text-sm tracking-wider">Manage</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {dataArticles.length > 0 ? (
-                  dataArticles.map((article, index) => (
-                    <tr key={article.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-500">{(currentPage - 1) * 10 + index + 1}</td>
-                      <td className="px-6 py-4 font-bold text-gray-900 max-w-[250px] truncate" title={article.title}>{article.title}</td>
-                      <td className="px-6 py-4">
-                        <span className="px-3 py-1 rounded-full text-white text-xs font-bold" style={{ backgroundColor: article.category_color || '#000' }}>
-                          {article.category_name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{new Date(article.createdAt).toLocaleDateString()}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center gap-3">
-                          <Link 
-                            to={`/cms/article/edit/${article.id}`} 
-                            className="bg-primary-1 hover:bg-primary-2 h-10 w-10 rounded-xl flex justify-center items-center transition-all shadow-sm active:scale-90"
-                            title="Edit"
-                          >
-                            <img className="w-5 h-5" src={Edit1} alt="Edit" />
-                          </Link>
-                          <button 
-                            onClick={() => handleDeleteClick(article.id)} 
-                            className="bg-red-500 hover:bg-red-600 h-10 w-10 rounded-xl flex justify-center items-center transition-all shadow-sm active:scale-90"
-                            title="Delete"
-                          >
-                            <img className="w-5 h-5" src={Delete} alt="Delete" />
-                          </button>
-                        </div>
+          <div className="bg-neutral-white mt-10 border-2 border-black rounded-2xl p-5 w-full">
+            <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4">
+              <div className="flex items-center gap-4">
+                <img className="w-6" src={EditIcon} alt="" />
+                <h4 className="headline-4">Daftar Article</h4>
+              </div>
+              <div className="flex items-center">
+                <Link to="/cms/article/add" className="bg-primary-1 hover:bg-primary-2 flex items-center rounded-md h-12 w-12 justify-center">
+                  <img className="w-7 h-7" src={Add} alt="" />
+                </Link>
+              </div>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="pr-4 py-4 text-left font-bold text-sm">No.</th>
+                    <th className="pr-4 py-4 text-left font-bold text-sm">Tanggal</th>
+                    <th className="pr-20 py-4 text-left font-bold text-sm">Title</th>
+                    <th className="pr-4 py-4 text-center font-bold text-sm">Category</th>
+                    <th className="pl-4 py-4 text-center font-bold text-sm">Manage</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {dataArticles.length > 0 ? (
+                    dataArticles.map((article, index) => (
+                      <tr key={article.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="pr-4 py-6 text-sm font-bold text-black">{(currentPage - 1) * 10 + index + 1}</td>
+                        <td className="pr-4 py-6 text-sm text-black">{new Date(article.createdAt).toLocaleDateString()}</td>
+                        <td className="pr-20 py-6 text-sm text-black max-w-[250px] truncate" title={article.title}>{article.title}</td>
+                        <td className="pr-4 py-6">
+                          <div className="flex justify-center">
+                            <span className="w-[100px] text-center inline-block px-2 py-2 rounded-full text-white text-xs font-bold leading-tight" style={{ backgroundColor: article.category_color || '#000' }}>
+                              {article.category_name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="pl-4 py-6">
+                          <div className="flex justify-center gap-3">
+                            <Link 
+                              to={`/cms/article/edit/${article.id}`} 
+                              className="bg-primary-1 hover:bg-primary-2 h-10 w-10 rounded-xl flex justify-center items-center transition-all shadow-sm active:scale-90"
+                              title="Edit"
+                            >
+                              <img className="w-5 h-5" src={EditSquare} alt="Edit" />
+                            </Link>
+                            <button 
+                              onClick={() => handleDeleteClick(article.id)} 
+                              className="bg-red-500 hover:bg-red-600 h-10 w-10 rounded-xl flex justify-center items-center transition-all shadow-sm active:scale-90"
+                              title="Delete"
+                            >
+                              <img className="w-5 h-5" src={Delete} alt="Delete" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="text-center py-8 text-gray-500">
+                        No articles found.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-20 text-center text-gray-400">No articles found.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="px-6 py-4 bg-gray-50 border-t-2 border-black flex items-center justify-between">
+              <div className="px-6 py-4 mt-4 bg-gray-50 border-2 border-black rounded-xl flex items-center justify-between">
                 <p className="text-sm text-gray-500">
                   Showing <span className="font-bold">{(currentPage - 1) * pagination.limit + 1}</span> to <span className="font-bold">{Math.min(currentPage * pagination.limit, pagination.totalItems)}</span> of <span className="font-bold">{pagination.totalItems}</span> results
                 </p>

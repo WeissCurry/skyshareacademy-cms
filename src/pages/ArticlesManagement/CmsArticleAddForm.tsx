@@ -1,6 +1,6 @@
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+
 import skyshareApi from "@utilities/skyshareApi";
 import CmsNavCard from "@components/cms/CmsNavCard";
 import Arrow from "@images/mascot-icons/Arrow-down.png";
@@ -15,6 +15,7 @@ import MediaLibraryMini from "@components/cms/MediaLibraryMini";
 
 import Show from "@images/mascot-icons/Show.png";
 import Chain from "@images/mascot-icons/Link.png";
+import ArrowLeft from "@images/mascot-icons/Arrow - Down 3.png";
 
 interface Category {
   id: string;
@@ -159,8 +160,8 @@ function CmsArticleAddForm() {
         <div><CmsNavCard /></div>
         <div className="flex-1 min-w-0">
           <div className="flex gap-4">
-            <button onClick={() => Navigate("/cms/article")} className="w-10 h-10 mt-1 flex-shrink-0 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-gray-100 transition-all shadow-sm">
-              <FaArrowLeft className="text-black" size={18} />
+            <button onClick={() => Navigate("/cms/article")} className="hover:scale-110 transition-transform mt-1">
+              <img className="w-10 rotate-90 invert" src={ArrowLeft} alt="Back" />
             </button>
             <div>
               <h1 className="headline-1">Add Article</h1>
