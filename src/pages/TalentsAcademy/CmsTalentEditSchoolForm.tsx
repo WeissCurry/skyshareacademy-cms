@@ -7,6 +7,7 @@ import Modal from "@components/modals/modals";
 
 import Edit1 from "@images/mascot-icons/Edit Square.png";
 import Delete from "@images/mascot-icons/Delete.png";
+import ArrowLeft from "@images/mascot-icons/Arrow - Down 3.png";
 import Add from "@images/mascot-icons/Plus.png";
 import Group from "@images/mascot-icons/3 User.png";
 import Chain from "@images/mascot-icons/Link.png";

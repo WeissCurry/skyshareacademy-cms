@@ -37,7 +37,7 @@ function CmsArticleDashboardTable() {
     try {
       const response = await skyshareApi.get(`/article?page=${page}&limit=10`);
       setDataarticles(response.data.data);
-      setPagination(response.data.meta);
+      setPagination(response.data.pagination);
     } catch (error) {
       console.log(error);
     } finally {
