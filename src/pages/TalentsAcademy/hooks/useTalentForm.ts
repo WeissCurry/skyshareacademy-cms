@@ -23,6 +23,9 @@ interface TalentFormData {
   link_join_program: string;
   school_ids: (string | number)[];
   school_id?: string | number;
+  // Temporary states for pasted URLs
+  url_alur?: string;
+  url_timeline?: string;
 }
 
 interface TalentData {
@@ -94,17 +97,27 @@ export function useTalentForm() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setTalentForm((prev) => ({ ...prev, gambar_alur_acara: file }));
+      setTalentForm((prev) => ({ ...prev, gambar_alur_acara: file, url_alur: "" }));
       setImagePreviewUrl(URL.createObjectURL(file));
     }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setTalentForm((prev) => ({ ...prev, url_alur: value, gambar_alur_acara: value }));
+    setImagePreviewUrl(value);
   };
 
   const handleFileChangeTimeline = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setTalentForm((prev) => ({ ...prev, gambar_timeline: file }));
+      setTalentForm((prev) => ({ ...prev, gambar_timeline: file, url_timeline: "" }));
       setImagePreviewUrlTimeline(URL.createObjectURL(file));
     }
+  };
+
+  const handleUrlChangeTimeline = (value: string) => {
+    setTalentForm((prev) => ({ ...prev, url_timeline: value, gambar_timeline: value }));
+    setImagePreviewUrlTimeline(value);
   };
 
   const handleCtaChange = (value: string) => {
@@ -190,7 +203,9 @@ export function useTalentForm() {
     isDeleting,
     handleBookletChange,
     handleFileChange,
+    handleUrlChange,
     handleFileChangeTimeline,
+    handleUrlChangeTimeline,
     handleCtaChange,
     handleJoinProgramChange,
     handleSubmit,

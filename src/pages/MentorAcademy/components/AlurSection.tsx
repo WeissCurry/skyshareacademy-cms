@@ -1,34 +1,29 @@
 import type { ChangeEvent } from "react";
-import Time from "@images/mascot-icons/Time Circle.png";
+import Work from "@images/mascot-icons/Work.png";
 import Show from "@images/mascot-icons/Show.png";
 import Chain from "@images/mascot-icons/Link.png";
 
-interface TimelineProgramSectionProps {
-  imagePreviewUrlTimeline: string;
+interface AlurSectionProps {
+  imagePreviewUrl: string;
   urlValue: string;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onUrlChange: (value: string) => void;
 }
 
-export default function TimelineProgramSection({
-  imagePreviewUrlTimeline,
-  urlValue,
-  onFileChange,
-  onUrlChange
-}: TimelineProgramSectionProps) {
+export default function AlurSection({ imagePreviewUrl, urlValue, onFileChange, onUrlChange }: AlurSectionProps) {
   return (
-    <div className="timeline-program mt-6">
+    <div className="alur mt-6">
       <div className="bg-background p-4 gap-4 flex items-center rounded-xl">
-        <img className="w-6" src={Time} alt="" />
-        <h4 className="headline-4">Timeline Program</h4>
+        <img className="w-6" src={Work} alt="" />
+        <h4 className="headline-4">Alur Pendaftaran / Acara</h4>
       </div>
       
       <div className="bg-neutral-white rounded-xl border-2 border-gray-400 px-6 pt-7 pb-4 mt-4">
         <div className="border-2 border-dashed flex justify-center items-center border-gray-400 rounded-xl h-60 bg-gray-50">
-          {imagePreviewUrlTimeline ? (
+          {imagePreviewUrl ? (
             <div className="flex justify-center h-full p-2">
               <img
-                src={imagePreviewUrlTimeline}
+                src={imagePreviewUrl}
                 alt="Preview"
                 className="rounded-xl object-contain w-full h-full"
               />

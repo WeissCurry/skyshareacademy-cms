@@ -27,7 +27,9 @@ function CmsTalentForm() {
     isDeleting,
     handleBookletChange,
     handleFileChange,
+    handleUrlChange,
     handleFileChangeTimeline,
+    handleUrlChangeTimeline,
     handleCtaChange,
     handleJoinProgramChange,
     handleSubmit,
@@ -96,7 +98,7 @@ function CmsTalentForm() {
   return (
     <>
       <div className="bg-background flex flex-col pt-12 items-center self-stretch">
-        <div className="content-1 flex gap-4">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4">
           <div>
             <CmsNavCard />
           </div>
@@ -113,11 +115,15 @@ function CmsTalentForm() {
               />
               <AlurPendaftaranSection
                 imagePreviewUrl={imagePreviewUrl}
+                urlValue={talentForm.url_alur || ""}
                 onFileChange={handleFileChange}
+                onUrlChange={handleUrlChange}
               />
               <TimelineProgramSection
                 imagePreviewUrlTimeline={imagePreviewUrlTimeline}
+                urlValue={talentForm.url_timeline || ""}
                 onFileChange={handleFileChangeTimeline}
+                onUrlChange={handleUrlChangeTimeline}
               />
               <SchoolTable
                 schools={schools}
