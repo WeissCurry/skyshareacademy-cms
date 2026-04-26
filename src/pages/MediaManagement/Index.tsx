@@ -145,7 +145,7 @@ const CmsMedia = () => {
 
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch pb-20">
-      <div className="content-1 flex gap-4 w-full px-4 md:px-6 max-w-[1100px]">
+      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
         <div className="hidden md:block">
           <CmsNavCard />
         </div>

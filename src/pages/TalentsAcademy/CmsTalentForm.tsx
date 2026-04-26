@@ -98,7 +98,7 @@ function CmsTalentForm() {
   return (
     <>
       <div className="bg-background flex flex-col pt-12 items-center self-stretch">
-        <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
           <div>
             <CmsNavCard />
           </div>

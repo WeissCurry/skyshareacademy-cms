@@ -57,50 +57,55 @@ function CmsLoginForm() {
   };
 
   return (
-    <div className="hero bg-background flex flex-col pb-12 pt-24 items-center self-stretch h-screen">
-      <div className="w-4/5 text-white flex justify-center">
-        <div className="-ml-36">
-          <img className="w-36" src={Pose1} alt="" />
-          <img className="w-36 -mt-20 ml-20 absolute" src={Pose5} alt="" />
-          <img className="w-36 -mt-36 ml-40 absolute" src={Pose4} alt="" />
-          <img className="w-36 -mt-4 ml-40 absolute" src={Pose3} alt="" />
-          <img className="w-36 -mt-3 ml-1 absolute" src={Pose2} alt="" />
+    <div className="bg-background flex flex-col items-center justify-center min-h-screen p-4 overflow-y-auto">
+      {/* Mascot Group Container - Restored to exact original structure */}
+      <div className="relative w-full max-w-[304px] h-48 mb-10 flex justify-center items-end scale-75 md:scale-100 transition-transform origin-bottom">
+        <div className="relative h-36">
+          <div className="relative -ml-36">
+            <img className="w-36" src={Pose1} alt="" />
+            <img className="w-36 -mt-20 ml-20 absolute" src={Pose5} alt="" />
+            <img className="w-36 -mt-36 ml-40 absolute" src={Pose4} alt="" />
+            <img className="w-36 -mt-4 ml-40 absolute" src={Pose3} alt="" />
+            <img className="w-36 -mt-3 ml-1 absolute" src={Pose2} alt="" />
+          </div>
         </div>
       </div>
-      <div className="mt-36 w-96">
-        <h1 className="headline-1 text-center">CMS Skyshare Academy</h1>
-        <p className="paragraph text-center">
-          Website ini digunakan untuk mengelola konten pada website Skyshare
-          Academy.
+
+      <div className="w-full max-w-md text-center mb-8">
+        <h1 className="headline-1 !text-4xl md:!text-5xl">CMS Skyshare Academy</h1>
+        <p className="paragraph px-4 text-sm md:text-base">
+          Website ini digunakan untuk mengelola konten pada website Skyshare Academy.
         </p>
       </div>
+
       <form 
         onSubmit={(e) => {
           e.preventDefault();
           handleLogin();
         }}
-        className="mt-6 bg-white border-2 rounded-xl shadow-lg shadow-gray-500 border-black px-5 pb-10 pt-5"
+        className="bg-white border-2 rounded-xl shadow-lg shadow-gray-300 border-black px-6 pb-10 pt-8 w-full max-w-[400px]"
       >
-        <h4 className="headline-4 text-center">Login Admin</h4>
+        <h4 className="headline-4 text-center mb-6">Login Admin</h4>
         <input
           onChange={(e) => setEmail(e.target.value)}
           type="text"
           placeholder="Email"
-          className="px-2 mt-5 py-2 rounded-md w-80 block border border-gray-300 shadow-sm shadow-gray-500"
+          className="px-4 py-2 mb-4 rounded-md w-full block border border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-1 outline-none"
         />
         <input
           onChange={(e) => setPassword(e.target.value)}
           type="password"
           placeholder="Password"
-          className="px-2 mt-5 py-2 rounded-md w-80 block border border-gray-300 shadow-sm shadow-gray-500"
+          className="px-4 py-2 mb-6 rounded-md w-full block border border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-1 outline-none"
         />
 
         <button
           type="submit"
-          className="bg-primary-1 w-80 py-2 mt-5 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-2"
+          className="bg-primary-1 w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
         >
           <p className="font-bold text-white">Login</p>
-          <img className="w-6 -rotate-90" src={ArrowLeft} alt="" />
+          <img className="w-5 -rotate-90" src={ArrowLeft} alt="" />
         </button>
       </form>
 
@@ -147,7 +152,7 @@ function CmsLoginForm() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            <p className="text-primary-1">Uploading article...</p>
+            <p className="text-primary-1">Logging in...</p>
           </div>
         </div>
       )}

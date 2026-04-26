@@ -73,7 +73,7 @@ function CmsArticleDashboardTable() {
 
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch">
-      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4">
+      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
         <div><CmsNavCard /></div>
         <div className="w-full">
           <div className="flex justify-between items-end mb-8">
