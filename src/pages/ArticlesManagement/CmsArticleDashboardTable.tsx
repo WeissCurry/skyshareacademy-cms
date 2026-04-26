@@ -116,7 +116,7 @@ function CmsArticleDashboardTable() {
                         <td className="pr-20 py-6 text-sm text-black max-w-[250px] truncate" title={article.title}>{article.title}</td>
                         <td className="pr-4 py-6">
                           <div className="flex justify-center">
-                            <span className="w-[100px] text-center inline-block px-2 py-2 rounded-full text-white text-xs font-bold leading-tight" style={{ backgroundColor: article.category_color || '#000' }}>
+                            <span className="px-4 py-1.5 rounded-full text-white text-[11px] font-bold whitespace-nowrap tracking-wide" style={{ backgroundColor: article.category_color || '#000' }}>
                               {article.category_name}
                             </span>
                           </div>
