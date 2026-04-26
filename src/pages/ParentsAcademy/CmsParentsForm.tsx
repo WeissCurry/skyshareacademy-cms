@@ -82,8 +82,8 @@ function CmsParentsForm() {
         <div><CmsNavCard /></div>
         <div className="w-full">
           <div>
-            <h1 className="headline-1 text-3xl font-bold">Parents Academy</h1>
-            <p className="paragraph text-gray-500 mt-2">Kelola konten Parents Academy Anda di sini.</p>
+            <h1 className="headline-1">Parents Academy</h1>
+            <p className="paragraph">Kelola konten Parents Academy Anda di sini.</p>
           </div>
 
           <div className="shadow-md bg-neutral-white mt-10 border-2 border-black rounded-2xl pb-10 px-8 w-full">

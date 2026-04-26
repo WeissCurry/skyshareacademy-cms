@@ -153,8 +153,8 @@ const CmsMedia = () => {
         <div className="flex-1">
           <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
-              <h1 className="headline-1 text-3xl font-bold text-gray-900">Media Library</h1>
-              <p className="paragraph text-gray-600 mt-2">Kelola aset gambar Anda ({images.length} item di halaman ini)</p>
+              <h1 className="headline-1">Media Library</h1>
+              <p className="paragraph">Kelola aset gambar Anda ({images.length} item di halaman ini)</p>
             </div>
             
             <div className="flex gap-3 flex-wrap">

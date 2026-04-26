@@ -75,8 +75,11 @@ function CmsArticleDashboardTable() {
       <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4">
         <div><CmsNavCard /></div>
         <div className="w-full">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="headline-1">Articles Management</h1>
+          <div className="flex justify-between items-end mb-8">
+            <div>
+              <h1 className="headline-1">Articles Management</h1>
+              <p className="paragraph mt-2">Kelola konten Article Anda di sini.</p>
+            </div>
             <Link to="/cms/article/add" className="bg-primary-1 hover:bg-primary-2 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-primary-1/20 transition-all active:scale-95">
               <img className="w-5" src={Add} alt="" /> Add New Article
             </Link>

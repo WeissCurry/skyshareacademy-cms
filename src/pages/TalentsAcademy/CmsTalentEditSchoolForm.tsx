@@ -10,7 +10,7 @@ import Delete from "@images/mascot-icons/Delete.png";
 import Add from "@images/mascot-icons/Plus.png";
 import Group from "@images/mascot-icons/3 User.png";
 import Chain from "@images/mascot-icons/Link.png";
-import ArrowLeft from "@images/mascot-icons/Arrow - Down 3.png";
+import Show from "@images/mascot-icons/Show.png";
 import Mascot from "@images/mascot-icons/pose=2.webp";
 import Mascot1 from "@images/mascot-icons/pose=8.webp";
 import Mascot2 from "@images/mascot-icons/pose=1.webp";
@@ -49,6 +49,7 @@ interface ModalProps {
 function CmsTalentEditSchoolForm() {
   const [schoolForm, setSchoolForm] = useState<SchoolForm>({});
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [urlValue, setUrlValue] = useState("");
   const [dataGroups, setDataGroups] = useState<Group[]>([]);
   const [dataSchool, setDataSchool] = useState<SchoolData>({});
   const Navigate = useNavigate();
@@ -155,7 +156,14 @@ function CmsTalentEditSchoolForm() {
     if (file) {
       setSchoolForm({ ...schoolForm, gambar_logo_sekolah: file });
       setImagePreviewUrl(URL.createObjectURL(file));
+      setUrlValue("");
     }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setUrlValue(value);
+    setSchoolForm({ ...schoolForm, gambar_logo_sekolah: value });
+    setImagePreviewUrl(value);
   };
 
   // --- Fungsi navigasi ---
@@ -261,22 +269,51 @@ function CmsTalentEditSchoolForm() {
                   <h4 className="font-bold text-base">Upload Logo Sekolah <span className="text-orange-300">*</span></h4>
                 </div>
                 <div className="bg-neutral-white rounded-xl border-2 border-gray-400 px-6 pt-7 pb-4">
-                  <div className="border-2 border-dashed flex justify-center items-center border-gray-400 rounded-xl h-60">
-                    {imagePreviewUrl && (
-                      <div className="flex justify-center">
-                        <img src={imagePreviewUrl} alt="Image Preview" className="rounded-xl border-2 border-gray-400" style={{ maxWidth: "100%", maxHeight: "220px" }} />
+                  <div className="border-2 border-dashed flex justify-center items-center border-gray-400 rounded-xl h-60 bg-gray-50">
+                    {imagePreviewUrl ? (
+                      <div className="flex justify-center h-full p-2 w-full">
+                        <img src={imagePreviewUrl} alt="Image Preview" className="rounded-xl border-2 border-gray-400 object-contain w-full h-full" style={{ maxWidth: "100%", maxHeight: "220px" }} />
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <p className="text-gray-400 font-medium">No image preview available</p>
                       </div>
                     )}
                   </div>
-                  <div className="my-4 bg-primary-1 cursor-pointer hover:bg-primary-2 flex justify-center rounded-xl items-center relative">
-                    <input type="file" id="image_heading" accept="image/*" onChange={handleFileChange} className="cursor-pointer absolute w-full h-full opacity-0 z-10" />
-                    <div className="flex gap-2 items-center py-4">
-                      <p className="cursor-pointer text-white font-bold">Upload File</p>
-                      <img className="cursor-pointer w-6 -rotate-90" src={ArrowLeft} alt="" />
+                  <div className="flex justify-center mt-2 mb-4">
+                    <p className="text-xs text-gray-500 font-bold">(PNG/JPG max 2MB) Minimal Ukuran (956 x 350px)</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    <div className="bg-primary-1 cursor-pointer hover:bg-primary-2 flex justify-center rounded-xl items-center relative h-[52px]">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="cursor-pointer z-10 opacity-0 w-full h-full absolute"
+                      />
+                      <div className="flex gap-2 items-center">
+                        <p className="text-white font-bold">Upload File Baru</p>
+                        <img className="w-6 -rotate-90" src={Show} alt="" />
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                        <img src={Chain} className="w-5" alt="" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Atau tempel URL gambar di sini..."
+                        value={urlValue}
+                        onChange={(e) => handleUrlChange(e.target.value)}
+                        className="w-full h-[52px] pl-12 pr-4 border-2 border-gray-400 rounded-xl outline-none focus:border-black transition-colors text-sm"
+                      />
                     </div>
                   </div>
-                  <div className="flex justify-center pb-3">
-                    <h4 className="text-base">Minimal Ukuran <span className="font-bold">(956 x 350px)</span></h4>
+
+                  <div className="flex justify-center mt-4">
+                    <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
                   </div>
                 </div>
               </div>

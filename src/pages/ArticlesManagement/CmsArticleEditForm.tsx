@@ -12,9 +12,8 @@ import ConfirmModal from "@components/cms/ConfirmModal";
 import RichTextEditor from "@components/cms/RichTextEditor";
 import MediaLibraryMini from "@components/cms/MediaLibraryMini";
 
-import Add from "@images/mascot-icons/Plus.png";
-import DocumentIcon from "@images/mascot-icons/Document.png";
-import EditIcon from "@images/mascot-icons/Edit Square.png";
+import Show from "@images/mascot-icons/Show.png";
+import Chain from "@images/mascot-icons/Link.png";
 
 interface Category {
   id: string;
@@ -52,6 +51,7 @@ function CmsArticleEditForm() {
     category_id: "",
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [urlValue, setUrlValue] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("Loading...");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -147,7 +147,14 @@ function CmsArticleEditForm() {
       const reader = new FileReader();
       reader.onloadend = () => setImagePreviewUrl(reader.result as string);
       reader.readAsDataURL(file);
+      setUrlValue("");
     }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setUrlValue(value);
+    setArticleForm({ ...articleForm, image_heading: value });
+    setImagePreviewUrl(value);
   };
 
   const deleteCategory = async function () {
@@ -163,135 +170,157 @@ function CmsArticleEditForm() {
 
   return (
     <div className="bg-background flex flex-col pt-12 items-center self-stretch h-auto pb-44">
-      <div className="content-1 flex gap-4 w-full max-w-[1300px] px-4">
+      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4">
         <div><CmsNavCard /></div>
-        <div className="w-full">
-          <div className="flex items-center gap-4">
-            <button onClick={() => Navigate("/cms/article")} className="w-10 h-10 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-gray-100 transition-all shadow-sm">
+        <div className="flex-1 min-w-0">
+          <div className="flex gap-4">
+            <button onClick={() => Navigate("/cms/article")} className="w-10 h-10 mt-1 flex-shrink-0 flex items-center justify-center bg-white border-2 border-black rounded-full hover:bg-gray-100 transition-all shadow-sm">
               <FaArrowLeft className="text-black" size={18} />
             </button>
-            <h1 className="headline-1">Edit Article</h1>
+            <div>
+              <h1 className="headline-1">Edit Article</h1>
+              <p className="text-sm font-medium text-black mt-1">Masukkan data pada field yang tertera</p>
+            </div>
           </div>
           
-          <div className="shadow-md bg-neutral-white mt-10 border-2 border-black rounded-xl pb-10 px-8 w-full overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-10 mt-10">
-              
-              {/* Left Column: Informasi Artikel */}
-              <div className="space-y-6">
-                <div className="bg-background p-4 gap-4 flex items-center rounded-xl">
-                  <img className="w-6" src={DocumentIcon} alt="" />
-                  <h4 className="headline-4">Informasi Artikel</h4>
-                </div>
-                
-                <div className="bg-neutral-white rounded-xl border-2 border-gray-400 p-6 space-y-6">
-                  <div>
-                    <label className="font-bold block mb-2 text-sm">Heading Image</label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 h-56 relative group overflow-hidden">
-                    {imagePreviewUrl ? (
-                      <>
-                        <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <label htmlFor="image_heading" className="bg-white text-black px-4 py-2 rounded-lg font-bold cursor-pointer hover:bg-gray-200">Change Image</label>
-                        </div>
-                      </>
-                    ) : (
-                      <label htmlFor="image_heading" className="flex flex-col items-center cursor-pointer">
-                        <div className="bg-primary-1/10 p-4 rounded-full mb-3"><img className="w-10" src={Add} alt="Add" /></div>
-                        <p className="text-sm font-medium text-gray-500">Upload heading image</p>
-                      </label>
-                    )}
-                    <input id="image_heading" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+          <div className="bg-neutral-white mt-8 border-2 border-black rounded-xl p-8 w-full overflow-hidden space-y-8 shadow-sm">
+            
+            {/* Heading Image */}
+            <div>
+              <label className="font-bold block mb-2 text-sm">Upload gambar heading <span className="text-orange-500">*</span></label>
+              <div className="border-2 border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white min-h-[160px] relative group overflow-hidden">
+                {imagePreviewUrl ? (
+                  <div className="flex justify-center h-full p-2 w-full">
+                    <img src={imagePreviewUrl} alt="Preview" className="w-full max-w-[400px] h-auto object-contain rounded-lg border border-gray-200" />
                   </div>
-                </div>
+                ) : (
+                  <p className="text-gray-400 italic text-sm">No image preview available</p>
+                )}
+              </div>
+              <div className="flex justify-center mt-2 mb-4">
+                <p className="text-xs text-gray-500 font-bold">Minimal Ukuran (956 x 350px)</p>
+              </div>
 
-                <div>
-                  <label className="font-bold block mb-2">Title</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                <div className="bg-primary-1 cursor-pointer hover:bg-primary-2 flex justify-center rounded-xl items-center relative h-[52px]">
                   <input
-                    value={articleForm.title}
-                    onChange={(e) => setArticleForm({ ...articleForm, title: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="cursor-pointer z-10 opacity-0 w-full h-full absolute"
                   />
-                </div>
-
-                <div>
-                  <label className="font-bold block mb-2">CTA Link</label>
-                  <input
-                    value={articleForm.link}
-                    onChange={(e) => setArticleForm({ ...articleForm, link: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
-                  />
+                  <div className="flex gap-2 items-center">
+                    <p className="text-white font-bold">Upload File Baru</p>
+                    <img className="w-6 -rotate-90" src={Show} alt="" />
+                  </div>
                 </div>
 
                 <div className="relative">
-                  <label className="font-bold block mb-2">Category</label>
-                  <div 
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl flex justify-between items-center cursor-pointer hover:border-black"
-                  >
-                    {isCategorySelected ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedCategory?.color }} />
-                        <span className="font-bold">{selectedCategory?.name}</span>
-                      </div>
-                    ) : <span className="text-gray-400">Pilih Kategori</span>}
-                    <img className={`w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} src={Arrow} alt="" />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <img src={Chain} className="w-5" alt="" />
                   </div>
+                  <input
+                    type="text"
+                    placeholder="Atau tempel URL gambar di sini..."
+                    value={urlValue}
+                    onChange={(e) => handleUrlChange(e.target.value)}
+                    className="w-full h-[52px] pl-12 pr-4 border-2 border-gray-400 rounded-xl outline-none focus:border-black transition-colors text-sm"
+                  />
+                </div>
+              </div>
 
-                  {isDropdownOpen && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white border-2 border-black rounded-xl shadow-xl z-50 overflow-hidden">
-                      <div className="max-h-60 overflow-y-auto">
-                        {categories.map((cat) => (
-                          <div key={cat.id} className="flex items-center justify-between p-3 hover:bg-gray-100 cursor-pointer group border-b last:border-b-0" onClick={() => {
-                            setSelectedCategory(cat);
-                            setArticleForm({ ...articleForm, category_id: cat.id });
-                            setIsCategorySelected(true);
-                            setIsDropdownOpen(false);
-                          }}>
-                            <div className="flex items-center gap-3">
-                              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                              <span className="font-medium">{cat.name}</span>
-                            </div>
-                            <button onClick={(e) => {
-                              e.stopPropagation();
-                              setCategoryId(cat.id);
-                              setDeleteMessage(`Hapus kategori "${cat.name}"?`);
-                              setIsModalOpen(true);
-                            }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-lg transition-all text-red-500">
-                              <img className="w-4" src={Del} alt="Delete" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+              <div className="flex justify-center mt-4">
+                <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
+              </div>
+            </div>
+
+            {/* Title */}
+            <div>
+              <label className="font-bold block mb-2 text-sm">Judul <span className="text-orange-500">*</span></label>
+              <input
+                value={articleForm.title}
+                onChange={(e) => setArticleForm({ ...articleForm, title: e.target.value })}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
+                placeholder="Masukkan judul artikel"
+              />
+            </div>
+            
+            {/* CTA Link */}
+            <div>
+              <label className="font-bold block mb-2 text-sm">CTA Link</label>
+              <input
+                value={articleForm.link}
+                onChange={(e) => setArticleForm({ ...articleForm, link: e.target.value })}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
+                placeholder="https://..."
+              />
+            </div>
+
+            {/* Category */}
+            <div className="relative">
+              <label className="font-bold block mb-2 text-sm">Kategori <span className="text-orange-500">*</span></label>
+              <div 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl flex justify-between items-center cursor-pointer hover:border-black transition-colors"
+              >
+                {isCategorySelected ? (
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 rounded-full text-white text-xs font-bold" style={{ backgroundColor: selectedCategory?.color }}>
+                      {selectedCategory?.name}
                     </div>
-                  )}
-                </div>
-                </div>
+                  </div>
+                ) : <span className="text-gray-400">Pilih Kategori</span>}
+                <img className={`w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} src={Arrow} alt="" />
               </div>
 
-              {/* Right Column: Konten Artikel */}
-              <div className="space-y-6 min-w-0">
-                <div className="bg-background p-4 gap-4 flex items-center rounded-xl">
-                  <img className="w-6" src={EditIcon} alt="" />
-                  <h4 className="headline-4">Konten Artikel</h4>
+              {isDropdownOpen && (
+                <div className="absolute top-full left-0 w-full mt-2 bg-white border-2 border-black rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="max-h-60 overflow-y-auto p-2">
+                    {categories.map((cat) => (
+                      <div key={cat.id} className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg cursor-pointer group mb-1" onClick={() => {
+                        setSelectedCategory(cat);
+                        setArticleForm({ ...articleForm, category_id: cat.id });
+                        setIsCategorySelected(true);
+                        setIsDropdownOpen(false);
+                      }}>
+                        <div className="flex items-center gap-3">
+                          <div className="px-3 py-1 rounded-full text-white text-xs font-bold" style={{ backgroundColor: cat.color }}>
+                            {cat.name}
+                          </div>
+                        </div>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          setCategoryId(cat.id);
+                          setDeleteMessage(`Hapus kategori "${cat.name}"?`);
+                          setIsModalOpen(true);
+                        }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-red-100 rounded-lg transition-all text-red-500">
+                          <img className="w-4" src={Del} alt="Delete" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+              )}
+            </div>
 
-                <div className="bg-neutral-white rounded-xl border-2 border-gray-400 p-6 space-y-6 min-w-0">
-                  <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} />
-                  <div className="border-2 border-gray-300 rounded-xl overflow-hidden">
-                    <RichTextEditor 
-                      value={articleForm.content} 
-                      onChange={(content) => setArticleForm({ ...articleForm, content })} 
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end gap-4 pt-6">
-                    <button onClick={() => setIsCancelModalOpen(true)} className="px-8 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-bold">Batal</button>
-                    <button onClick={handleArticleUpdate} className="px-10 py-3 bg-primary-1 hover:bg-primary-2 text-white rounded-xl font-bold shadow-lg shadow-primary-1/20 transition-all active:scale-95">Update Artikel</button>
-                  </div>
-                </div>
+            {/* Content */}
+            <div className="min-w-0">
+              <label className="font-bold block mb-2 text-sm">Berikan isi <span className="text-orange-500">*</span></label>
+              <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} />
+              <div className="border-2 border-gray-300 rounded-xl overflow-hidden mt-2">
+                <RichTextEditor 
+                  value={articleForm.content} 
+                  onChange={(content) => setArticleForm({ ...articleForm, content })} 
+                />
               </div>
             </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4 pt-6 mt-4">
+              <button onClick={() => setIsCancelModalOpen(true)} className="px-8 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold transition-colors text-sm">Batal</button>
+              <button onClick={handleArticleUpdate} className="px-10 py-3 bg-orange-400 hover:bg-orange-500 text-white rounded-lg font-bold transition-all active:scale-95 text-sm shadow-md">Simpan</button>
             </div>
+
           </div>
         </div>
       </div>

@@ -24,6 +24,7 @@ interface MentorForm {
   // Temporary states for pasted URLs
   url_alur?: string;
   url_timeline?: string;
+  url_event?: string;
 }
 
 function CmsMentorForm() {
@@ -91,8 +92,8 @@ function CmsMentorForm() {
         <div><CmsNavCard /></div>
         <div className="w-full">
           <div>
-            <h1 className="headline-1 text-3xl font-bold">Mentor Academy</h1>
-            <p className="paragraph text-gray-500 mt-2">Kelola konten Mentor Academy Anda di sini.</p>
+            <h1 className="headline-1">Mentor Academy</h1>
+            <p className="paragraph">Kelola konten Mentor Academy Anda di sini.</p>
           </div>
 
           <div className="shadow-md bg-neutral-white mt-10 border-2 border-black rounded-2xl pb-10 px-8 w-full">
@@ -138,12 +139,17 @@ function CmsMentorForm() {
               onToggle={() => setMentorForm({ ...mentorForm, is_event_active: !mentorForm.is_event_active })}
               imageUrl={imagePreviewEvent}
               ctaLink={mentorForm.event_cta_link || ""}
+              urlValue={mentorForm.url_event || ""}
               onFileChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  setMentorForm({ ...mentorForm, event_image_url: file });
+                  setMentorForm({ ...mentorForm, event_image_url: file, url_event: "" });
                   setImagePreviewEvent(URL.createObjectURL(file));
                 }
+              }}
+              onUrlChange={(val) => {
+                setMentorForm({ ...mentorForm, url_event: val, event_image_url: val });
+                setImagePreviewEvent(val);
               }}
               onCtaChange={(val) => setMentorForm({ ...mentorForm, event_cta_link: val })}
             />

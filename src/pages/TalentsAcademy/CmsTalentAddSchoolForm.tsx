@@ -8,9 +8,11 @@ import SuccessModal from "@components/cms/SuccessModal";
 import ConfirmModal from "@components/cms/ConfirmModal";
 
 import ArrowLeft from "@images/mascot-icons/Arrow - Down 3.png";
+import Show from "@images/mascot-icons/Show.png";
+import Chain from "@images/mascot-icons/Link.png";
 
 interface SchoolForm {
-  gambar_logo_sekolah: File | null;
+  gambar_logo_sekolah: File | string | null;
   nama_sekolah: string;
 }
 
@@ -20,6 +22,7 @@ function CmsTalentAddSchoolForm() {
     nama_sekolah: "",
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [urlValue, setUrlValue] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -50,7 +53,14 @@ function CmsTalentAddSchoolForm() {
     if (file) {
       setSchoolForm({ ...schoolForm, gambar_logo_sekolah: file });
       setImagePreviewUrl(URL.createObjectURL(file));
+      setUrlValue("");
     }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setUrlValue(value);
+    setSchoolForm({ ...schoolForm, gambar_logo_sekolah: value });
+    setImagePreviewUrl(value);
   };
 
   return (
@@ -71,14 +81,49 @@ function CmsTalentAddSchoolForm() {
                 <label className="font-bold block mb-4">Logo Sekolah</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center bg-gray-50 h-64 relative group overflow-hidden">
                   {imagePreviewUrl ? (
-                    <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-contain" />
+                    <div className="flex justify-center h-full p-2 w-full">
+                      <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-contain" />
+                    </div>
                   ) : (
                     <div className="text-center">
-                      <p className="text-gray-400 font-medium">Upload logo sekolah</p>
-                      <p className="text-xs text-gray-400 mt-1">(PNG/JPG max 2MB)</p>
+                      <p className="text-gray-400 font-medium">No image preview available</p>
                     </div>
                   )}
-                  <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                </div>
+                <div className="flex justify-center mt-2 mb-4">
+                  <p className="text-xs text-gray-500 font-bold">(PNG/JPG max 2MB)</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  <div className="bg-primary-1 cursor-pointer hover:bg-primary-2 flex justify-center rounded-xl items-center relative h-[52px]">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="cursor-pointer z-10 opacity-0 w-full h-full absolute"
+                    />
+                    <div className="flex gap-2 items-center">
+                      <p className="text-white font-bold">Upload File Baru</p>
+                      <img className="w-6 -rotate-90" src={Show} alt="" />
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                      <img src={Chain} className="w-5" alt="" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Atau tempel URL gambar di sini..."
+                      value={urlValue}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      className="w-full h-[52px] pl-12 pr-4 border-2 border-gray-400 rounded-xl outline-none focus:border-black transition-colors text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-center mt-4">
+                  <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
                 </div>
               </div>
 

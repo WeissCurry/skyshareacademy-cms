@@ -1,12 +1,15 @@
 import type { ChangeEvent } from "react";
 import Show from "@images/mascot-icons/Show.png";
+import Chain from "@images/mascot-icons/Link.png";
 
 interface EventHighlightSectionProps {
   isActive: boolean;
   onToggle: () => void;
   imageUrl: string;
+  urlValue: string;
   ctaLink: string;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onUrlChange: (value: string) => void;
   onCtaChange: (value: string) => void;
 }
 
@@ -14,8 +17,10 @@ export default function EventHighlightSection({
   isActive,
   onToggle,
   imageUrl,
+  urlValue,
   ctaLink,
   onFileChange,
+  onUrlChange,
   onCtaChange
 }: EventHighlightSectionProps) {
   return (
@@ -23,7 +28,7 @@ export default function EventHighlightSection({
       <div className="bg-background p-4 flex justify-between items-center rounded-xl">
         <div className="flex items-center gap-4">
            <span className="text-xl">📢</span>
-           <h4 className="headline-4">Event Highlight Landing Page</h4>
+           <h4 className="headline-4">Popup Event</h4>
         </div>
         <div 
           onClick={onToggle}
@@ -39,22 +44,44 @@ export default function EventHighlightSection({
             <label className="block font-bold mb-2">Event Banner</label>
             <div className="h-48 border-2 border-dashed border-gray-400 rounded-xl flex justify-center items-center bg-gray-50 overflow-hidden">
                {imageUrl ? (
-                 <img src={imageUrl} alt="Event Preview" className="w-full h-full object-contain" />
+                 <div className="flex justify-center h-full p-2 w-full">
+                   <img src={imageUrl} alt="Event Preview" className="w-full h-full object-contain" />
+                 </div>
                ) : (
-                 <span className="text-gray-400 font-medium italic">No image selected</span>
+                 <span className="text-gray-400 font-medium italic">No image preview available</span>
                )}
             </div>
-            <div className="my-4 bg-primary-1 cursor-pointer hover:bg-primary-2 flex justify-center rounded-xl items-center relative">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={onFileChange}
-                className="cursor-pointer z-10 opacity-0 w-full h-full absolute py-3"
-              />
-              <div className="flex gap-2 items-center py-3">
-                <p className="text-white font-bold">Ubah Gambar</p>
-                <img className="w-6 -rotate-90" src={Show} alt="" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div className="bg-primary-1 cursor-pointer hover:bg-primary-2 flex justify-center rounded-xl items-center relative h-[52px]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onFileChange}
+                  className="cursor-pointer z-10 opacity-0 w-full h-full absolute"
+                />
+                <div className="flex gap-2 items-center">
+                  <p className="text-white font-bold">Upload File Baru</p>
+                  <img className="w-6 -rotate-90" src={Show} alt="" />
+                </div>
               </div>
+
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                  <img src={Chain} className="w-5" alt="" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Atau tempel URL gambar di sini..."
+                  value={urlValue}
+                  onChange={(e) => onUrlChange(e.target.value)}
+                  className="w-full h-[52px] pl-12 pr-4 border-2 border-gray-400 rounded-xl outline-none focus:border-black transition-colors text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-center mt-4">
+              <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
             </div>
           </div>
 
