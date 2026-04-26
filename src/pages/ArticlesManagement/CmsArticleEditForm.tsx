@@ -38,6 +38,16 @@ interface ArticleData {
   category_id?: string;
 }
 
+interface BlobInfo {
+  id: () => string;
+  name: () => string;
+  filename: () => string;
+  blob: () => Blob;
+  base64: () => string;
+  blobUri: () => string;
+  uri: () => string | undefined;
+}
+
 function CmsArticleEditForm() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDropdownAddOpen, setIsDropdownAddOpen] = useState(false);
@@ -522,6 +532,29 @@ function CmsArticleEditForm() {
                     tinycomments_mode: "embedded",
                     extended_valid_elements: 'script[src|async|defer|type|charset]',
                     tinycomments_author: "Author name",
+                    paste_data_images: true,
+                    images_upload_handler: (blobInfo: BlobInfo) =>
+                      new Promise((resolve, reject) => {
+                        const formData = new FormData();
+                        formData.append(
+                          "file",
+                          blobInfo.blob(),
+                          blobInfo.filename()
+                        );
+
+                        skyshareApi
+                          .post("/media/tinymce", formData, {
+                            headers: {
+                              "Content-Type": "multipart/form-data",
+                            },
+                          })
+                          .then((res) => {
+                            resolve(res.data.location);
+                          })
+                          .catch((err) => {
+                            reject("HTTP Error: " + err.message);
+                          });
+                      }),
                     mergetags_list: [
                       { value: "First.Name", title: "First Name" },
                       { value: "Email", title: "Email" },

@@ -36,7 +36,7 @@ interface Event {
 
 function CmsMentorForm() {
   const [mentorForm, setMentorForm] = useState<MentorForm>({});
-  const [events, setEvents] = useState([
+  const [events, setEvents] = useState<Event[]>([
     { id: 1, nama_event: 'Mentor Academy Nusantara Season 1', total_peserta: 100, kategori: 'hybrid' },
     { id: 2, nama_event: 'Graduation Mentor Academy Nusantara Season 1', total_peserta: 20, kategori: 'offline' },
     { id: 3, nama_event: 'Mentor Academy Nusantara Season 2', total_peserta: 250, kategori: 'hybrid' },
