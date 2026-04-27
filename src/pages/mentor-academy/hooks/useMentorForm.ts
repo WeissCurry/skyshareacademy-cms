@@ -54,12 +54,12 @@ export function useMentorForm() {
   const handleSave = async () => {
     const formData = new FormData();
     if (mentorForm.file_booklet) formData.append("file_booklet", mentorForm.file_booklet);
-    if (mentorForm.gambar_alur_acara instanceof File) formData.append("gambar_alur_acara", mentorForm.gambar_alur_acara);
-    if (mentorForm.gambar_timeline instanceof File) formData.append("gambar_timeline", mentorForm.gambar_timeline);
+    if (mentorForm.gambar_alur_acara instanceof File || typeof mentorForm.gambar_alur_acara === "string") formData.append("gambar_alur_acara", mentorForm.gambar_alur_acara);
+    if (mentorForm.gambar_timeline instanceof File || typeof mentorForm.gambar_timeline === "string") formData.append("gambar_timeline", mentorForm.gambar_timeline);
     if (mentorForm.link_cta) formData.append("link_cta", mentorForm.link_cta);
     if (mentorForm.link_join_program) formData.append("link_join_program", mentorForm.link_join_program);
     formData.append("is_event_active", String(mentorForm.is_event_active || false));
-    if (mentorForm.event_image_url instanceof File) formData.append("event_image_url", mentorForm.event_image_url);
+    if (mentorForm.event_image_url instanceof File || typeof mentorForm.event_image_url === "string") formData.append("event_image_url", mentorForm.event_image_url);
     if (mentorForm.event_cta_link) formData.append("event_cta_link", mentorForm.event_cta_link);
 
     setLoadingMessage("Saving changes...");

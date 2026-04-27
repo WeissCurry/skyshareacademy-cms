@@ -107,7 +107,7 @@ export function useArticleEditForm() {
 
   const handleArticleUpdate = async function () {
     const formData = new FormData();
-    if (articleForm.image_heading instanceof File) {
+    if (articleForm.image_heading instanceof File || typeof articleForm.image_heading === "string") {
       formData.append("image_heading", articleForm.image_heading);
     }
     formData.append("title", articleForm.title);

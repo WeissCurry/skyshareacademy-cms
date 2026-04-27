@@ -115,7 +115,7 @@ function CmsTalentEditSchoolForm() {
   const handleEditSchool = async () => {
     const formData = new FormData();
     // Append file hanya jika ada file baru yang diupload
-    if (schoolForm.gambar_logo_sekolah instanceof File) {
+    if (schoolForm.gambar_logo_sekolah instanceof File || typeof schoolForm.gambar_logo_sekolah === "string") {
       formData.append("gambar_logo_sekolah", schoolForm.gambar_logo_sekolah);
     }
     formData.append("nama_sekolah", schoolForm.nama_sekolah ?? "");

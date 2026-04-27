@@ -48,8 +48,8 @@ export function useParentsForm() {
   const handleSave = async () => {
     const formData = new FormData();
     if (parentsForm.file_booklet) formData.append("file_booklet", parentsForm.file_booklet);
-    if (parentsForm.gambar_alur_acara instanceof File) formData.append("gambar_alur_acara", parentsForm.gambar_alur_acara);
-    if (parentsForm.gambar_timeline instanceof File) formData.append("gambar_timeline", parentsForm.gambar_timeline);
+    if (parentsForm.gambar_alur_acara instanceof File || typeof parentsForm.gambar_alur_acara === "string") formData.append("gambar_alur_acara", parentsForm.gambar_alur_acara);
+    if (parentsForm.gambar_timeline instanceof File || typeof parentsForm.gambar_timeline === "string") formData.append("gambar_timeline", parentsForm.gambar_timeline);
     if (parentsForm.link_cta) formData.append("link_cta", parentsForm.link_cta);
     if (parentsForm.link_join_program) formData.append("link_join_program", parentsForm.link_join_program);
 
