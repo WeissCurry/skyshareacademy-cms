@@ -1,8 +1,4 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-
-import skyshareApi from "@shared/api/skyshareApi";
 
 import Pose1 from "@shared/assets/images/mascot-icons/pose=2.webp";
 import Pose2 from "@shared/assets/images/mascot-icons/pose=7.webp";
@@ -13,48 +9,23 @@ import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
 import Xbutton from "@shared/assets/images/mascot-icons/Fill 300.png";
 import Danger from "@shared/assets/images/mascot-icons/Danger Triangle.png";
 
+import { useLoginForm } from "./hooks/useLoginForm";
+
 function CmsLoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const Navigate = useNavigate();
+  const { state, actions } = useLoginForm();
+  
+  const {
+    isErrorModalOpen,
+    isLoading,
+    errorMessage,
+  } = state;
 
-  const handleLogin = async () => {
-    const inputAdmin = {
-      email,
-      password,
-    };
-    setIsLoading(true);
-
-    try {
-      const dataFromServer = await skyshareApi({
-        method: "post",
-        url: "admin/login",
-        data: inputAdmin,
-      });
-
-      const token = dataFromServer.data.data.token;
-      localStorage.setItem("authorization", token);
-      skyshareApi.defaults.headers.common["authorization"] = `${token}`;
-      if (dataFromServer.data.data.role === "superadmin") {
-        Navigate("/cms/kelolaakun");
-      } else {
-        Navigate("/cms/talentacademy");
-      }
-    } catch (error) {
-      console.log(error);
-      setErrorMessage("Email or Password is incorrect. Please try again.");
-      setIsErrorModalOpen(true);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const closeErrorModal = () => {
-    setIsErrorModalOpen(false);
-  };
+  const {
+    setEmail,
+    setPassword,
+    handleLogin,
+    closeErrorModal,
+  } = actions;
 
   return (
     <div className="bg-background flex flex-col items-center justify-center min-h-screen p-4 overflow-y-auto">

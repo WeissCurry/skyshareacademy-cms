@@ -1,7 +1,4 @@
-import { useState, useEffect, type ChangeEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 
-import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
 import Arrow from "@shared/assets/images/mascot-icons/Arrow-down.png";
 import Del from "@shared/assets/images/mascot-icons/Delete-0.png";
@@ -16,158 +13,44 @@ import Show from "@shared/assets/images/mascot-icons/Show.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
 import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface ArticleForm {
-  image_heading?: File | string | null;
-  title: string;
-  content: string;
-  link: string;
-  category_id: string;
-}
-
-interface MediaImage {
-  public_id: string;
-  secure_url: string;
-  created_at: string;
-}
+import { useArticleEditForm } from "./hooks/useArticleEditForm";
 
 function CmsArticleEditForm() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [isCategorySelected, setIsCategorySelected] = useState(false);
-  const [deleteMessage, setDeleteMessage] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [articleForm, setArticleForm] = useState<ArticleForm>({
-    title: "",
-    content: "",
-    link: "",
-    category_id: "",
-  });
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [urlValue, setUrlValue] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState("Loading...");
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
-  const [isMediaLoading, setIsMediaLoading] = useState(false);
-  const { id } = useParams();
-  const Navigate = useNavigate();
+  const { state, actions } = useArticleEditForm();
+  
+  const {
+    isDropdownOpen,
+    isModalOpen,
+    isSaveModalOpen,
+    isCancelModalOpen,
+    isCategorySelected,
+    deleteMessage,
+    categories,
+    articleForm,
+    imagePreviewUrl,
+    urlValue,
+    isUploading,
+    loadingMessage,
+    selectedCategory,
+    mediaImages,
+    isMediaLoading,
+  } = state;
 
-  const getCategory = async function () {
-    try {
-      const response = await skyshareApi.get("/category");
-      setCategories(response.data.data);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const fetchMedia = async () => {
-    try {
-      setIsMediaLoading(true);
-      const response = await skyshareApi.get("/media?limit=10");
-      setMediaImages(response.data.data);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsMediaLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoadingMessage("Fetching article...");
-      setIsUploading(true);
-      try {
-        const [articleRes, categoriesRes] = await Promise.all([
-          skyshareApi.get(`/article/${id}`),
-          skyshareApi.get("/category")
-        ]);
-        
-        const article = articleRes.data.data;
-        setArticleForm({
-          title: article.title,
-          content: article.content,
-          link: article.link,
-          category_id: article.category_id,
-          image_heading: article.image_heading
-        });
-        setImagePreviewUrl(article.image_heading || "");
-        setCategories(categoriesRes.data.data);
-        
-        const cat = categoriesRes.data.data.find((c: Category) => c.id === article.category_id);
-        if (cat) {
-          setSelectedCategory(cat);
-          setIsCategorySelected(true);
-        }
-        await fetchMedia();
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsUploading(false);
-      }
-    };
-    fetchData();
-  }, [id]);
-
-  const handleArticleUpdate = async function () {
-    const formData = new FormData();
-    if (articleForm.image_heading instanceof File) {
-      formData.append("image_heading", articleForm.image_heading);
-    }
-    formData.append("title", articleForm.title);
-    formData.append("content", articleForm.content);
-    formData.append("link", articleForm.link);
-    formData.append("category_id", articleForm.category_id);
-    
-    setLoadingMessage("Saving changes...");
-    setIsUploading(true);
-    try {
-      await skyshareApi.put(`/article/${id}`, formData);
-      setIsSaveModalOpen(true);
-    } catch (error: unknown) {
-      const err = error as Error;
-      console.log(err.message);
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setArticleForm({ ...articleForm, image_heading: file });
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreviewUrl(reader.result as string);
-      reader.readAsDataURL(file);
-      setUrlValue("");
-    }
-  };
-
-  const handleUrlChange = (value: string) => {
-    setUrlValue(value);
-    setArticleForm({ ...articleForm, image_heading: value });
-    setImagePreviewUrl(value);
-  };
-
-  const deleteCategory = async function () {
-    try {
-      await skyshareApi.delete(`/category/delete/${categoryId}`);
-      getCategory();
-      setIsModalOpen(false);
-    } catch (error) {
-      console.log(error);
-      setIsModalOpen(false);
-    }
-  };
+  const {
+    setIsDropdownOpen,
+    setIsModalOpen,
+    setIsCancelModalOpen,
+    setIsCategorySelected,
+    setDeleteMessage,
+    setSelectedCategory,
+    setCategoryId,
+    setFormValue,
+    handleFileChange,
+    handleUrlChange,
+    handleArticleUpdate,
+    deleteCategory,
+    navigate,
+  } = actions;
 
   return (
     <div className="bg-background flex flex-col pt-12 items-center self-stretch h-auto pb-44">
@@ -175,7 +58,7 @@ function CmsArticleEditForm() {
         <div><Sidebar /></div>
         <div className="flex-1 min-w-0">
           <div className="flex gap-4">
-            <button onClick={() => Navigate("/cms/article")} className="hover:scale-110 transition-transform mt-1">
+            <button onClick={() => navigate("/cms/article")} className="hover:scale-110 transition-transform mt-1">
               <img className="w-10 rotate-90 invert" src={ArrowLeft} alt="Back" />
             </button>
             <div>
@@ -243,7 +126,7 @@ function CmsArticleEditForm() {
               <label className="font-bold block mb-2 text-sm">Judul <span className="text-orange-500">*</span></label>
               <input
                 value={articleForm.title}
-                onChange={(e) => setArticleForm({ ...articleForm, title: e.target.value })}
+                onChange={(e) => setFormValue({ title: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="Masukkan judul artikel"
               />
@@ -254,7 +137,7 @@ function CmsArticleEditForm() {
               <label className="font-bold block mb-2 text-sm">CTA Link</label>
               <input
                 value={articleForm.link}
-                onChange={(e) => setArticleForm({ ...articleForm, link: e.target.value })}
+                onChange={(e) => setFormValue({ link: e.target.value })}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="https://..."
               />
@@ -283,7 +166,7 @@ function CmsArticleEditForm() {
                     {categories.map((cat) => (
                       <div key={cat.id} className="flex items-center justify-between p-3 hover:bg-gray-100 rounded-lg cursor-pointer group mb-1" onClick={() => {
                         setSelectedCategory(cat);
-                        setArticleForm({ ...articleForm, category_id: cat.id });
+                        setFormValue({ category_id: cat.id });
                         setIsCategorySelected(true);
                         setIsDropdownOpen(false);
                       }}>
@@ -313,7 +196,7 @@ function CmsArticleEditForm() {
               <div className="border-2 border-gray-300 rounded-xl overflow-hidden mt-2">
                 <RichTextEditor 
                   value={articleForm.content} 
-                  onChange={(content) => setArticleForm({ ...articleForm, content })} 
+                  onChange={(content) => setFormValue({ content })} 
                 />
               </div>
             </div>
@@ -329,8 +212,8 @@ function CmsArticleEditForm() {
       </div>
 
       <ConfirmModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={deleteCategory} title="Hapus Kategori?" message={deleteMessage} type="danger" confirmText="Hapus" />
-      <ConfirmModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={() => Navigate("/cms/article")} title="Batalkan Perubahan?" message="Progres yang Anda buat tidak akan tersimpan." confirmText="Ya, Batalkan" cancelText="Lanjutkan Edit" />
-      <SuccessModal isOpen={isSaveModalOpen} onClose={() => Navigate("/cms/article")} title="Artikel Berhasil Diupdate" />
+      <ConfirmModal isOpen={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} onConfirm={() => navigate("/cms/article")} title="Batalkan Perubahan?" message="Progres yang Anda buat tidak akan tersimpan." confirmText="Ya, Batalkan" cancelText="Lanjutkan Edit" />
+      <SuccessModal isOpen={isSaveModalOpen} onClose={() => navigate("/cms/article")} title="Artikel Berhasil Diupdate" />
       <LoadingModal isLoading={isUploading} message={loadingMessage} />
     </div>
   );
