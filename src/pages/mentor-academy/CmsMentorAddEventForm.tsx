@@ -1,6 +1,4 @@
-import { useState, type ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import skyshareApi from "@shared/api/skyshareApi";
+import { type ChangeEvent } from "react";
 import Sidebar from "@widgets/Sidebar";
 import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
 import Xbutton from "@shared/assets/images/mascot-icons/Fill 300.png";
@@ -9,90 +7,31 @@ import Mascot1 from "@shared/assets/images/mascot-icons/pose=8.webp";
 import Coution from "@shared/assets/images/mascot-icons/Info Square.png";
 import Ceklist from "@shared/assets/images/mascot-icons/Tick Square.png";
 
-interface EventForm {
-    nama_event: string;
-    deskripsi_event: string;
-    total_peserta: string;
-    kategori: string;
-    poster_event: File | null;
-}
+
+
+import { useMentorAddEventForm } from "./hooks/useMentorAddEventForm";
 
 function CmsMentorAddEventForm() {
-    // State untuk menampung data dari form event
-    const [eventForm, setEventForm] = useState<EventForm>({
-        nama_event: "",
-        deskripsi_event: "",
-        total_peserta: "",
-        kategori: "online", // Nilai default untuk kategori
-        poster_event: null,
-    });
+    const { state, actions } = useMentorAddEventForm();
+    
+    const {
+        eventForm,
+        isErrorModal,
+        isSaveModalOpen,
+        isCancelModalOpen,
+        imagePreviewUrl,
+        isUploading,
+    } = state;
 
-    // State untuk modals dan UI
-    const [isErrorModal, setIsErrorModal] = useState(false);
-    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-    const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-    const [isUploading, setIsUploading] = useState(false);
-
-    const Navigate = useNavigate();
-
-    // Fungsi untuk mengirim data event baru ke server
-    const handleAddEvent = async function () {
-        // Validasi sederhana
-        if (!eventForm.poster_event || !eventForm.nama_event || !eventForm.deskripsi_event || !eventForm.total_peserta) {
-            alert("Harap isi semua field yang wajib diisi (*)");
-            return;
-        }
-        const formData = new FormData();
-        formData.append("poster_event", eventForm.poster_event);
-        formData.append("nama_event", eventForm.nama_event);
-        formData.append("deskripsi_event", eventForm.deskripsi_event);
-        formData.append("total_peserta", eventForm.total_peserta);
-        formData.append("kategori", eventForm.kategori);
-
-        setIsUploading(true);
-        try {
-            // Ganti URL endpoint sesuai dengan API untuk menambah event
-            const responseFromServer = await skyshareApi({
-                url: "/event/add",
-                method: "POST",
-                data: formData,
-            });
-            if (responseFromServer.data.status === "success") {
-                setIsSaveModalOpen(true);
-            } else {
-                setIsErrorModal(true);
-            }
-        } catch (error) {
-            console.log(error);
-            setIsErrorModal(true);
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    // Handler untuk file upload
-    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            setEventForm({ ...eventForm, poster_event: file });
-            setImagePreviewUrl(URL.createObjectURL(file));
-        }
-    };
-
-    // Fungsi untuk menutup modal
-    const closeErrorModal = () => setIsErrorModal(false);
-    const handleCancel = () => setIsCancelModalOpen(true);
-    const closeSaveModal = () => {
-        setIsSaveModalOpen(false);
-        // Arahkan kembali ke halaman daftar event setelah berhasil menyimpan
-        Navigate("/cms/talentacademy");
-    };
-    const closeCancelModal = () => {
-        setIsCancelModalOpen(false);
-        // Arahkan kembali ke halaman daftar event jika batal
-        Navigate("/cms/talentacademy");
-    };
+    const {
+        setIsErrorModal,
+        setIsCancelModalOpen,
+        handleAddEvent,
+        handleFileChange,
+        updateFormValue,
+        closeSaveModal,
+        closeCancelModal,
+    } = actions;
 
     return (
         <>
@@ -180,7 +119,7 @@ function CmsMentorAddEventForm() {
                                                 type="text"
                                                 value={eventForm.nama_event}
                                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                                    setEventForm({ ...eventForm, nama_event: e.target.value })
+                                                    updateFormValue({ nama_event: e.target.value })
                                                 }
                                                 className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
                                             />
@@ -198,8 +137,7 @@ function CmsMentorAddEventForm() {
                                                 placeholder="Jelaskan tentang event ini"
                                                 value={eventForm.deskripsi_event}
                                                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
-                                                    setEventForm({
-                                                        ...eventForm,
+                                                    updateFormValue({
                                                         deskripsi_event: e.target.value,
                                                     })
                                                 }
@@ -221,8 +159,7 @@ function CmsMentorAddEventForm() {
                                                 type="number"
                                                 value={eventForm.total_peserta}
                                                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                                                    setEventForm({
-                                                        ...eventForm,
+                                                    updateFormValue({
                                                         total_peserta: e.target.value,
                                                     })
                                                 }
@@ -241,7 +178,7 @@ function CmsMentorAddEventForm() {
                                                 id="kategori"
                                                 value={eventForm.kategori}
                                                 onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                                                    setEventForm({ ...eventForm, kategori: e.target.value })
+                                                    updateFormValue({ kategori: e.target.value })
                                                 }
                                                 className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none bg-white"
                                             >
@@ -257,7 +194,7 @@ function CmsMentorAddEventForm() {
                                     <div className=" w-56 py-2 flex">
                                         <button
                                             type="button"
-                                            onClick={handleCancel}
+                                            onClick={() => setIsCancelModalOpen(true)}
                                             className="bg-gray-300 w-full py-2 rounded-md hover:bg-gray-200 text-black font-bold"
                                         >
                                             Batal
@@ -321,7 +258,7 @@ function CmsMentorAddEventForm() {
                 <div className="fixed inset-0 bg-gray-600 z-10 bg-opacity-50 flex justify-center items-center">
                     <div className="bg-white rounded-3xl p-6 relative">
                         <button
-                            onClick={closeErrorModal}
+                            onClick={() => setIsErrorModal(false)}
                             className="absolute top-6 right-6"
                         >
                             <img className="w-5" src={Xbutton} alt="" />

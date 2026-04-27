@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import skyshareApi from "@shared/api/skyshareApi";
 import { Link } from "react-router-dom";
 import Character from "@shared/assets/images/mascot-icons/Char.png";
 import Edit1 from "@shared/assets/images/mascot-icons/Edit Square.png";
@@ -8,55 +6,24 @@ import Add from "@shared/assets/images/mascot-icons/Plus.png";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
 import LoadingModal from "@shared/ui/LoadingModal";
 
-interface Admin {
-  id: string | number;
-  name: string;
-  email: string;
-  role: string;
-}
+
+
+import { useDashboardAkun } from "./hooks/useDashboardAkun";
 
 function CmsDashboardAkun() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Admin | null>(null);
-  const [dataAdmins, setDataAdmins] = useState<Admin[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { state, actions } = useDashboardAkun();
+  
+  const {
+    isModalOpen,
+    dataAdmins,
+    isLoading,
+  } = state;
 
-
-  useEffect(() => {
-    const getDataAdmin = async function () {
-      setIsLoading(true);
-      try {
-        const dataAdminFromServer = await skyshareApi.get("/admin/admins");
-        setDataAdmins(dataAdminFromServer.data.data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    getDataAdmin();
-  }, []);
-
-  function handleDelete(user: Admin) {
-    setSelectedUser(user);
-    setIsModalOpen(true);
-  }
-
-  function closeModal() {
-    setIsModalOpen(false);
-    setSelectedUser(null);
-  }
-
-  async function confirmDelete() {
-    if (!selectedUser) return;
-    try {
-      await skyshareApi.delete(`/admin/admin/${selectedUser.id}`);
-      setDataAdmins(dataAdmins.filter((admin) => admin.id !== selectedUser.id));
-      closeModal();
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  const {
+    handleDelete,
+    closeModal,
+    confirmDelete,
+  } = actions;
 
   return (
     <>

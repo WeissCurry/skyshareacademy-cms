@@ -36,7 +36,6 @@ interface MentorParticipantTableProps {
     handleEpisodeManualCheck: (participantId: number, episodeId: number) => void;
     handleTaskChange: (participantId: number, episodeId: number, taskName: string) => void;
     handleDeleteParticipant: (id: number) => void;
-    episodeColors: { [key: string]: string };
     eventId: string | undefined;
 }
 
@@ -48,7 +47,6 @@ const MentorParticipantTable = ({
     handleEpisodeManualCheck,
     handleTaskChange,
     handleDeleteParticipant,
-    episodeColors,
     eventId
 }: MentorParticipantTableProps) => {
     return (
@@ -101,7 +99,7 @@ const MentorParticipantTable = ({
                                     <td className="pr-4 py-4 text-left font-medium">{participant.nama}</td>
                                     <td className="pr-4 py-4 text-left text-sm text-gray-600">{participant.asal}</td>
                                     <td className="px-4 py-4 text-left min-w-[140px]">
-                                        <p className={`py-1 text-center font-bold text-white rounded-full text-xs ${episodeColors[participant.status.toLowerCase()] || 'bg-gray-400'}`}>
+                                        <p className="py-1 text-center font-bold text-white rounded-full text-xs bg-gray-400">
                                             {participant.status}
                                         </p>
                                     </td>

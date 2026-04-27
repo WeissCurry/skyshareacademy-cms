@@ -1,6 +1,4 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import skyshareApi from "@shared/api/skyshareApi";
+import React from "react";
 import Sidebar from "@widgets/Sidebar";
 import Modal from "@shared/ui/modals"; // Pastikan path ini benar
 import Ceklist from "@shared/assets/images/mascot-icons/Tick Square.png";
@@ -9,59 +7,35 @@ import Mascot2 from "@shared/assets/images/mascot-icons/pose=1.webp";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
 import Coution from "@shared/assets/images/mascot-icons/Info Square.png";
 
+import { useMentorAddParticipantForm } from "./hooks/useMentorAddParticipantForm";
+
 function CmsMentorAddParticipantForm() {
-    const navigate = useNavigate();
+    const { state, actions } = useMentorAddParticipantForm();
+    
+    const {
+        namaLengkap,
+        asalDaerah,
+        instansi,
+        email,
+        nomorTelepon,
+        isErrorModal,
+        isSaveModalOpen,
+        isCancelModalOpen,
+        isUploading,
+    } = state;
 
-    // State untuk field form
-    const [namaLengkap, setNamaLengkap] = useState("");
-    const [asalDaerah, setAsalDaerah] = useState("");
-    const [instansi, setInstansi] = useState("");
-    const [email, setEmail] = useState(""); // State baru
-    const [nomorTelepon, setNomorTelepon] = useState(""); // State baru
-
-    // State untuk modals dan UI
-    const [isErrorModal, setIsErrorModal] = useState(false);
-    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-    const [isUploading, setIsUploading] = useState(false);
-
-    const handleAddParticipant = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const inputData = {
-            nama_lengkap: namaLengkap,
-            asal_daerah: asalDaerah,
-            instansi: instansi,
-            email: email, // Data baru
-            nomor_telepon: nomorTelepon, // Data baru
-        };
-
-        setIsUploading(true);
-        try {
-            const response = await skyshareApi.post("/participant/add", inputData);
-            if (response.data.status === "success") {
-                setIsSaveModalOpen(true);
-            } else {
-                setIsErrorModal(true);
-            }
-        } catch (error) {
-            console.log(error);
-            setIsErrorModal(true);
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const closeErrorModal = () => setIsErrorModal(false);
-    const handleCancel = () => setIsCancelModalOpen(true);
-    const closeSaveModal = () => {
-        setIsSaveModalOpen(false);
-        navigate(-1); // Kembali ke halaman sebelumnya
-    };
-    const closeCancelModal = () => setIsCancelModalOpen(false);
-    const confirmCancel = () => {
-        setIsCancelModalOpen(false);
-        navigate(-1); // Kembali ke halaman sebelumnya
-    };
+    const {
+        setNamaLengkap,
+        setAsalDaerah,
+        setInstansi,
+        setEmail,
+        setNomorTelepon,
+        setIsErrorModal,
+        setIsCancelModalOpen,
+        handleAddParticipant,
+        closeSaveModal,
+        confirmCancel,
+    } = actions;
 
     return (
         <>
@@ -180,7 +154,7 @@ function CmsMentorAddParticipantForm() {
                                         <div className="mt-8 pt-4 flex gap-5 justify-end">
                                             <button
                                                 type="button"
-                                                onClick={handleCancel}
+                                                onClick={() => setIsCancelModalOpen(true)}
                                                 className="bg-gray-300 w-56 py-2 rounded-md hover:bg-gray-200 text-black font-bold"
                                             >
                                                 Batal
@@ -215,7 +189,7 @@ function CmsMentorAddParticipantForm() {
             {/* Modal Konfirmasi Batal */}
             <Modal
                 isOpen={isCancelModalOpen}
-                onClose={closeCancelModal}
+                onClose={() => setIsCancelModalOpen(false)}
                 showCloseButton={false}
             >
                 <div className="flex justify-center">
@@ -226,7 +200,7 @@ function CmsMentorAddParticipantForm() {
                 </h3>
                 <div className="flex justify-center gap-4">
                     <button
-                        onClick={closeCancelModal}
+                        onClick={() => setIsCancelModalOpen(false)}
                         className="bg-gray-300 px-4 py-2 w-1/2 rounded-lg"
                     >
                         Tidak
@@ -241,7 +215,7 @@ function CmsMentorAddParticipantForm() {
             </Modal>
 
             {/* Modal Error */}
-            <Modal isOpen={isErrorModal} onClose={closeErrorModal}>
+            <Modal isOpen={isErrorModal} onClose={() => setIsErrorModal(false)}>
                 <div className="flex justify-center">
                     <img className="w-40" src={Mascot2} alt="Error Mascot" />
                 </div>
