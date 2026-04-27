@@ -9,10 +9,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@public': path.resolve(__dirname, './public'),
-      '@images': path.resolve(__dirname, './src/images'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@utilities': path.resolve(__dirname, './src/utilities'),
-      '@pages': path.resolve(__dirname, './src/pages')
+      '@app': path.resolve(__dirname, './src/app'),
+      '@pages': path.resolve(__dirname, './src/pages'),
+      '@widgets': path.resolve(__dirname, './src/widgets'),
+      '@features': path.resolve(__dirname, './src/features'),
+      '@entities': path.resolve(__dirname, './src/entities'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@images': path.resolve(__dirname, './src/shared/assets/images'),
+      '@components': path.resolve(__dirname, './src/shared/ui'),
+      '@utilities': path.resolve(__dirname, './src/shared/api'),
+      '@assets': path.resolve(__dirname, './src/shared/assets')
     }
   }
 })
