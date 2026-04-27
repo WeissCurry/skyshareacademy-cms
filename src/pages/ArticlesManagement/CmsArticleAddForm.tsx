@@ -218,6 +218,9 @@ function CmsArticleAddForm() {
               <div className="flex justify-center mt-4">
                 <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
               </div>
+              <div className="mt-6">
+                <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} onSelect={handleUrlChange} />
+              </div>
             </div>
 
             {/* Title */}
@@ -323,7 +326,6 @@ function CmsArticleAddForm() {
             {/* Content */}
             <div className="min-w-0">
               <label className="font-bold block mb-2 text-sm">Berikan isi <span className="text-orange-500">*</span></label>
-              <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} />
               <div className="border-2 border-gray-300 rounded-xl overflow-hidden mt-2">
                 <RichTextEditor 
                   value={articleForm.content} 

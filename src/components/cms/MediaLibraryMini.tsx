@@ -9,12 +9,37 @@ interface MediaImage {
 interface MediaLibraryMiniProps {
   images: MediaImage[];
   isLoading: boolean;
+  onSelect?: (url: string) => void;
 }
 
-const MediaLibraryMini = ({ images, isLoading }: MediaLibraryMiniProps) => {
-  const copyToClipboard = (url: string) => {
-    navigator.clipboard.writeText(url);
-    alert("URL copied!");
+const MediaLibraryMini = ({ images, isLoading, onSelect }: MediaLibraryMiniProps) => {
+  const copyToClipboard = async (url: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        alert("URL berhasil disalin!");
+      } else {
+        throw new Error("Clipboard API unavailable");
+      }
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        alert("URL berhasil disalin!");
+      } catch (copyErr) {
+        console.error("Fallback copy failed: ", copyErr);
+        alert("Gagal menyalin URL.");
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   return (
@@ -35,15 +60,37 @@ const MediaLibraryMini = ({ images, isLoading }: MediaLibraryMiniProps) => {
           images.map((img) => (
             <div 
               key={img.public_id} 
-              className="relative w-20 h-20 rounded-lg overflow-hidden group shrink-0 border border-gray-200 hover:border-black transition-all"
+              className="relative w-20 h-20 rounded-lg overflow-hidden group shrink-0 border border-gray-200 hover:border-black transition-all cursor-pointer"
+              onClick={() => onSelect && onSelect(img.secure_url)}
             >
-              <img src={img.secure_url} className="w-full h-full object-cover" alt="" />
-              <button 
-                onClick={() => copyToClipboard(img.secure_url)}
-                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-              >
-                <FaCopy className="text-white" />
-              </button>
+              <img src={img.secure_url} className="w-full h-full object-cover" alt="" loading="lazy" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity gap-1">
+                {onSelect ? (
+                  <span className="text-[10px] text-white font-bold bg-black/50 px-2 py-0.5 rounded">SELECT</span>
+                ) : (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(img.secure_url);
+                    }}
+                    className="p-2 hover:scale-110 transition-transform"
+                  >
+                    <FaCopy className="text-white" />
+                  </button>
+                )}
+                {onSelect && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyToClipboard(img.secure_url);
+                    }}
+                    className="p-1 hover:bg-white/20 rounded transition-colors"
+                    title="Copy URL"
+                  >
+                    <FaCopy className="text-white text-xs" />
+                  </button>
+                )}
+              </div>
             </div>
           ))
         )}

@@ -20,6 +20,7 @@ const CmsMedia = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [deletePublicId, setDeletePublicId] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
   
   // Selection & Pagination
   const [isSelectMode, setIsSelectMode] = useState(false);
@@ -70,18 +71,19 @@ const CmsMedia = () => {
     }
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append("file", file);
-
+  const uploadFiles = async (files: FileList | File[]) => {
+    setIsUploading(true);
     try {
-      setIsUploading(true);
-      await skyshareApi.post("/media", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      // Handle multiple files
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) continue;
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        await skyshareApi.post("/media", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+      }
       fetchImages(); // Refresh to first page
       setCurrentPage(1);
       setCursorHistory([null]);
@@ -89,6 +91,30 @@ const CmsMedia = () => {
       console.error("Gagal upload gambar", error);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    uploadFiles(e.target.files);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      uploadFiles(e.dataTransfer.files);
     }
   };
 
@@ -136,11 +162,33 @@ const CmsMedia = () => {
     }
   };
 
-  const copyToClipboard = (url: string) => {
-    navigator.clipboard.writeText(url);
-    // Standard alert is fine but let's use the success modal or a toast if possible
-    // For now we just alert
-    alert("URL Gambar berhasil disalin!");
+  const copyToClipboard = async (url: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+        alert("URL Gambar berhasil disalin!");
+      } else {
+        throw new Error("Clipboard API unavailable");
+      }
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        alert("URL Gambar berhasil disalin!");
+      } catch (copyErr) {
+        console.error("Fallback copy failed: ", copyErr);
+        alert("Gagal menyalin URL.");
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   return (
@@ -208,7 +256,21 @@ const CmsMedia = () => {
             </div>
           )}
 
-          <div className="bg-white border-2 border-black rounded-2xl p-6">
+          <div 
+            className={`bg-white border-2 border-black rounded-2xl p-6 relative transition-all duration-300 ${isDragging ? 'ring-4 ring-primary-1 ring-offset-2 border-primary-1' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            {isDragging && (
+              <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-primary-1/10 backdrop-blur-sm rounded-2xl border-4 border-dashed border-primary-1 m-1 pointer-events-none">
+                <div className="bg-white p-6 rounded-full shadow-2xl mb-4 animate-bounce">
+                  <FaCloudUploadAlt className="text-primary-1 text-5xl" />
+                </div>
+                <h3 className="text-2xl font-bold text-primary-1 uppercase tracking-tighter">Lepaskan untuk Upload</h3>
+                <p className="text-primary-1/70 font-medium">Gambar akan otomatis masuk ke library</p>
+              </div>
+            )}
             {loading ? (
               <div className="flex flex-col items-center justify-center py-24">
                 <div className="animate-bounce mb-4">
@@ -246,6 +308,7 @@ const CmsMedia = () => {
                           src={img.secure_url} 
                           alt={img.public_id} 
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          loading="lazy"
                         />
                         
                         {!isSelectMode && (

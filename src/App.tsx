@@ -1,28 +1,30 @@
-// import React from "react";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import CmsPrivateRoute from "@components/cms/CmsPrivateRoute";
 import CmsLoginRoute from "@components/cms/CmsLoginRoute";
 import CmsLayout from "./layouts/CmsLayout";
+import LoadingModal from "@components/cms/LoadingModal";
 
-import CmsLoginForm from "@pages/CmsLoginForm";
-import CmsDashboardAkun from "@pages/AccountManagement/CmsDashboardAkun";
-import CmsAddAdminForm from "@pages/AccountManagement/CmsAddAdminForm";
-import CmsEditAdminForm from "@pages/AccountManagement/CmsEditAdminForm";
-import CmsTalentForm from "@pages/TalentsAcademy/CmsTalentForm";
-import CmsTalentEditSchoolForm from "@pages/TalentsAcademy/CmsTalentEditSchoolForm";
-import CmsTalentEditGroupForm from "@pages/TalentsAcademy/CmsTalentEditGroupForm";
-import CmsTalentAddSchoolForm from "@pages/TalentsAcademy/CmsTalentAddSchoolForm";
-import CmsTalentAddGroupForm from "@pages/TalentsAcademy/CmsTalentAddGroupForm";
-import CmsMentorForm from "@pages/MentorAcademy/CmsMentorForm";
-import CmsMentorAddEventForm from "@pages/MentorAcademy/CmsMentorAddEventForm";
-import CmsMentorEditEventForm from "@pages/MentorAcademy/CmsMentorEditEventForm";
-import CmsMentorAddParticipantForm from "@pages/MentorAcademy/CmsMentorAddParticipantForm";
-import CmsParentsForm from "@pages/ParentsAcademy/CmsParentsForm";
-import CmsArticleDashboardTable from "@pages/ArticlesManagement/CmsArticleDashboardTable";
-import CmsArticleEditForm from "@pages/ArticlesManagement/CmsArticleEditForm";
-import CmsArticleAddForm from "@pages/ArticlesManagement/CmsArticleAddForm";
-import CmsMedia from "@pages/MediaManagement/Index";
+// Lazy loaded components
+const CmsLoginForm = lazy(() => import("@pages/CmsLoginForm"));
+const CmsDashboardAkun = lazy(() => import("@pages/AccountManagement/CmsDashboardAkun"));
+const CmsAddAdminForm = lazy(() => import("@pages/AccountManagement/CmsAddAdminForm"));
+const CmsEditAdminForm = lazy(() => import("@pages/AccountManagement/CmsEditAdminForm"));
+const CmsTalentForm = lazy(() => import("@pages/TalentsAcademy/CmsTalentForm"));
+const CmsTalentEditSchoolForm = lazy(() => import("@pages/TalentsAcademy/CmsTalentEditSchoolForm"));
+const CmsTalentEditGroupForm = lazy(() => import("@pages/TalentsAcademy/CmsTalentEditGroupForm"));
+const CmsTalentAddSchoolForm = lazy(() => import("@pages/TalentsAcademy/CmsTalentAddSchoolForm"));
+const CmsTalentAddGroupForm = lazy(() => import("@pages/TalentsAcademy/CmsTalentAddGroupForm"));
+const CmsMentorForm = lazy(() => import("@pages/MentorAcademy/CmsMentorForm"));
+const CmsMentorAddEventForm = lazy(() => import("@pages/MentorAcademy/CmsMentorAddEventForm"));
+const CmsMentorEditEventForm = lazy(() => import("@pages/MentorAcademy/CmsMentorEditEventForm"));
+const CmsMentorAddParticipantForm = lazy(() => import("@pages/MentorAcademy/CmsMentorAddParticipantForm"));
+const CmsParentsForm = lazy(() => import("@pages/ParentsAcademy/CmsParentsForm"));
+const CmsArticleDashboardTable = lazy(() => import("@pages/ArticlesManagement/CmsArticleDashboardTable"));
+const CmsArticleEditForm = lazy(() => import("@pages/ArticlesManagement/CmsArticleEditForm"));
+const CmsArticleAddForm = lazy(() => import("@pages/ArticlesManagement/CmsArticleAddForm"));
+const CmsMedia = lazy(() => import("@pages/MediaManagement/Index"));
 
 export default function App() {
   const cmsPrivateRoutes = [
@@ -47,23 +49,25 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/cms" replace />} />
-        
-        {/* CMS login route */}
-        <Route path="/cms" element={<CmsLoginRoute />}>
-          <Route path="/cms" element={<CmsLoginForm />} />
-        </Route>
-
-        {/* CMS private routes */}
-        <Route element={<CmsPrivateRoute />}>
-          <Route element={<CmsLayout />}>
-            {cmsPrivateRoutes.map(({ path, element }) => (
-              <Route key={path} path={path} element={element} />
-            ))}
+      <Suspense fallback={<LoadingModal isLoading={true} message="Loading Page..." />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/cms" replace />} />
+          
+          {/* CMS login route */}
+          <Route path="/cms" element={<CmsLoginRoute />}>
+            <Route path="/cms" element={<CmsLoginForm />} />
           </Route>
-        </Route>
-      </Routes>
+  
+          {/* CMS private routes */}
+          <Route element={<CmsPrivateRoute />}>
+            <Route element={<CmsLayout />}>
+              {cmsPrivateRoutes.map(({ path, element }) => (
+                <Route key={path} path={path} element={element} />
+              ))}
+            </Route>
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
