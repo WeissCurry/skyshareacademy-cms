@@ -162,6 +162,14 @@ export default function CmsDashboard() {
     if (points.length === 0) return [];
     const maxVal = Math.max(...points.map((p) => Math.max(p.pageviews, p.unique_visitors)), 1);
     
+    if (points.length === 1) {
+      const p = points[0];
+      const x = svgWidth / 2;
+      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxVal) * (svgHeight - 2 * paddingY);
+      const yViews = svgHeight - paddingY - (p.pageviews / maxVal) * (svgHeight - 2 * paddingY);
+      return [{ x, yUnique, yViews, ...p }];
+    }
+    
     return points.map((p, i) => {
       const x = paddingX + (i / (points.length - 1)) * (svgWidth - 2 * paddingX);
       const yUnique = svgHeight - paddingY - (p.unique_visitors / maxVal) * (svgHeight - 2 * paddingY);
