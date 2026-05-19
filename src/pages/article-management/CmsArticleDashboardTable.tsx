@@ -18,10 +18,16 @@ interface Article {
 }
 
 interface PaginationMeta {
-  totalItems: number;
+  total: number;
   totalPages: number;
   currentPage: number;
   limit: number;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 function CmsArticleDashboardTable() {
@@ -32,25 +38,59 @@ function CmsArticleDashboardTable() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | number | null>(null);
 
-  const getDataArticles = async function (page: number) {
+  // Search and Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [hoveredArticleId, setHoveredArticleId] = useState<string | number | null>(null);
+
+  const getDataArticles = async function (page: number, search = "", categoryId = "") {
     setIsDeleting(true);
     try {
-      const response = await skyshareApi.get(`/article?page=${page}&limit=10`);
-      setDataarticles(response.data.data);
-      setPagination(response.data.pagination);
+      const response = await skyshareApi.get(
+        `/article?page=${page}&limit=10&search=${encodeURIComponent(search)}&category_id=${categoryId}`
+      );
+      setDataarticles(response.data.data || []);
+      setPagination(response.data.pagination || null);
     } catch (error) {
       console.log(error);
+      setDataarticles([]);
+      setPagination(null);
     } finally {
       setIsDeleting(false);
     }
   };
 
+  // Fetch categories once on mount
   useEffect(() => {
-    const fetchData = async () => {
-      await getDataArticles(currentPage);
+    const fetchCategories = async () => {
+      try {
+        const response = await skyshareApi.get("/category");
+        setCategories(response.data.data || []);
+      } catch (error) {
+        console.log(error);
+      }
     };
-    fetchData();
-  }, [currentPage]);
+    fetchCategories();
+  }, []);
+
+  // Fetch articles when query, category, or page changes (with debouncing for search)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      getDataArticles(currentPage, searchQuery, selectedCategory);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [currentPage, searchQuery, selectedCategory]);
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (val: string) => {
+    setSelectedCategory(val);
+    setCurrentPage(1);
+  };
 
   const handleDeleteClick = (id: string | number) => {
     setSelectedArticleId(id);
@@ -63,7 +103,7 @@ function CmsArticleDashboardTable() {
     try {
       await skyshareApi.delete(`/article/delete/${selectedArticleId}`);
       setIsConfirmOpen(false);
-      getDataArticles(currentPage);
+      getDataArticles(currentPage, searchQuery, selectedCategory);
     } catch (error) {
       console.log(error);
     } finally {
@@ -74,7 +114,7 @@ function CmsArticleDashboardTable() {
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        <div><Sidebar /></div>
+        <div className="self-start"><Sidebar /></div>
         <div className="w-full">
           <div className="flex justify-between items-end mb-8">
             <div>
@@ -84,7 +124,7 @@ function CmsArticleDashboardTable() {
           </div>
 
           <div className="bg-neutral-white mt-10 border-2 border-black rounded-2xl p-5 w-full">
-            <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4">
+            <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-6">
               <div className="flex items-center gap-4">
                 <img className="w-6" src={EditIcon} alt="" />
                 <h4 className="headline-4">Daftar Article</h4>
@@ -93,6 +133,42 @@ function CmsArticleDashboardTable() {
                 <Link to="/cms/article/add" className="bg-primary-1 hover:bg-primary-2 flex items-center rounded-md h-12 w-12 justify-center">
                   <img className="w-7 h-7" src={Add} alt="" />
                 </Link>
+              </div>
+            </div>
+
+            {/* Search and Category Filter Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              {/* Search Bar */}
+              <div className="md:col-span-2 relative">
+                <input
+                  type="text"
+                  placeholder="🔍 Cari berdasarkan judul artikel..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full h-12 pl-4 pr-10 border-2 border-black rounded-xl outline-none focus:bg-gray-50 transition-colors font-bold text-sm"
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="w-full h-12 px-4 border-2 border-black rounded-xl outline-none focus:bg-gray-50 transition-colors font-bold text-sm cursor-pointer appearance-none bg-white"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 16px center",
+                    backgroundSize: "16px"
+                  }}
+                >
+                  <option value="">Semua Kategori</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
             
@@ -112,11 +188,29 @@ function CmsArticleDashboardTable() {
                     dataArticles.map((article, index) => (
                       <tr key={article.id} className="hover:bg-gray-50 transition-colors">
                         <td className="pr-4 py-6 text-sm font-bold text-black">{(currentPage - 1) * 10 + index + 1}</td>
-                        <td className="pr-4 py-6 text-sm text-black">{new Date(article.createdAt).toLocaleDateString()}</td>
-                        <td className="pr-20 py-6 text-sm text-black max-w-[250px] truncate" title={article.title}>{article.title}</td>
+                        <td className="pr-4 py-6 text-sm text-black">{new Date(article.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</td>
+                        <td 
+                          className="pr-20 py-6 text-sm text-black relative cursor-help"
+                          onMouseEnter={() => setHoveredArticleId(article.id)}
+                          onMouseLeave={() => setHoveredArticleId(null)}
+                        >
+                          <div className="max-w-[250px] truncate">
+                            <span className="hover:underline decoration-2 decoration-orange-400">{article.title}</span>
+                          </div>
+                          
+                          {/* Premium Custom Neobrutalist Tooltip with Dynamic Positioning */}
+                          {hoveredArticleId === article.id && (
+                            <div className={`absolute left-0 bg-white border-2 border-black rounded-lg p-3 z-50 min-w-[280px] max-w-[380px] whitespace-normal pointer-events-none transition-all duration-150 shadow-[4px_4px_0_#000] ${
+                              index < 5 ? "top-full mt-1" : "bottom-full mb-2"
+                            }`}>
+                              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Full Article Title</p>
+                              <p className="text-xs font-bold text-black leading-relaxed">{article.title}</p>
+                            </div>
+                          )}
+                        </td>
                         <td className="pr-4 py-6">
                           <div className="flex justify-center">
-                            <span className="px-4 py-1.5 rounded-full text-white text-[11px] font-bold whitespace-nowrap tracking-wide" style={{ backgroundColor: article.category_color || '#000' }}>
+                            <span className="px-4 py-1.5 rounded-full text-white text-[11px] font-bold whitespace-nowrap tracking-wide border border-black shadow-[1.5px_1.5px_0_#000]" style={{ backgroundColor: article.category_color || '#000' }}>
                               {article.category_name}
                             </span>
                           </div>
@@ -125,14 +219,14 @@ function CmsArticleDashboardTable() {
                           <div className="flex justify-center gap-3">
                             <Link 
                               to={`/cms/article/edit/${article.id}`} 
-                              className="bg-primary-1 hover:bg-primary-2 h-10 w-10 rounded-xl flex justify-center items-center transition-all shadow-sm active:scale-90"
+                              className="bg-primary-1 hover:bg-primary-2 h-10 w-10 rounded-xl flex justify-center items-center border border-black shadow-[2px_2px_0_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#000] transition-all"
                               title="Edit"
                             >
                               <img className="w-5 h-5" src={EditSquare} alt="Edit" />
                             </Link>
                             <button 
                               onClick={() => handleDeleteClick(article.id)} 
-                              className="bg-red-500 hover:bg-red-600 h-10 w-10 rounded-xl flex justify-center items-center transition-all shadow-sm active:scale-90"
+                              className="bg-red-500 hover:bg-red-600 h-10 w-10 rounded-xl flex justify-center items-center border border-black shadow-[2px_2px_0_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#000] transition-all"
                               title="Delete"
                             >
                               <img className="w-5 h-5" src={Delete} alt="Delete" />
@@ -143,8 +237,8 @@ function CmsArticleDashboardTable() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="text-center py-8 text-gray-500">
-                        No articles found.
+                      <td colSpan={5} className="text-center py-12 text-gray-500 font-bold">
+                        😔 Tidak ada artikel yang cocok dengan filter pencarian.
                       </td>
                     </tr>
                   )}
@@ -154,15 +248,15 @@ function CmsArticleDashboardTable() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="px-6 py-4 mt-4 bg-gray-50 border-2 border-black rounded-xl flex items-center justify-between">
-                <p className="text-sm text-gray-500">
-                  Showing <span className="font-bold">{(currentPage - 1) * pagination.limit + 1}</span> to <span className="font-bold">{Math.min(currentPage * pagination.limit, pagination.totalItems)}</span> of <span className="font-bold">{pagination.totalItems}</span> results
+              <div className="px-6 py-4 mt-6 bg-gray-50 border-2 border-black rounded-xl flex items-center justify-between shadow-[2px_2px_0_#000]">
+                <p className="text-sm text-gray-500 font-bold">
+                  Showing <span className="font-extrabold">{(currentPage - 1) * pagination.limit + 1}</span> to <span className="font-extrabold">{Math.min(currentPage * pagination.limit, pagination.total)}</span> of <span className="font-extrabold">{pagination.total}</span> results
                 </p>
                 <div className="flex gap-2">
                   <button 
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => prev - 1)}
-                    className="px-4 py-2 bg-white border-2 border-black rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all"
+                    className="px-4 py-2 bg-white border-2 border-black rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000]"
                   >
                     Prev
                   </button>
@@ -172,7 +266,7 @@ function CmsArticleDashboardTable() {
                   <button 
                     disabled={currentPage === pagination.totalPages}
                     onClick={() => setCurrentPage(prev => prev + 1)}
-                    className="px-4 py-2 bg-white border-2 border-black rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all"
+                    className="px-4 py-2 bg-white border-2 border-black rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000]"
                   >
                     Next
                   </button>
