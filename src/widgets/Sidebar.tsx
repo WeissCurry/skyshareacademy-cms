@@ -6,6 +6,7 @@ import ArrowRight from "@shared/assets/images/mascot-icons/Arrow - Right 3.png";
 import IconAddUser from "@shared/assets/images/mascot-icons/Add User.png";
 import IconMedia from "@shared/assets/images/mascot-icons/Image 3.png";
 import LoadingModal from "@shared/ui/LoadingModal";
+import { FiTrendingUp } from "react-icons/fi";
 
 interface AdminData {
   role: string;
@@ -35,6 +36,13 @@ function Sidebar() {
   }
 
   const menuItems = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      to: "/cms/dashboard",
+      icon: <FiTrendingUp className="w-6 h-6 text-neutral-dark" />,
+      condition: true,
+    },
     {
       id: "kelola-akun",
       label: "Kelola Akun",
@@ -90,7 +98,7 @@ function Sidebar() {
             const iconComponent = isReactIcon ? (
               menu.icon
             ) : (
-              <img className="w-6" src={menu.icon} alt={menu.label} />
+              <img className="w-6" src={menu.icon as string} alt={menu.label} />
             );
 
             return (

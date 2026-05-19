@@ -25,9 +25,11 @@ const CmsArticleDashboardTable = lazy(() => import("@pages/article-management/Cm
 const CmsArticleEditForm = lazy(() => import("@pages/article-management/CmsArticleEditForm"));
 const CmsArticleAddForm = lazy(() => import("@pages/article-management/CmsArticleAddForm"));
 const CmsMedia = lazy(() => import("@pages/media-management/MediaPage"));
+const CmsDashboard = lazy(() => import("@pages/dashboard/CmsDashboard"));
 
 export default function App() {
   const cmsPrivateRoutes = [
+    { path: "/cms/dashboard", element: <CmsDashboard /> },
     { path: "/cms/kelolaakun", element: <CmsDashboardAkun /> },
     { path: "/cms/add/admin", element: <CmsAddAdminForm /> },
     { path: "/cms/edit/admin/:id", element: <CmsEditAdminForm /> },
