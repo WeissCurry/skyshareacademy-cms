@@ -147,7 +147,7 @@ export function useArticleEditForm() {
 
   const deleteCategory = async function () {
     try {
-      await skyshareApi.delete(`/category/delete/${categoryId}`);
+      await skyshareApi.delete(`/category/${categoryId}`);
       getCategory();
       setIsModalOpen(false);
     } catch (error) {
