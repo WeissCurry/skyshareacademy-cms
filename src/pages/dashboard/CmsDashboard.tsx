@@ -56,7 +56,7 @@ function DashboardSkeleton() {
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch text-black font-sans">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
         {/* Sidebar remains fully visible and interactive */}
-        <div>
+        <div className="self-start">
           <Sidebar />
         </div>
         <div className="w-full animate-pulse">
@@ -217,7 +217,7 @@ export default function CmsDashboard() {
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch text-black font-sans">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
         {/* Embedded Sidebar Layout */}
-        <div>
+        <div className="self-start">
           <Sidebar />
         </div>
 
@@ -376,7 +376,7 @@ export default function CmsDashboard() {
           {/* Row 2: SVG Chart and Performance Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* SVG Interactive Chart Box */}
-            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 flex flex-col justify-between shadow-sm">
+            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between shadow-sm">
               <div>
                 <div className="bg-background flex flex-col sm:flex-row justify-between sm:items-center rounded-xl py-3 px-4 mb-4 gap-2 border-2 border-black">
                   <div className="flex items-center gap-3">
