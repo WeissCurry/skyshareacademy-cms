@@ -443,41 +443,98 @@ export default function CmsDashboard() {
                             <line x1={p.x} y1={paddingY} x2={p.x} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} strokeDasharray="4 4" />
                           )}
                           <circle cx={p.x} cy={p.yUnique} r={hoveredPoint === i ? 6 : 4} fill="#3b82f6" stroke="#000" strokeWidth={2} />
-                          <circle cx={p.x} cy={p.yViews} r={hoveredPoint === i ? 5.5 : 3.5} fill="#a855f7" stroke="#000" strokeWidth={1.5} />
                         </g>
                       ))}
-                    </svg>
 
-                    {hoveredPoint !== null && coords[hoveredPoint] && (
-                      <div
-                        className="absolute bg-neutral-white border-2 border-black shadow-sm rounded-xl p-3 text-[11px] font-bold pointer-events-none transition-all z-20"
-                        style={{
-                          left: `${Math.min(
-                            Math.max(coords[hoveredPoint].x - 60, 10),
-                            svgWidth - 145
-                          )}px`,
-                          top: `${Math.max(coords[hoveredPoint].yUnique - 80, 10)}px`,
-                        }}
-                      >
-                        <p className="text-gray-500 mb-1 flex items-center gap-1">
-                          <FiCalendar className="w-3.5 h-3.5" />
-                          {new Date(coords[hoveredPoint].date).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </p>
-                        <div className="flex flex-col gap-1 text-xs">
-                          <span className="text-blue-600 flex justify-between gap-4">
-                            <span>Unik:</span>
-                            <span>{coords[hoveredPoint].unique_visitors}</span>
-                          </span>
-                          <span className="text-purple-600 flex justify-between gap-4">
-                            <span>Views:</span>
-                            <span>{coords[hoveredPoint].pageviews}</span>
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                      {/* Native SVG Tooltip (Scales perfectly and never gets cropped) */}
+                      {hoveredPoint !== null && coords[hoveredPoint] && (() => {
+                        const p = coords[hoveredPoint];
+                        const tooltipX = Math.min(Math.max(p.x, 70), svgWidth - 70);
+                        const tooltipY = Math.max(Math.min(p.yUnique, p.yViews) - 85, 10);
+                        return (
+                          <g pointerEvents="none">
+                            {/* Shadow Offset Rect for Neobrutalist look */}
+                            <rect 
+                              x={tooltipX - 56} 
+                              y={tooltipY + 4} 
+                              width={120} 
+                              height={70} 
+                              rx={10} 
+                              fill="#000000" 
+                            />
+                            {/* Foreground White Rect */}
+                            <rect 
+                              x={tooltipX - 60} 
+                              y={tooltipY} 
+                              width={120} 
+                              height={70} 
+                              rx={10} 
+                              fill="#ffffff" 
+                              stroke="#000000" 
+                              strokeWidth={2} 
+                            />
+                            {/* Date text */}
+                            <text 
+                              x={tooltipX} 
+                              y={tooltipY + 18} 
+                              textAnchor="middle" 
+                              fontSize={10} 
+                              fontFamily="sans-serif"
+                              fontWeight="bold" 
+                              fill="#6b7280"
+                            >
+                              {new Date(p.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                            </text>
+                            {/* Unik label & value */}
+                            <text 
+                              x={tooltipX - 45} 
+                              y={tooltipY + 38} 
+                              textAnchor="start" 
+                              fontSize={11} 
+                              fontFamily="sans-serif"
+                              fontWeight="bold" 
+                              fill="#2563eb"
+                            >
+                              Unik:
+                            </text>
+                            <text 
+                              x={tooltipX + 45} 
+                              y={tooltipY + 38} 
+                              textAnchor="end" 
+                              fontSize={11} 
+                              fontFamily="sans-serif"
+                              fontWeight="black" 
+                              fill="#2563eb"
+                            >
+                              {p.unique_visitors}
+                            </text>
+                            {/* Views label & value */}
+                            <text 
+                              x={tooltipX - 45} 
+                              y={tooltipY + 54} 
+                              textAnchor="start" 
+                              fontSize={11} 
+                              fontFamily="sans-serif"
+                              fontWeight="bold" 
+                              fill="#7c3aed"
+                            >
+                              Views:
+                            </text>
+                            <text 
+                              x={tooltipX + 45} 
+                              y={tooltipY + 54} 
+                              textAnchor="end" 
+                              fontSize={11} 
+                              fontFamily="sans-serif"
+                              fontWeight="black" 
+                              fill="#7c3aed"
+                            >
+                              {p.pageviews}
+                            </text>
+                          </g>
+                        );
+                      })()}
+                    </svg>
                   </div>
                 )}
               </div>
