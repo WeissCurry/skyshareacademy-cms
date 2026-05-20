@@ -152,6 +152,18 @@ export default function CmsDashboard() {
 
   const hasData = activeData.timeSeries.length > 0;
 
+  const chartPoints = activeData.timeSeries.length > 0
+    ? activeData.timeSeries
+    : Array.from({ length: filterDays }).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (filterDays - 1 - i));
+      return {
+        date: d.toISOString().split("T")[0],
+        pageviews: 0,
+        unique_visitors: 0,
+      };
+    });
+
   // SVG Chart Scaling
   const svgWidth = 800;
   const svgHeight = 250;
@@ -160,25 +172,26 @@ export default function CmsDashboard() {
 
   const getCoordinates = (points: TimeSeriesPoint[]) => {
     if (points.length === 0) return [];
-    const maxVal = Math.max(...points.map((p) => Math.max(p.pageviews, p.unique_visitors)), 1);
-    
+    const maxUnique = Math.max(...points.map((p) => p.unique_visitors), 1);
+    const maxViews = Math.max(...points.map((p) => p.pageviews), 1);
+
     if (points.length === 1) {
       const p = points[0];
       const x = svgWidth / 2;
-      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxVal) * (svgHeight - 2 * paddingY);
-      const yViews = svgHeight - paddingY - (p.pageviews / maxVal) * (svgHeight - 2 * paddingY);
+      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxUnique) * (svgHeight - 2 * paddingY);
+      const yViews = svgHeight - paddingY - (p.pageviews / maxViews) * (svgHeight - 2 * paddingY);
       return [{ x, yUnique, yViews, ...p }];
     }
-    
+
     return points.map((p, i) => {
       const x = paddingX + (i / (points.length - 1)) * (svgWidth - 2 * paddingX);
-      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxVal) * (svgHeight - 2 * paddingY);
-      const yViews = svgHeight - paddingY - (p.pageviews / maxVal) * (svgHeight - 2 * paddingY);
+      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxUnique) * (svgHeight - 2 * paddingY);
+      const yViews = svgHeight - paddingY - (p.pageviews / maxViews) * (svgHeight - 2 * paddingY);
       return { x, yUnique, yViews, ...p };
     });
   };
 
-  const coords = getCoordinates(activeData.timeSeries);
+  const coords = getCoordinates(chartPoints);
 
   const generateAreaPath = (points: typeof coords, type: "unique" | "views") => {
     if (points.length === 0) return "";
@@ -235,52 +248,25 @@ export default function CmsDashboard() {
             <div className="flex items-center gap-2 bg-neutral-white border-2 border-black rounded-xl p-1 shadow-sm">
               <button
                 onClick={() => setFilterDays(7)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  filterDays === 7 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${filterDays === 7 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                  }`}
               >
                 7 Hari
               </button>
               <button
                 onClick={() => setFilterDays(30)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  filterDays === 30 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${filterDays === 30 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                  }`}
               >
                 30 Hari
               </button>
               <button
                 onClick={() => setFilterDays(90)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                  filterDays === 90 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
-                }`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${filterDays === 90 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                  }`}
               >
                 90 Hari
               </button>
-            </div>
-          </div>
-
-          {/* Connection Status indicator - Short & sweet */}
-          <div className="mb-6 bg-neutral-white border-2 border-black rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="flex h-3.5 w-3.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border border-black"></span>
-              </span>
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 block">
-                  Koneksi Real-time Aktif
-                </span>
-                <span className="text-[11px] text-gray-500 font-medium">
-                  {totalUniqueVisitors === 0
-                    ? "Menunggu data masuk dari website Next.js."
-                    : "Menampilkan data kunjungan riil siswa & orang tua."}
-                </span>
-              </div>
-            </div>
-            
-            <div className="text-[11px] text-primary-1 font-bold underline cursor-help self-start sm:self-auto">
-              💡 Buka website Next.js untuk memicu traffic baru!
             </div>
           </div>
 
@@ -382,169 +368,160 @@ export default function CmsDashboard() {
                   <div className="flex items-center gap-3">
                     <img className="w-5" src={EditIcon} alt="" />
                     <h4 className="headline-4">Tren Pengunjung</h4>
+                    {!hasData && (
+                      <span className="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-black animate-pulse">
+                        Preview (Data Kosong)
+                      </span>
+                    )}
                   </div>
-                  {hasData && (
-                    <div className="flex gap-3 text-[10px] font-bold self-start sm:self-auto">
-                      <span className="flex items-center gap-1 text-blue-600">
-                        <span className="w-2.5 h-2.5 bg-blue-500 rounded-full inline-block border border-black"></span>
-                        Kunjungan
-                      </span>
-                      <span className="flex items-center gap-1 text-purple-600">
-                        <span className="w-2.5 h-2.5 bg-purple-500 rounded-full inline-block border border-black"></span>
-                        Pageviews
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex gap-3 text-[10px] font-bold self-start sm:self-auto">
+                    <span className="flex items-center gap-1 text-secondary-1">
+                      <span className="w-2.5 h-2.5 bg-secondary-1 rounded-full inline-block border border-black"></span>
+                      Kunjungan
+                    </span>
+                    <span className="flex items-center gap-1 text-primary-1">
+                      <span className="w-2.5 h-2.5 bg-primary-1 rounded-full inline-block border border-black"></span>
+                      Pageviews
+                    </span>
+                  </div>
                 </div>
 
-                {/* Empty State placeholder */}
-                {!hasData ? (
-                  <div className="flex flex-col items-center justify-center py-14 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50 text-center p-6 my-2">
-                    <FiActivity className="w-10 h-10 text-gray-400 mb-3 animate-pulse" />
-                    <h5 className="font-bold text-sm text-neutral-800">Menunggu Kunjungan Pertama...</h5>
-                    <p className="text-xs text-gray-500 mt-1 max-w-xs">
-                      Belum ada data traffic masuk. Buka website Next.js Anda untuk melihat visualisasi data real-time!
-                    </p>
-                  </div>
-                ) : (
-                  /* SVG Area Chart */
-                  <div className="relative pt-2 overflow-x-auto">
-                    <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto min-w-[550px]">
-                      <defs>
-                        <linearGradient id="uniqueGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
-                        </linearGradient>
-                        <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#a855f7" stopOpacity="0.15" />
-                          <stop offset="100%" stopColor="#a855f7" stopOpacity="0.0" />
-                        </linearGradient>
-                      </defs>
+                {/* SVG Area Chart */}
+                <div className="relative pt-2 overflow-x-auto">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto min-w-[550px]">
+                    <defs>
+                      <linearGradient id="uniqueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#34BCEE" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#34BCEE" stopOpacity="0.0" />
+                      </linearGradient>
+                      <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#FEA02F" stopOpacity="0.15" />
+                        <stop offset="100%" stopColor="#FEA02F" stopOpacity="0.0" />
+                      </linearGradient>
+                    </defs>
 
-                      <line x1={paddingX} y1={paddingY} x2={svgWidth - paddingX} y2={paddingY} stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3" />
-                      <line x1={paddingX} y1={svgHeight / 2} x2={svgWidth - paddingX} y2={svgHeight / 2} stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3" />
-                      <line x1={paddingX} y1={svgHeight - paddingY} x2={svgWidth - paddingX} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} />
+                    <line x1={paddingX} y1={paddingY} x2={svgWidth - paddingX} y2={paddingY} stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3" />
+                    <line x1={paddingX} y1={svgHeight / 2} x2={svgWidth - paddingX} y2={svgHeight / 2} stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3" />
+                    <line x1={paddingX} y1={svgHeight - paddingY} x2={svgWidth - paddingX} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} />
 
-                      <path d={generateAreaPath(coords, "unique")} fill="url(#uniqueGrad)" />
-                      <path d={generateAreaPath(coords, "views")} fill="url(#viewsGrad)" />
+                    <path d={generateAreaPath(coords, "unique")} fill="url(#uniqueGrad)" />
+                    <path d={generateAreaPath(coords, "views")} fill="url(#viewsGrad)" />
 
-                      <path d={generateLinePath(coords, "unique")} fill="none" stroke="#3b82f6" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
-                      <path d={generateLinePath(coords, "views")} fill="none" stroke="#a855f7" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 2" />
+                    <path d={generateLinePath(coords, "unique")} fill="none" stroke="#34BCEE" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={generateLinePath(coords, "views")} fill="none" stroke="#FEA02F" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 2" />
 
-                      {coords.map((p, i) => (
-                        <g
-                          key={i}
-                          onMouseEnter={() => setHoveredPoint(i)}
-                          onMouseLeave={() => setHoveredPoint(null)}
-                          className="cursor-pointer"
-                        >
-                          <rect x={p.x - 12} y={0} width={24} height={svgHeight} fill="transparent" />
-                          {hoveredPoint === i && (
-                            <line x1={p.x} y1={paddingY} x2={p.x} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} strokeDasharray="4 4" />
-                          )}
-                          <circle cx={p.x} cy={p.yUnique} r={hoveredPoint === i ? 6 : 4} fill="#3b82f6" stroke="#000" strokeWidth={2} />
+                    {coords.map((p, i) => (
+                      <g
+                        key={i}
+                        onMouseEnter={() => setHoveredPoint(i)}
+                        onMouseLeave={() => setHoveredPoint(null)}
+                        className="cursor-pointer"
+                      >
+                        <rect x={p.x - 12} y={0} width={24} height={svgHeight} fill="transparent" />
+                        {hoveredPoint === i && (
+                          <line x1={p.x} y1={paddingY} x2={p.x} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} strokeDasharray="4 4" />
+                        )}
+                        <circle cx={p.x} cy={p.yUnique} r={hoveredPoint === i ? 6 : 4} fill="#34BCEE" stroke="#000" strokeWidth={2} />
+                        <circle cx={p.x} cy={p.yViews} r={hoveredPoint === i ? 6 : 4} fill="#FEA02F" stroke="#000" strokeWidth={2} />
+                      </g>
+                    ))}
+
+                    {/* Native SVG Tooltip (Scales perfectly and never gets cropped) */}
+                    {hoveredPoint !== null && coords[hoveredPoint] && (() => {
+                      const p = coords[hoveredPoint];
+                      const tooltipX = Math.min(Math.max(p.x, 70), svgWidth - 70);
+                      const tooltipY = Math.max(Math.min(p.yUnique, p.yViews) - 85, 10);
+                      return (
+                        <g pointerEvents="none">
+                          {/* Shadow Offset Rect for Neobrutalist look */}
+                          <rect
+                            x={tooltipX - 56}
+                            y={tooltipY + 4}
+                            width={120}
+                            height={70}
+                            rx={10}
+                            fill="#000000"
+                          />
+                          {/* Foreground White Rect */}
+                          <rect
+                            x={tooltipX - 60}
+                            y={tooltipY}
+                            width={120}
+                            height={70}
+                            rx={10}
+                            fill="#ffffff"
+                            stroke="#000000"
+                            strokeWidth={2}
+                          />
+                          {/* Date text */}
+                          <text
+                            x={tooltipX}
+                            y={tooltipY + 18}
+                            textAnchor="middle"
+                            fontSize={10}
+                            fontFamily="sans-serif"
+                            fontWeight="bold"
+                            fill="#6b7280"
+                          >
+                            {new Date(p.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                          </text>
+                          {/* Unik label & value */}
+                          <text
+                            x={tooltipX - 45}
+                            y={tooltipY + 38}
+                            textAnchor="start"
+                            fontSize={11}
+                            fontFamily="sans-serif"
+                            fontWeight="bold"
+                            fill="#34BCEE"
+                          >
+                            Unik:
+                          </text>
+                          <text
+                            x={tooltipX + 45}
+                            y={tooltipY + 38}
+                            textAnchor="end"
+                            fontSize={11}
+                            fontFamily="sans-serif"
+                            fontWeight="black"
+                            fill="#34BCEE"
+                          >
+                            {p.unique_visitors}
+                          </text>
+                          {/* Views label & value */}
+                          <text
+                            x={tooltipX - 45}
+                            y={tooltipY + 54}
+                            textAnchor="start"
+                            fontSize={11}
+                            fontFamily="sans-serif"
+                            fontWeight="bold"
+                            fill="#FEA02F"
+                          >
+                            Views:
+                          </text>
+                          <text
+                            x={tooltipX + 45}
+                            y={tooltipY + 54}
+                            textAnchor="end"
+                            fontSize={11}
+                            fontFamily="sans-serif"
+                            fontWeight="black"
+                            fill="#FEA02F"
+                          >
+                            {p.pageviews}
+                          </text>
                         </g>
-                      ))}
-
-                      {/* Native SVG Tooltip (Scales perfectly and never gets cropped) */}
-                      {hoveredPoint !== null && coords[hoveredPoint] && (() => {
-                        const p = coords[hoveredPoint];
-                        const tooltipX = Math.min(Math.max(p.x, 70), svgWidth - 70);
-                        const tooltipY = Math.max(Math.min(p.yUnique, p.yViews) - 85, 10);
-                        return (
-                          <g pointerEvents="none">
-                            {/* Shadow Offset Rect for Neobrutalist look */}
-                            <rect 
-                              x={tooltipX - 56} 
-                              y={tooltipY + 4} 
-                              width={120} 
-                              height={70} 
-                              rx={10} 
-                              fill="#000000" 
-                            />
-                            {/* Foreground White Rect */}
-                            <rect 
-                              x={tooltipX - 60} 
-                              y={tooltipY} 
-                              width={120} 
-                              height={70} 
-                              rx={10} 
-                              fill="#ffffff" 
-                              stroke="#000000" 
-                              strokeWidth={2} 
-                            />
-                            {/* Date text */}
-                            <text 
-                              x={tooltipX} 
-                              y={tooltipY + 18} 
-                              textAnchor="middle" 
-                              fontSize={10} 
-                              fontFamily="sans-serif"
-                              fontWeight="bold" 
-                              fill="#6b7280"
-                            >
-                              {new Date(p.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                            </text>
-                            {/* Unik label & value */}
-                            <text 
-                              x={tooltipX - 45} 
-                              y={tooltipY + 38} 
-                              textAnchor="start" 
-                              fontSize={11} 
-                              fontFamily="sans-serif"
-                              fontWeight="bold" 
-                              fill="#2563eb"
-                            >
-                              Unik:
-                            </text>
-                            <text 
-                              x={tooltipX + 45} 
-                              y={tooltipY + 38} 
-                              textAnchor="end" 
-                              fontSize={11} 
-                              fontFamily="sans-serif"
-                              fontWeight="black" 
-                              fill="#2563eb"
-                            >
-                              {p.unique_visitors}
-                            </text>
-                            {/* Views label & value */}
-                            <text 
-                              x={tooltipX - 45} 
-                              y={tooltipY + 54} 
-                              textAnchor="start" 
-                              fontSize={11} 
-                              fontFamily="sans-serif"
-                              fontWeight="bold" 
-                              fill="#7c3aed"
-                            >
-                              Views:
-                            </text>
-                            <text 
-                              x={tooltipX + 45} 
-                              y={tooltipY + 54} 
-                              textAnchor="end" 
-                              fontSize={11} 
-                              fontFamily="sans-serif"
-                              fontWeight="black" 
-                              fill="#7c3aed"
-                            >
-                              {p.pageviews}
-                            </text>
-                          </g>
-                        );
-                      })()}
-                    </svg>
-                  </div>
-                )}
+                      );
+                    })()}
+                  </svg>
+                </div>
               </div>
 
-              {hasData && (
-                <div className="border-t border-gray-100 pt-3 flex justify-between text-[10px] text-gray-500 font-bold mt-4">
-                  <span>📅 Mulai: {new Date(activeData.timeSeries[0]?.date).toLocaleDateString("id-ID")}</span>
-                  <span>📅 Akhir: {new Date(activeData.timeSeries[activeData.timeSeries.length - 1]?.date).toLocaleDateString("id-ID")}</span>
-                </div>
-              )}
+              <div className="border-t border-gray-100 pt-3 flex justify-between text-[10px] text-gray-500 font-bold mt-4">
+                <span>📅 Mulai: {new Date(chartPoints[0]?.date).toLocaleDateString("id-ID")}</span>
+                <span>📅 Akhir: {new Date(chartPoints[chartPoints.length - 1]?.date).toLocaleDateString("id-ID")}</span>
+              </div>
             </div>
 
             {/* Performance Panel */}
@@ -566,9 +543,8 @@ export default function CmsDashboard() {
                     <div className="w-full bg-background border-2 border-black h-3 rounded-full overflow-hidden p-[1px]">
                       <div
                         style={{ width: `${activeData.performance.avg_fcp > 0 ? Math.min((activeData.performance.avg_fcp / 3500) * 100, 100) : 0}%` }}
-                        className={`h-full rounded-full transition-all ${
-                          activeData.performance.avg_fcp < 1800 ? "bg-emerald-500" : activeData.performance.avg_fcp < 3000 ? "bg-amber-500" : "bg-rose-500"
-                        }`}
+                        className={`h-full rounded-full transition-all ${activeData.performance.avg_fcp < 1800 ? "bg-emerald-500" : activeData.performance.avg_fcp < 3000 ? "bg-amber-500" : "bg-rose-500"
+                          }`}
                       ></div>
                     </div>
                   </div>
@@ -583,9 +559,8 @@ export default function CmsDashboard() {
                     <div className="w-full bg-background border-2 border-black h-3 rounded-full overflow-hidden p-[1px]">
                       <div
                         style={{ width: `${activeData.performance.avg_lcp > 0 ? Math.min((activeData.performance.avg_lcp / 5000) * 100, 100) : 0}%` }}
-                        className={`h-full rounded-full transition-all ${
-                          activeData.performance.avg_lcp < 2500 ? "bg-emerald-500" : activeData.performance.avg_lcp < 4000 ? "bg-amber-500" : "bg-rose-500"
-                        }`}
+                        className={`h-full rounded-full transition-all ${activeData.performance.avg_lcp < 2500 ? "bg-emerald-500" : activeData.performance.avg_lcp < 4000 ? "bg-amber-500" : "bg-rose-500"
+                          }`}
                       ></div>
                     </div>
                   </div>

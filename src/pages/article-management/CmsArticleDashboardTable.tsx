@@ -198,15 +198,19 @@ function CmsArticleDashboardTable() {
                             <span className="hover:underline decoration-2 decoration-orange-400">{article.title}</span>
                           </div>
                           
-                          {/* Premium Custom Neobrutalist Tooltip with Dynamic Positioning */}
-                          {hoveredArticleId === article.id && (
-                            <div className={`absolute left-0 bg-white border-2 border-black rounded-lg p-3 z-50 min-w-[280px] max-w-[380px] whitespace-normal pointer-events-none transition-all duration-150 shadow-[4px_4px_0_#000] ${
-                              index < 5 ? "top-full mt-1" : "bottom-full mb-2"
-                            }`}>
-                              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Full Article Title</p>
-                              <p className="text-xs font-bold text-black leading-relaxed">{article.title}</p>
-                            </div>
-                          )}
+                          {/* Premium Custom Neobrutalist Tooltip with Dynamic Positioning and Smooth Animation */}
+                          <div className={`absolute left-0 bg-white border-2 border-black rounded-lg p-3 z-50 min-w-[280px] max-w-[380px] whitespace-normal pointer-events-none transition-all duration-200 ease-out shadow-[4px_4px_0_#000] transform ${
+                            index < 5 
+                              ? "top-full mt-2 origin-top" 
+                              : "bottom-full mb-3 origin-bottom"
+                          } ${
+                            hoveredArticleId === article.id 
+                              ? "opacity-100 scale-100 visible" 
+                              : "opacity-0 scale-95 invisible"
+                          }`}>
+                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Full Article Title</p>
+                            <p className="text-xs font-bold text-black leading-relaxed">{article.title}</p>
+                          </div>
                         </td>
                         <td className="pr-4 py-6">
                           <div className="flex justify-center">
