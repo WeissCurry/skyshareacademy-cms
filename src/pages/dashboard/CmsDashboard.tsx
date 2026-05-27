@@ -279,17 +279,42 @@ export default function CmsDashboard() {
 
   const hasData = activeData.timeSeries.length > 0;
 
-  const chartPoints = activeData.timeSeries.length > 0
-    ? activeData.timeSeries
-    : Array.from({ length: filterDays }).map((_, i) => {
+  // Always pad the chart to show exactly N points (7, 30, or 90) representing each day in the range
+  const chartPoints = (() => {
+    const points: TimeSeriesPoint[] = [];
+    const dateMap = new Map<string, TimeSeriesPoint>();
+    
+    // Index existing records from the backend by YYYY-MM-DD
+    (activeData.timeSeries || []).forEach((p) => {
+      try {
+        const key = new Date(p.date).toISOString().split("T")[0];
+        dateMap.set(key, p);
+      } catch {
+        dateMap.set(p.date, p);
+      }
+    });
+
+    for (let i = 0; i < filterDays; i++) {
       const d = new Date();
       d.setDate(d.getDate() - (filterDays - 1 - i));
-      return {
-        date: d.toISOString().split("T")[0],
-        pageviews: 0,
-        unique_visitors: 0,
-      };
-    });
+      const dateStr = d.toISOString().split("T")[0];
+      
+      const existing = dateMap.get(dateStr);
+      if (existing) {
+        points.push({
+          ...existing,
+          date: dateStr,
+        });
+      } else {
+        points.push({
+          date: dateStr,
+          pageviews: 0,
+          unique_visitors: 0,
+        });
+      }
+    }
+    return points;
+  })();
 
   // SVG Chart Scaling
   const svgWidth = 800;
@@ -517,8 +542,8 @@ export default function CmsDashboard() {
                 </div>
 
                 {/* SVG Area Chart */}
-                <div className="relative pt-2 overflow-x-auto">
-                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto min-w-[550px]">
+                <div className="relative pt-2">
+                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
                     <defs>
                       <linearGradient id="uniqueGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="#34BCEE" stopOpacity="0.2" />
