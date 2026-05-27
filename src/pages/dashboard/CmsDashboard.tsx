@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
+import LoadingModal from "@shared/ui/LoadingModal";
 import EditIcon from "@shared/assets/images/mascot-icons/Edit.png";
 import InfoIcon from "@shared/assets/images/mascot-icons/Info Square.png";
 import {
@@ -9,9 +10,9 @@ import {
   FiZap,
   FiGlobe,
   FiExternalLink,
-  FiCalendar,
   FiArrowRight,
   FiCompass,
+  FiRefreshCw,
 } from "react-icons/fi";
 
 interface TodayStats {
@@ -38,6 +39,11 @@ interface TopPage {
   views: number;
 }
 
+interface ProvinceStat {
+  province: string;
+  visitors: number;
+}
+
 interface TopReferrer {
   referrer: string;
   views: number;
@@ -49,6 +55,7 @@ interface DashboardData {
   timeSeries: TimeSeriesPoint[];
   topPages: TopPage[];
   topReferrers: TopReferrer[];
+  provinces?: ProvinceStat[];
 }
 
 function DashboardSkeleton() {
@@ -115,21 +122,83 @@ export default function CmsDashboard() {
   const [loading, setLoading] = useState(true);
   const [filterDays, setFilterDays] = useState(90);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const [svgContent, setSvgContent] = useState<string>("");
+
+  // Load idmap.svg statically on mount
+  useEffect(() => {
+    fetch("/idmap.svg")
+      .then((res) => res.text())
+      .then((text) => setSvgContent(text))
+      .catch((err) => console.error("Failed to load idmap.svg:", err));
+  }, []);
+
+  // Dynamically color active provinces in the SVG based on visitor stats
+  useEffect(() => {
+    if (!svgContent || !data) return;
+
+    const provData = data.provinces || [];
+    const maxVisitors = Math.max(...provData.map((p) => p.visitors), 1);
+
+    const svgEl = document.getElementById("features");
+    if (svgEl) {
+      const paths = svgEl.getElementsByTagName("path");
+      for (let i = 0; i < paths.length; i++) {
+        const path = paths[i];
+        const provName = path.getAttribute("name");
+
+        const match = provData.find(
+          (p) => p.province.toLowerCase() === provName?.toLowerCase()
+        );
+
+        if (match && match.visitors > 0) {
+          const intensity = match.visitors / maxVisitors;
+          path.setAttribute("fill", "#FEA02F");
+          path.setAttribute("fill-opacity", String(Math.max(0.15, intensity)));
+          path.setAttribute("stroke", "#000000");
+          path.setAttribute("stroke-width", "1");
+          path.style.cursor = "pointer";
+
+          // Add interactive tooltip
+          const existingTitle = path.getElementsByTagName("title")[0];
+          const titleText = `${provName}: ${match.visitors} Pengunjung`;
+          if (existingTitle) {
+            existingTitle.textContent = titleText;
+          } else {
+            const titleEl = document.createElementNS("http://www.w3.org/2000/svg", "title");
+            titleEl.textContent = titleText;
+            path.appendChild(titleEl);
+          }
+        } else {
+          path.setAttribute("fill", "#EFEFEF");
+          path.setAttribute("fill-opacity", "1");
+          path.setAttribute("stroke", "#cccccc");
+          path.setAttribute("stroke-width", "0.5");
+
+          const titleEl = path.getElementsByTagName("title")[0];
+          if (titleEl) path.removeChild(titleEl);
+        }
+      }
+    }
+  }, [svgContent, data]);
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await skyshareApi.get(`/analytics/dashboard?days=${filterDays}`);
+      setData(response.data.data);
+    } catch (error) {
+      console.error("Failed to load analytics dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterDays]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const response = await skyshareApi.get(`/analytics/dashboard?days=${filterDays}`);
-        setData(response.data.data);
-      } catch (error) {
-        console.error("Failed to load analytics dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
-  }, [filterDays]);
+    const timer = setTimeout(() => {
+      fetchDashboardData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchDashboardData]);
 
   // Use the premium flat skeleton loader when loading
   if (loading && !data) {
@@ -143,6 +212,7 @@ export default function CmsDashboard() {
     timeSeries: [],
     topPages: [],
     topReferrers: [],
+    provinces: [],
   };
 
   const totalUniqueVisitors = activeData.timeSeries.reduce(
@@ -248,21 +318,24 @@ export default function CmsDashboard() {
             <div className="flex items-center gap-2 bg-neutral-white border-2 border-black rounded-xl p-1 shadow-sm">
               <button
                 onClick={() => setFilterDays(7)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${filterDays === 7 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                disabled={loading}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 7 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
                 7 Hari
               </button>
               <button
                 onClick={() => setFilterDays(30)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${filterDays === 30 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                disabled={loading}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 30 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
                 30 Hari
               </button>
               <button
                 onClick={() => setFilterDays(90)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${filterDays === 90 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                disabled={loading}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 90 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
                   }`}
               >
                 90 Hari
@@ -527,9 +600,19 @@ export default function CmsDashboard() {
             {/* Performance Panel */}
             <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 flex flex-col justify-between shadow-sm">
               <div>
-                <div className="bg-background flex items-center gap-3 rounded-xl py-3 px-4 mb-4 border-2 border-black">
-                  <img className="w-5" src={InfoIcon} alt="" />
-                  <h4 className="headline-4">Kinerja Website</h4>
+                <div className="bg-background flex items-center justify-between gap-1 rounded-xl py-2 px-2 mb-4 border-2 border-black">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <img className="w-4 flex-shrink-0" src={InfoIcon} alt="" />
+                    <h4 className="font-bold text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">Performa</h4>
+                  </div>
+                  <button
+                    onClick={fetchDashboardData}
+                    disabled={loading}
+                    className="p-1 bg-white border border-black rounded-md hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    title="Perbarui Metrik"
+                  >
+                    <FiRefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                  </button>
                 </div>
 
                 <div className="flex flex-col gap-5 mt-4">
@@ -592,8 +675,93 @@ export default function CmsDashboard() {
             </div>
           </div>
 
-          {/* Row 3: Insights Tables */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Row 3: Geographical Map and Province Distribution */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+            {/* Province Distribution Table Card */}
+            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 flex flex-col justify-between shadow-sm min-h-[380px]">
+              <div>
+                <div className="bg-background flex justify-between items-center rounded-xl py-2 px-3 mb-4 border-2 border-black">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FiUsers className="w-4 h-4 flex-shrink-0 text-primary-1" />
+                    <h4 className="font-bold text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">Distribusi Wilayah</h4>
+                  </div>
+                </div>
+
+                <div className="overflow-y-auto max-h-[240px] pr-1">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="text-gray-500 font-bold border-b border-gray-200 pb-3">
+                        <th className="pb-3 w-3/4">Provinsi / Wilayah</th>
+                        <th className="pb-3 text-right">Pengunjung</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activeData.provinces && activeData.provinces.length > 0 ? (
+                        activeData.provinces.map((prov, index) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
+                            <td className="py-2.5 font-bold text-gray-700 flex items-center gap-2">
+                              <span className="text-[10px] text-gray-400 w-4 inline-block font-black">{index + 1}.</span>
+                              <span className="text-black font-black truncate max-w-[150px]">{prov.province}</span>
+                            </td>
+                            <td className="py-2.5 text-right font-black text-black">{prov.visitors.toLocaleString()}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={2} className="text-center py-12 text-gray-500 font-bold">
+                            Belum ada data distribusi wilayah.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="mt-4 bg-background border border-black rounded-xl p-2.5 flex gap-2 text-[9px] text-gray-600 leading-relaxed font-bold">
+                <FiCompass className="w-4 h-4 flex-shrink-0 text-primary-1 mt-0.5" />
+                <div>
+                  Kategori "Luar Negeri" mencakup akses VPN, IP luar negeri, atau proxy terenkripsi.
+                </div>
+              </div>
+            </div>
+
+            {/* Indonesia Map Card */}
+            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between shadow-sm min-h-[380px]">
+              <div>
+                <div className="bg-background flex items-center justify-between gap-3 rounded-xl py-3 px-4 mb-4 border-2 border-black">
+                  <div className="flex items-center gap-3">
+                    <FiGlobe className="w-5 h-5 text-primary-1" />
+                    <h4 className="headline-4">Geografis Pengunjung (Indonesia)</h4>
+                  </div>
+                  <span className="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-black animate-pulse">
+                    Real-time
+                  </span>
+                </div>
+
+                {/* Inline SVG Map Render */}
+                <div className="relative pt-2 overflow-x-auto flex items-center justify-center min-h-[220px]">
+                  {svgContent ? (
+                    <div
+                      className="w-full h-auto min-w-[550px] inline-svg-map-container"
+                      dangerouslySetInnerHTML={{ __html: svgContent }}
+                    />
+                  ) : (
+                    <div className="text-gray-400 font-bold py-12">Memuat Peta Geografis...</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-100 pt-3 flex justify-between text-[10px] text-gray-500 font-bold mt-4">
+                <span>💡 Sorot provinsi untuk melihat jumlah pengunjung spesifik.</span>
+                <span>🇮🇩 Peta Jangkauan Indonesia</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 4: Insights Tables */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Top Pages Table Box */}
             <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 shadow-sm">
               <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4 border-2 border-black">
@@ -680,6 +848,7 @@ export default function CmsDashboard() {
           </div>
         </div>
       </div>
+      <LoadingModal isLoading={loading && !!data} message="Memperbarui Data..." />
     </div>
   );
 }
