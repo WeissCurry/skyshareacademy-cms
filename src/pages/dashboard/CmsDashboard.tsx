@@ -13,6 +13,9 @@ import {
   FiArrowRight,
   FiCompass,
   FiRefreshCw,
+  FiMaximize2,
+  FiX,
+  FiSearch,
 } from "react-icons/fi";
 
 interface TodayStats {
@@ -123,6 +126,14 @@ export default function CmsDashboard() {
   const [filterDays, setFilterDays] = useState(90);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [svgContent, setSvgContent] = useState<string>("");
+  const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hoveredProvince, setHoveredProvince] = useState<{
+    name: string;
+    visitors: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Load idmap.svg statically on mount
   useEffect(() => {
@@ -132,54 +143,96 @@ export default function CmsDashboard() {
       .catch((err) => console.error("Failed to load idmap.svg:", err));
   }, []);
 
-  // Dynamically color active provinces in the SVG based on visitor stats
+  // Dynamically color active provinces in the SVG based on visitor stats and attach event listeners
   useEffect(() => {
     if (!svgContent || !data) return;
 
     const provData = data.provinces || [];
     const maxVisitors = Math.max(...provData.map((p) => p.visitors), 1);
 
-    const svgEl = document.getElementById("features");
-    if (svgEl) {
-      const paths = svgEl.getElementsByTagName("path");
-      for (let i = 0; i < paths.length; i++) {
-        const path = paths[i];
-        const provName = path.getAttribute("name");
+    const mapContainers = document.querySelectorAll(".inline-svg-map-container");
+    const cleanupFns: (() => void)[] = [];
 
-        const match = provData.find(
-          (p) => p.province.toLowerCase() === provName?.toLowerCase()
-        );
+    mapContainers.forEach((container) => {
+      const svgEl = container.querySelector("#features");
+      if (svgEl) {
+        const paths = svgEl.getElementsByTagName("path");
+        for (let i = 0; i < paths.length; i++) {
+          const path = paths[i];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pathEl = path as any;
+          const provName = path.getAttribute("name");
 
-        if (match && match.visitors > 0) {
-          const intensity = match.visitors / maxVisitors;
-          path.setAttribute("fill", "#FEA02F");
-          path.setAttribute("fill-opacity", String(Math.max(0.15, intensity)));
-          path.setAttribute("stroke", "#000000");
-          path.setAttribute("stroke-width", "1");
-          path.style.cursor = "pointer";
+          const match = provData.find(
+            (p) => p.province.toLowerCase() === (provName || "").trim().toLowerCase()
+          );
 
-          // Add interactive tooltip
-          const existingTitle = path.getElementsByTagName("title")[0];
-          const titleText = `${provName}: ${match.visitors} Pengunjung`;
-          if (existingTitle) {
-            existingTitle.textContent = titleText;
-          } else {
-            const titleEl = document.createElementNS("http://www.w3.org/2000/svg", "title");
-            titleEl.textContent = titleText;
-            path.appendChild(titleEl);
+          // Clean up old event listeners if any were attached previously
+          if (pathEl._cleanup) {
+            pathEl._cleanup();
           }
-        } else {
-          path.setAttribute("fill", "#EFEFEF");
-          path.setAttribute("fill-opacity", "1");
-          path.setAttribute("stroke", "#cccccc");
-          path.setAttribute("stroke-width", "0.5");
 
-          const titleEl = path.getElementsByTagName("title")[0];
-          if (titleEl) path.removeChild(titleEl);
+          if (match && match.visitors > 0) {
+            const intensity = match.visitors / maxVisitors;
+            path.setAttribute("fill", "#FEA02F");
+            path.setAttribute("fill-opacity", String(Math.max(0.15, intensity)));
+            path.setAttribute("stroke", "#000000");
+            path.setAttribute("stroke-width", "1");
+            path.style.cursor = "pointer";
+
+            // Remove native tooltips
+            const titleEl = path.getElementsByTagName("title")[0];
+            if (titleEl) path.removeChild(titleEl);
+
+            const handleMouseEnter = (e: MouseEvent) => {
+              setHoveredProvince({
+                name: provName || "",
+                visitors: match.visitors,
+                x: e.clientX,
+                y: e.clientY,
+              });
+            };
+
+            const handleMouseMove = (e: MouseEvent) => {
+              setHoveredProvince((prev) =>
+                prev ? { ...prev, x: e.clientX, y: e.clientY } : null
+              );
+            };
+
+            const handleMouseLeave = () => {
+              setHoveredProvince(null);
+            };
+
+            path.addEventListener("mouseenter", handleMouseEnter);
+            path.addEventListener("mousemove", handleMouseMove);
+            path.addEventListener("mouseleave", handleMouseLeave);
+
+            const cleanup = () => {
+              path.removeEventListener("mouseenter", handleMouseEnter);
+              path.removeEventListener("mousemove", handleMouseMove);
+              path.removeEventListener("mouseleave", handleMouseLeave);
+            };
+
+            pathEl._cleanup = cleanup;
+            cleanupFns.push(cleanup);
+          } else {
+            path.setAttribute("fill", "#EFEFEF");
+            path.setAttribute("fill-opacity", "1");
+            path.setAttribute("stroke", "#cccccc");
+            path.setAttribute("stroke-width", "0.5");
+            path.style.cursor = "default";
+
+            const titleEl = path.getElementsByTagName("title")[0];
+            if (titleEl) path.removeChild(titleEl);
+          }
         }
       }
-    }
-  }, [svgContent, data]);
+    });
+
+    return () => {
+      cleanupFns.forEach((fn) => fn());
+    };
+  }, [svgContent, data, isFullscreenMapOpen]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -214,6 +267,10 @@ export default function CmsDashboard() {
     topReferrers: [],
     provinces: [],
   };
+
+  const filteredProvinces = (activeData.provinces || []).filter((prov) =>
+    prov.province.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const totalUniqueVisitors = activeData.timeSeries.reduce(
     (acc, point) => acc + point.unique_visitors,
@@ -440,7 +497,7 @@ export default function CmsDashboard() {
                 <div className="bg-background flex flex-col sm:flex-row justify-between sm:items-center rounded-xl py-3 px-4 mb-4 gap-2 border-2 border-black">
                   <div className="flex items-center gap-3">
                     <img className="w-5" src={EditIcon} alt="" />
-                    <h4 className="headline-4">Tren Pengunjung</h4>
+                    <h4 className="headline-4">Tren Pengunjung ({filterDays} Hari)</h4>
                     {!hasData && (
                       <span className="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-black animate-pulse">
                         Preview (Data Kosong)
@@ -684,7 +741,7 @@ export default function CmsDashboard() {
                 <div className="bg-background flex justify-between items-center rounded-xl py-2 px-3 mb-4 border-2 border-black">
                   <div className="flex items-center gap-2 min-w-0">
                     <FiUsers className="w-4 h-4 flex-shrink-0 text-primary-1" />
-                    <h4 className="font-bold text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">Distribusi Wilayah</h4>
+                    <h4 className="font-bold text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">Distribusi Wilayah ({filterDays} Hari)</h4>
                   </div>
                 </div>
 
@@ -733,11 +790,18 @@ export default function CmsDashboard() {
                 <div className="bg-background flex items-center justify-between gap-3 rounded-xl py-3 px-4 mb-4 border-2 border-black">
                   <div className="flex items-center gap-3">
                     <FiGlobe className="w-5 h-5 text-primary-1" />
-                    <h4 className="headline-4">Geografis Pengunjung (Indonesia)</h4>
+                    <h4 className="headline-4">Geografis Pengunjung ({filterDays} Hari)</h4>
                   </div>
-                  <span className="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-black animate-pulse">
-                    Real-time
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsFullscreenMapOpen(true)}
+                      className="px-2.5 py-1 bg-white border border-black rounded-lg hover:bg-gray-100 active:translate-x-[1.5px] active:translate-y-[1.5px] transition-all flex items-center gap-1.5 text-[10px] font-black shadow-[1.5px_1.5px_0px_#000] active:shadow-none"
+                      title="Perbesar Layar Peta"
+                    >
+                      <FiMaximize2 className="w-3 h-3 text-black" />
+                      <span>Detail</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Inline SVG Map Render */}
@@ -767,7 +831,7 @@ export default function CmsDashboard() {
               <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4 border-2 border-black">
                 <div className="flex items-center gap-3">
                   <FiGlobe className="w-5 h-5 text-primary-1" />
-                  <h4 className="headline-4">Halaman Terpopuler</h4>
+                  <h4 className="headline-4">Halaman Terpopuler ({filterDays} Hari)</h4>
                 </div>
                 <FiArrowRight className="text-gray-400 w-5 h-5" />
               </div>
@@ -810,7 +874,7 @@ export default function CmsDashboard() {
               <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4 border-2 border-black">
                 <div className="flex items-center gap-3">
                   <FiExternalLink className="w-5 h-5 text-primary-1" />
-                  <h4 className="headline-4">Sumber Traffic</h4>
+                  <h4 className="headline-4">Sumber Traffic ({filterDays} Hari)</h4>
                 </div>
                 <FiExternalLink className="text-gray-400 w-5 h-5" />
               </div>
@@ -849,6 +913,140 @@ export default function CmsDashboard() {
         </div>
       </div>
       <LoadingModal isLoading={loading && !!data} message="Memperbarui Data..." />
+
+      {/* Floating HTML Hover Tooltip */}
+      {hoveredProvince && (
+        <div
+          style={{
+            position: "fixed",
+            top: hoveredProvince.y - 75,
+            left: hoveredProvince.x + 15,
+            pointerEvents: "none",
+            zIndex: 9999,
+          }}
+          className="bg-white border-2 border-black p-3.5 rounded-xl shadow-[4px_4px_0px_#000] min-w-[160px] transition-all duration-75"
+        >
+          <div className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-0.5">
+            🇮🇩 Wilayah
+          </div>
+          <div className="font-black text-black text-sm mb-1.5 leading-tight">
+            {hoveredProvince.name}
+          </div>
+          <div className="flex items-center justify-between border-t border-gray-100 pt-1.5 text-xs">
+            <span className="font-bold text-gray-500">Pengunjung:</span>
+            <span className="font-black text-primary-1 bg-amber-50 px-2 py-0.5 rounded border border-black text-[11px]">
+              {hoveredProvince.visitors.toLocaleString()}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Interactive Modal */}
+      {isFullscreenMapOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 transition-all"
+          onClick={() => {
+            setIsFullscreenMapOpen(false);
+            setSearchQuery("");
+          }}
+        >
+          <div
+            className="bg-background border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] w-full max-w-[1250px] h-[90vh] flex flex-col justify-between"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b-2 border-black mb-4">
+              <div>
+                <h2 className="text-xl md:text-2xl font-black flex items-center gap-2 text-black">
+                  <FiGlobe className="w-5 h-5 md:w-6 md:h-6 text-primary-1" />
+                  Analisis Geografis Pengunjung ({filterDays} Hari Terakhir)
+                </h2>
+                <p className="text-gray-500 text-xs font-bold mt-1">
+                  Visualisasi jangkauan akses dan statistik pengunjung per wilayah Indonesia.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsFullscreenMapOpen(false);
+                  setSearchQuery("");
+                }}
+                className="p-1.5 md:p-2 bg-white border-2 border-black rounded-xl hover:bg-rose-50 hover:text-rose-600 active:translate-x-[1.5px] active:translate-y-[1.5px] transition-all shadow-[2px_2px_0px_#000] active:shadow-none"
+              >
+                <FiX className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
+
+            {/* Modal Grid Body */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden min-h-0">
+              {/* Kolom Kiri: Peta SVG Interaktif */}
+              <div className="lg:col-span-2 bg-white border-2 border-black rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden h-full">
+                <div className="absolute top-4 left-4 bg-background border border-black rounded-lg px-2.5 py-1 text-[9px] font-black uppercase text-gray-500">
+                  PETA INTERAKTIF
+                </div>
+                <div
+                  className="w-full h-full max-h-[85%] flex items-center justify-center inline-svg-map-container"
+                  dangerouslySetInnerHTML={{ __html: svgContent }}
+                />
+                <div className="absolute bottom-4 left-4 text-[10px] text-gray-500 font-bold">
+                  💡 Arahkan kursor ke wilayah untuk melihat detail pengunjung.
+                </div>
+              </div>
+
+              {/* Kolom Rerata/Kanan: Tabel Distribusi Detail dengan Pencarian */}
+              <div className="bg-white border-2 border-black rounded-2xl p-5 flex flex-col h-full overflow-hidden">
+                <div className="relative mb-4">
+                  <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Cari provinsi..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-xs font-bold bg-background border-2 border-black rounded-xl focus:outline-none focus:bg-white shadow-[2px_2px_0px_#000] focus:shadow-none transition-all"
+                  />
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-1">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="text-gray-500 font-bold border-b border-gray-200 pb-3 sticky top-0 bg-white z-10">
+                        <th className="pb-3 w-3/4">Provinsi / Wilayah</th>
+                        <th className="pb-3 text-right">Pengunjung</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProvinces && filteredProvinces.length > 0 ? (
+                        filteredProvinces.map((prov, index) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
+                            <td className="py-2.5 font-bold text-gray-700 flex items-center gap-2">
+                              <span className="text-[10px] text-gray-400 w-4 inline-block font-black">{index + 1}.</span>
+                              <span className="text-black font-black truncate">{prov.province}</span>
+                            </td>
+                            <td className="py-2.5 text-right font-black text-black">
+                              {prov.visitors.toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={2} className="text-center py-12 text-gray-500 font-bold">
+                            Provinsi "{searchQuery}" tidak ditemukan.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-4 border-t-2 border-black mt-4 flex justify-between items-center text-[10px] text-gray-500 font-bold">
+              <span>🇮🇩 Data Wilayah Indonesia ({filterDays} Hari Terakhir)</span>
+              <span>Total: {activeData.provinces?.length || 0} Provinsi Tercatat</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
