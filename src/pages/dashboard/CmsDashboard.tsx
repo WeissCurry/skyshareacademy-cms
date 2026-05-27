@@ -128,12 +128,7 @@ export default function CmsDashboard() {
   const [svgContent, setSvgContent] = useState<string>("");
   const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [hoveredProvince, setHoveredProvince] = useState<{
-    name: string;
-    visitors: number;
-    x: number;
-    y: number;
-  } | null>(null);
+
 
   // Load idmap.svg statically on mount
   useEffect(() => {
@@ -143,15 +138,18 @@ export default function CmsDashboard() {
       .catch((err) => console.error("Failed to load idmap.svg:", err));
   }, []);
 
-  // Dynamically color active provinces in the SVG based on visitor stats and attach event listeners
+  // Dynamically color active provinces in the SVG based on visitor stats
   useEffect(() => {
     if (!svgContent || !data) return;
 
-    const provData = data.provinces || [];
+    // Standardize and sanitize provinces list to avoid NaN or crash errors
+    const provData = (data.provinces || []).map((p) => ({
+      province: p?.province || "",
+      visitors: Number(p?.visitors) || 0,
+    }));
     const maxVisitors = Math.max(...provData.map((p) => p.visitors), 1);
 
     const mapContainers = document.querySelectorAll(".inline-svg-map-container");
-    const cleanupFns: (() => void)[] = [];
 
     mapContainers.forEach((container) => {
       const svgEl = container.querySelector("#features");
@@ -159,79 +157,49 @@ export default function CmsDashboard() {
         const paths = svgEl.getElementsByTagName("path");
         for (let i = 0; i < paths.length; i++) {
           const path = paths[i];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const pathEl = path as any;
           const provName = path.getAttribute("name");
 
           const match = provData.find(
-            (p) => p.province.toLowerCase() === (provName || "").trim().toLowerCase()
+            (p) => p && p.province && p.province.toLowerCase() === (provName || "").trim().toLowerCase()
           );
 
-          // Clean up old event listeners if any were attached previously
-          if (pathEl._cleanup) {
-            pathEl._cleanup();
-          }
+          const hasVisitors = match && match.visitors > 0;
 
-          if (match && match.visitors > 0) {
+          // Determine base styling (heat map scale: deeper orange/jingga for more visitors)
+          let baseFill = "#EFEFEF"; // 0 visitors (gray)
+          let baseStroke = "#cccccc";
+          let baseStrokeWidth = "0.5";
+
+          if (hasVisitors) {
             const intensity = match.visitors / maxVisitors;
-            path.setAttribute("fill", "#FEA02F");
-            path.setAttribute("fill-opacity", String(Math.max(0.15, intensity)));
-            path.setAttribute("stroke", "#000000");
-            path.setAttribute("stroke-width", "1");
-            path.style.cursor = "pointer";
+            baseStroke = "#000000";
+            baseStrokeWidth = "1";
 
-            // Remove native tooltips
-            const titleEl = path.getElementsByTagName("title")[0];
-            if (titleEl) path.removeChild(titleEl);
-
-            const handleMouseEnter = (e: MouseEvent) => {
-              setHoveredProvince({
-                name: provName || "",
-                visitors: match.visitors,
-                x: e.clientX,
-                y: e.clientY,
-              });
-            };
-
-            const handleMouseMove = (e: MouseEvent) => {
-              setHoveredProvince((prev) =>
-                prev ? { ...prev, x: e.clientX, y: e.clientY } : null
-              );
-            };
-
-            const handleMouseLeave = () => {
-              setHoveredProvince(null);
-            };
-
-            path.addEventListener("mouseenter", handleMouseEnter);
-            path.addEventListener("mousemove", handleMouseMove);
-            path.addEventListener("mouseleave", handleMouseLeave);
-
-            const cleanup = () => {
-              path.removeEventListener("mouseenter", handleMouseEnter);
-              path.removeEventListener("mousemove", handleMouseMove);
-              path.removeEventListener("mouseleave", handleMouseLeave);
-            };
-
-            pathEl._cleanup = cleanup;
-            cleanupFns.push(cleanup);
-          } else {
-            path.setAttribute("fill", "#EFEFEF");
-            path.setAttribute("fill-opacity", "1");
-            path.setAttribute("stroke", "#cccccc");
-            path.setAttribute("stroke-width", "0.5");
-            path.style.cursor = "default";
-
-            const titleEl = path.getElementsByTagName("title")[0];
-            if (titleEl) path.removeChild(titleEl);
+            // 4-step vibrant color scale representing visitor density (makin banyak makin pekat jingga)
+            if (intensity <= 0.25) {
+              baseFill = "#FFEBD1"; // very soft light warm peach
+            } else if (intensity <= 0.5) {
+              baseFill = "#FFC583"; // soft warm gold/orange
+            } else if (intensity <= 0.75) {
+              baseFill = "#FEA02F"; // standard vibrant orange (jingga)
+            } else {
+              baseFill = "#D85300"; // deep rich neobrutalist dark orange/jingga
+            }
           }
+
+          // Set base attributes
+          path.setAttribute("fill", baseFill);
+          path.setAttribute("fill-opacity", "1");
+          path.setAttribute("stroke", baseStroke);
+          path.setAttribute("stroke-width", baseStrokeWidth);
+          path.style.cursor = "default"; // remove pointer since it's no longer interactive
+
+          // Remove native tooltips
+          const titleEl = path.getElementsByTagName("title")[0];
+          if (titleEl) path.removeChild(titleEl);
         }
       }
     });
-
-    return () => {
-      cleanupFns.forEach((fn) => fn());
-    };
   }, [svgContent, data, isFullscreenMapOpen]);
 
   const fetchDashboardData = useCallback(async () => {
@@ -820,20 +788,19 @@ export default function CmsDashboard() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setIsFullscreenMapOpen(true)}
-                      className="px-2.5 py-1 bg-white border border-black rounded-lg hover:bg-gray-100 active:translate-x-[1.5px] active:translate-y-[1.5px] transition-all flex items-center gap-1.5 text-[10px] font-black shadow-[1.5px_1.5px_0px_#000] active:shadow-none"
+                      className="p-2 bg-white border border-black rounded-lg hover:bg-gray-100 active:translate-x-[1.5px] active:translate-y-[1.5px] transition-all flex items-center justify-center shadow-[1.5px_1.5px_0px_#000] active:shadow-none"
                       title="Perbesar Layar Peta"
                     >
-                      <FiMaximize2 className="w-3 h-3 text-black" />
-                      <span>Detail</span>
+                      <FiMaximize2 className="w-3.5 h-3.5 text-black" />
                     </button>
                   </div>
                 </div>
 
                 {/* Inline SVG Map Render */}
-                <div className="relative pt-2 overflow-x-auto flex items-center justify-center min-h-[220px]">
+                <div className="relative pt-2 flex items-center justify-center min-h-[220px] overflow-hidden">
                   {svgContent ? (
                     <div
-                      className="w-full h-auto min-w-[550px] inline-svg-map-container"
+                      className="w-full h-auto max-w-[480px] inline-svg-map-container"
                       dangerouslySetInnerHTML={{ __html: svgContent }}
                     />
                   ) : (
@@ -939,44 +906,40 @@ export default function CmsDashboard() {
       </div>
       <LoadingModal isLoading={loading && !!data} message="Memperbarui Data..." />
 
-      {/* Floating HTML Hover Tooltip */}
-      {hoveredProvince && (
-        <div
-          style={{
-            position: "fixed",
-            top: hoveredProvince.y - 75,
-            left: hoveredProvince.x + 15,
-            pointerEvents: "none",
-            zIndex: 9999,
-          }}
-          className="bg-white border-2 border-black p-3.5 rounded-xl shadow-[4px_4px_0px_#000] min-w-[160px] transition-all duration-75"
-        >
-          <div className="text-[10px] font-black uppercase text-gray-400 tracking-wider mb-0.5">
-            🇮🇩 Wilayah
-          </div>
-          <div className="font-black text-black text-sm mb-1.5 leading-tight">
-            {hoveredProvince.name}
-          </div>
-          <div className="flex items-center justify-between border-t border-gray-100 pt-1.5 text-xs">
-            <span className="font-bold text-gray-500">Pengunjung:</span>
-            <span className="font-black text-primary-1 bg-amber-50 px-2 py-0.5 rounded border border-black text-[11px]">
-              {hoveredProvince.visitors.toLocaleString()}
-            </span>
-          </div>
-        </div>
-      )}
+      <style>{`
+        @keyframes modalBackdropIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalContentIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        .animate-backdrop-in {
+          animation: modalBackdropIn 0.2s ease-out forwards;
+        }
+        .animate-modal-in {
+          animation: modalContentIn 0.28s cubic-bezier(0.34, 1.6, 0.64, 1) forwards;
+        }
+      `}</style>
 
       {/* Fullscreen Interactive Modal */}
       {isFullscreenMapOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 transition-all"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-backdrop-in"
           onClick={() => {
             setIsFullscreenMapOpen(false);
             setSearchQuery("");
           }}
         >
           <div
-            className="bg-background border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] w-full max-w-[1250px] h-[90vh] flex flex-col justify-between"
+            className="bg-background border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] w-full max-w-[1250px] h-[90vh] flex flex-col justify-between animate-modal-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
