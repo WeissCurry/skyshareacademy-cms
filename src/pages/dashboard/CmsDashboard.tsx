@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, memo } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
 import LoadingModal from "@shared/ui/LoadingModal";
@@ -120,10 +120,87 @@ function DashboardSkeleton() {
   );
 }
 
+// Separated and memoized Map component to prevent resetting colors on parent re-renders (like chart hover)
+const IndonesiaMap = memo(
+  ({
+    svgContent,
+    provinces,
+    className,
+  }: {
+    svgContent: string;
+    provinces: ProvinceStat[];
+    className?: string;
+  }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!svgContent || !containerRef.current) return;
+
+      const provData = (provinces || []).map((p) => ({
+        province: p?.province || "",
+        visitors: Number(p?.visitors) || 0,
+      }));
+      const maxVisitors = Math.max(...provData.map((p) => p.visitors), 1);
+
+      const svgEl = containerRef.current.querySelector("#features");
+      if (svgEl) {
+        const paths = svgEl.getElementsByTagName("path");
+        for (let i = 0; i < paths.length; i++) {
+          const path = paths[i];
+          const provName = path.getAttribute("name");
+
+          const match = provData.find(
+            (p) => p && p.province && p.province.toLowerCase() === (provName || "").trim().toLowerCase()
+          );
+
+          const hasVisitors = match && match.visitors > 0;
+
+          let baseFill = "#EFEFEF"; // 0 visitors (gray)
+          let baseStroke = "#cccccc";
+          let baseStrokeWidth = "0.5";
+
+          if (hasVisitors) {
+            const intensity = match.visitors / maxVisitors;
+            baseStroke = "#000000";
+            baseStrokeWidth = "1";
+
+            if (intensity <= 0.25) {
+              baseFill = "#FFEBD1";
+            } else if (intensity <= 0.5) {
+              baseFill = "#FFC583";
+            } else if (intensity <= 0.75) {
+              baseFill = "#FEA02F";
+            } else {
+              baseFill = "#D85300";
+            }
+          }
+
+          path.setAttribute("fill", baseFill);
+          path.setAttribute("fill-opacity", "1");
+          path.setAttribute("stroke", baseStroke);
+          path.setAttribute("stroke-width", baseStrokeWidth);
+          path.style.cursor = "default";
+
+          const titleEl = path.getElementsByTagName("title")[0];
+          if (titleEl) path.removeChild(titleEl);
+        }
+      }
+    }, [svgContent, provinces]);
+
+    return (
+      <div
+        ref={containerRef}
+        className={className}
+        dangerouslySetInnerHTML={{ __html: svgContent }}
+      />
+    );
+  }
+);
+
 export default function CmsDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filterDays, setFilterDays] = useState(90);
+  const [filterDays, setFilterDays] = useState(30);
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [svgContent, setSvgContent] = useState<string>("");
   const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
@@ -138,69 +215,7 @@ export default function CmsDashboard() {
       .catch((err) => console.error("Failed to load idmap.svg:", err));
   }, []);
 
-  // Dynamically color active provinces in the SVG based on visitor stats
-  useEffect(() => {
-    if (!svgContent || !data) return;
 
-    // Standardize and sanitize provinces list to avoid NaN or crash errors
-    const provData = (data.provinces || []).map((p) => ({
-      province: p?.province || "",
-      visitors: Number(p?.visitors) || 0,
-    }));
-    const maxVisitors = Math.max(...provData.map((p) => p.visitors), 1);
-
-    const mapContainers = document.querySelectorAll(".inline-svg-map-container");
-
-    mapContainers.forEach((container) => {
-      const svgEl = container.querySelector("#features");
-      if (svgEl) {
-        const paths = svgEl.getElementsByTagName("path");
-        for (let i = 0; i < paths.length; i++) {
-          const path = paths[i];
-          const provName = path.getAttribute("name");
-
-          const match = provData.find(
-            (p) => p && p.province && p.province.toLowerCase() === (provName || "").trim().toLowerCase()
-          );
-
-          const hasVisitors = match && match.visitors > 0;
-
-          // Determine base styling (heat map scale: deeper orange/jingga for more visitors)
-          let baseFill = "#EFEFEF"; // 0 visitors (gray)
-          let baseStroke = "#cccccc";
-          let baseStrokeWidth = "0.5";
-
-          if (hasVisitors) {
-            const intensity = match.visitors / maxVisitors;
-            baseStroke = "#000000";
-            baseStrokeWidth = "1";
-
-            // 4-step vibrant color scale representing visitor density (makin banyak makin pekat jingga)
-            if (intensity <= 0.25) {
-              baseFill = "#FFEBD1"; // very soft light warm peach
-            } else if (intensity <= 0.5) {
-              baseFill = "#FFC583"; // soft warm gold/orange
-            } else if (intensity <= 0.75) {
-              baseFill = "#FEA02F"; // standard vibrant orange (jingga)
-            } else {
-              baseFill = "#D85300"; // deep rich neobrutalist dark orange/jingga
-            }
-          }
-
-          // Set base attributes
-          path.setAttribute("fill", baseFill);
-          path.setAttribute("fill-opacity", "1");
-          path.setAttribute("stroke", baseStroke);
-          path.setAttribute("stroke-width", baseStrokeWidth);
-          path.style.cursor = "default"; // remove pointer since it's no longer interactive
-
-          // Remove native tooltips
-          const titleEl = path.getElementsByTagName("title")[0];
-          if (titleEl) path.removeChild(titleEl);
-        }
-      }
-    });
-  }, [svgContent, data, isFullscreenMapOpen]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -251,7 +266,7 @@ export default function CmsDashboard() {
   const chartPoints = (() => {
     const points: TimeSeriesPoint[] = [];
     const dateMap = new Map<string, TimeSeriesPoint>();
-    
+
     // Index existing records from the backend by YYYY-MM-DD
     (activeData.timeSeries || []).forEach((p) => {
       try {
@@ -266,7 +281,7 @@ export default function CmsDashboard() {
       const d = new Date();
       d.setDate(d.getDate() - (filterDays - 1 - i));
       const dateStr = d.toISOString().split("T")[0];
-      
+
       const existing = dateMap.get(dateStr);
       if (existing) {
         points.push({
@@ -490,7 +505,7 @@ export default function CmsDashboard() {
                 <div className="bg-background flex flex-col sm:flex-row justify-between sm:items-center rounded-xl py-3 px-4 mb-4 gap-2 border-2 border-black">
                   <div className="flex items-center gap-3">
                     <img className="w-5" src={EditIcon} alt="" />
-                    <h4 className="headline-4">Tren Pengunjung ({filterDays} Hari)</h4>
+                    <h4 className="headline-4">Tren Pengunjung</h4>
                     {!hasData && (
                       <span className="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-black animate-pulse">
                         Preview (Data Kosong)
@@ -731,30 +746,30 @@ export default function CmsDashboard() {
             {/* Province Distribution Table Card */}
             <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 flex flex-col justify-between shadow-sm min-h-[380px]">
               <div>
-                <div className="bg-background flex justify-between items-center rounded-xl py-2 px-3 mb-4 border-2 border-black">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <FiUsers className="w-4 h-4 flex-shrink-0 text-primary-1" />
-                    <h4 className="font-bold text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">Distribusi Wilayah ({filterDays} Hari)</h4>
+                <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4 border-2 border-black h-[59.33px]">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FiUsers className="w-5 h-5 flex-shrink-0 text-primary-1" />
+                    <h4 className="headline-4">Wilayah</h4>
                   </div>
                 </div>
 
-                <div className="overflow-y-auto max-h-[240px] pr-1">
+                <div className="overflow-y-auto max-h-[320px] pr-2">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="text-gray-500 font-bold border-b border-gray-200 pb-3">
-                        <th className="pb-3 w-3/4">Provinsi / Wilayah</th>
-                        <th className="pb-3 text-right">Pengunjung</th>
+                        <th className="pb-3 w-[60%] text-[11px]">Provinsi / Wilayah</th>
+                        <th className="pb-3 text-right text-[11px] pr-2">Pengunjung</th>
                       </tr>
                     </thead>
                     <tbody>
                       {activeData.provinces && activeData.provinces.length > 0 ? (
-                        activeData.provinces.map((prov, index) => (
+                        activeData.provinces.slice(0, 10).map((prov, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
-                            <td className="py-2.5 font-bold text-gray-700 flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400 w-4 inline-block font-black">{index + 1}.</span>
-                              <span className="text-black font-black truncate max-w-[150px]">{prov.province}</span>
+                            <td className="py-2 font-bold text-gray-700 flex items-center gap-1.5 min-w-0">
+                              <span className="text-[10px] text-gray-400 w-3.5 inline-block font-black">{index + 1}.</span>
+                              <span className="text-black font-black truncate max-w-[100px] text-[11px]">{prov.province}</span>
                             </td>
-                            <td className="py-2.5 text-right font-black text-black">{prov.visitors.toLocaleString()}</td>
+                            <td className="py-2 text-right font-black text-black text-[11px] pr-2">{prov.visitors.toLocaleString()}</td>
                           </tr>
                         ))
                       ) : (
@@ -783,7 +798,7 @@ export default function CmsDashboard() {
                 <div className="bg-background flex items-center justify-between gap-3 rounded-xl py-3 px-4 mb-4 border-2 border-black">
                   <div className="flex items-center gap-3">
                     <FiGlobe className="w-5 h-5 text-primary-1" />
-                    <h4 className="headline-4">Geografis Pengunjung ({filterDays} Hari)</h4>
+                    <h4 className="headline-4">Geografis Pengunjung</h4>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -799,9 +814,10 @@ export default function CmsDashboard() {
                 {/* Inline SVG Map Render */}
                 <div className="relative pt-2 flex items-center justify-center min-h-[220px] overflow-hidden">
                   {svgContent ? (
-                    <div
+                    <IndonesiaMap
+                      svgContent={svgContent}
+                      provinces={activeData.provinces || []}
                       className="w-full h-auto max-w-[480px] inline-svg-map-container"
-                      dangerouslySetInnerHTML={{ __html: svgContent }}
                     />
                   ) : (
                     <div className="text-gray-400 font-bold py-12">Memuat Peta Geografis...</div>
@@ -823,30 +839,30 @@ export default function CmsDashboard() {
               <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4 border-2 border-black">
                 <div className="flex items-center gap-3">
                   <FiGlobe className="w-5 h-5 text-primary-1" />
-                  <h4 className="headline-4">Halaman Terpopuler ({filterDays} Hari)</h4>
+                  <h4 className="headline-4">Halaman Terpopuler</h4>
                 </div>
                 <FiArrowRight className="text-gray-400 w-5 h-5" />
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto pr-1">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="text-gray-500 font-bold border-b border-gray-200 pb-3">
-                      <th className="pb-3 w-3/4">URL Path</th>
-                      <th className="pb-3 text-right">Kunjungan</th>
+                      <th className="pb-3 w-[65%] text-[11px]">URL Path</th>
+                      <th className="pb-3 text-right text-[11px] pr-2">Kunjungan</th>
                     </tr>
                   </thead>
                   <tbody>
                     {activeData.topPages.length > 0 ? (
                       activeData.topPages.map((page, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
-                          <td className="py-3 font-bold text-gray-700 truncate max-w-[210px] flex items-center gap-2">
+                          <td className="py-3 font-bold text-gray-700 truncate max-w-[210px] flex items-center gap-2 min-w-0">
                             <span className="text-[10px] text-gray-400 w-4 inline-block font-black">{index + 1}.</span>
-                            <code className="text-[10px] text-primary-1 bg-background border border-gray-200 px-2 py-0.5 rounded font-mono font-bold">
+                            <code className="text-[10px] text-primary-1 bg-background border border-gray-200 px-2 py-0.5 rounded font-mono font-bold truncate">
                               {page.path}
                             </code>
                           </td>
-                          <td className="py-3 text-right font-black text-black">{page.views.toLocaleString()}</td>
+                          <td className="py-3 text-right font-black text-black text-[11px] pr-2">{page.views.toLocaleString()}</td>
                         </tr>
                       ))
                     ) : (
@@ -866,28 +882,28 @@ export default function CmsDashboard() {
               <div className="bg-background flex justify-between items-center rounded-xl py-3 px-4 mb-4 border-2 border-black">
                 <div className="flex items-center gap-3">
                   <FiExternalLink className="w-5 h-5 text-primary-1" />
-                  <h4 className="headline-4">Sumber Traffic ({filterDays} Hari)</h4>
+                  <h4 className="headline-4">Sumber Traffic</h4>
                 </div>
                 <FiExternalLink className="text-gray-400 w-5 h-5" />
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto pr-1">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="text-gray-500 font-bold border-b border-gray-200 pb-3">
-                      <th className="pb-3 w-3/4">Sumber Referensi</th>
-                      <th className="pb-3 text-right">Kunjungan</th>
+                      <th className="pb-3 w-[65%] text-[11px]">Sumber Referensi</th>
+                      <th className="pb-3 text-right text-[11px] pr-2">Kunjungan</th>
                     </tr>
                   </thead>
                   <tbody>
                     {activeData.topReferrers.length > 0 ? (
                       activeData.topReferrers.map((ref, index) => (
                         <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
-                          <td className="py-3 font-bold text-gray-700 flex items-center gap-2">
+                          <td className="py-3 font-bold text-gray-700 flex items-center gap-2 min-w-0 text-[11px]">
                             <span className="text-[10px] text-gray-400 w-4 inline-block font-black">{index + 1}.</span>
-                            <span className="text-black font-black">{ref.referrer}</span>
+                            <span className="text-black font-black truncate">{ref.referrer}</span>
                           </td>
-                          <td className="py-3 text-right font-black text-black">{ref.views.toLocaleString()}</td>
+                          <td className="py-3 text-right font-black text-black text-[11px] pr-2">{ref.views.toLocaleString()}</td>
                         </tr>
                       ))
                     ) : (
@@ -971,10 +987,13 @@ export default function CmsDashboard() {
                 <div className="absolute top-4 left-4 bg-background border border-black rounded-lg px-2.5 py-1 text-[9px] font-black uppercase text-gray-500">
                   PETA INTERAKTIF
                 </div>
-                <div
-                  className="w-full h-full max-h-[85%] flex items-center justify-center inline-svg-map-container"
-                  dangerouslySetInnerHTML={{ __html: svgContent }}
-                />
+                {svgContent && (
+                  <IndonesiaMap
+                    svgContent={svgContent}
+                    provinces={activeData.provinces || []}
+                    className="w-full h-full max-h-[85%] flex items-center justify-center inline-svg-map-container"
+                  />
+                )}
                 <div className="absolute bottom-4 left-4 text-[10px] text-gray-500 font-bold">
                   💡 Arahkan kursor ke wilayah untuk melihat detail pengunjung.
                 </div>
@@ -993,23 +1012,23 @@ export default function CmsDashboard() {
                   />
                 </div>
 
-                <div className="flex-1 overflow-y-auto pr-1">
+                <div className="flex-1 overflow-y-auto pr-2">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="text-gray-500 font-bold border-b border-gray-200 pb-3 sticky top-0 bg-white z-10">
-                        <th className="pb-3 w-3/4">Provinsi / Wilayah</th>
-                        <th className="pb-3 text-right">Pengunjung</th>
+                        <th className="pb-3 w-[65%] text-[11px]">Provinsi / Wilayah</th>
+                        <th className="pb-3 text-right text-[11px] pr-2">Pengunjung</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredProvinces && filteredProvinces.length > 0 ? (
                         filteredProvinces.map((prov, index) => (
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50/50 transition-all">
-                            <td className="py-2.5 font-bold text-gray-700 flex items-center gap-2">
+                            <td className="py-2.5 font-bold text-gray-700 flex items-center gap-2 min-w-0 text-[11px]">
                               <span className="text-[10px] text-gray-400 w-4 inline-block font-black">{index + 1}.</span>
-                              <span className="text-black font-black truncate">{prov.province}</span>
+                              <span className="text-black font-black truncate max-w-[120px]">{prov.province}</span>
                             </td>
-                            <td className="py-2.5 text-right font-black text-black">
+                            <td className="py-2.5 text-right font-black text-black text-[11px] pr-2">
                               {prov.visitors.toLocaleString()}
                             </td>
                           </tr>
