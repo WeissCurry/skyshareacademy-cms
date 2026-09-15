@@ -7,7 +7,6 @@ import ConfirmModal from "@shared/ui/ConfirmModal";
 import BookletSection from "./components/BookletSection";
 import AlurSection from "./components/AlurSection";
 import TimelineSection from "./components/TimelineSection";
-import EventHighlightSection from "./components/EventHighlightSection";
 import ActionButtonsSection from "./components/ActionButtonsSection";
 
 import { useMentorForm } from "./hooks/useMentorForm";
@@ -19,7 +18,6 @@ function CmsMentorForm() {
     mentorForm,
     imagePreviewAlur,
     imagePreviewTimeline,
-    imagePreviewEvent,
     isUploading,
     isSaveModalOpen,
     isCancelModalOpen,
@@ -65,17 +63,6 @@ function CmsMentorForm() {
               urlValue={mentorForm.url_timeline || ""}
               onFileChange={handleFileChange('gambar_timeline', actions.setImagePreviewTimeline, 'url_timeline')}
               onUrlChange={handleUrlChange('gambar_timeline', actions.setImagePreviewTimeline, 'url_timeline')}
-            />
-
-            <EventHighlightSection 
-              isActive={!!mentorForm.is_event_active}
-              onToggle={() => updateFormValue({ is_event_active: !mentorForm.is_event_active })}
-              imageUrl={imagePreviewEvent}
-              ctaLink={mentorForm.event_cta_link || ""}
-              urlValue={mentorForm.url_event || ""}
-              onFileChange={handleFileChange('event_image_url', actions.setImagePreviewEvent, 'url_event')}
-              onUrlChange={handleUrlChange('event_image_url', actions.setImagePreviewEvent, 'url_event')}
-              onCtaChange={(val) => updateFormValue({ event_cta_link: val })}
             />
 
             <ActionButtonsSection 

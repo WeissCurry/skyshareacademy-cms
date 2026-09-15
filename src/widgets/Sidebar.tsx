@@ -6,7 +6,7 @@ import ArrowRight from "@shared/assets/images/mascot-icons/Arrow - Right 3.png";
 import IconAddUser from "@shared/assets/images/mascot-icons/Add User.png";
 import IconMedia from "@shared/assets/images/mascot-icons/Image 3.png";
 import LoadingModal from "@shared/ui/LoadingModal";
-import { FiTrendingUp } from "react-icons/fi";
+import { FiTrendingUp, FiBell } from "react-icons/fi";
 
 interface AdminData {
   role: string;
@@ -76,6 +76,13 @@ function Sidebar() {
       label: "Article",
       to: "/cms/article",
       icon: Edit,
+      condition: true,
+    },
+    {
+      id: "event-management",
+      label: "Event & Popup",
+      to: "/cms/events",
+      icon: <FiBell className="w-6 h-6 text-neutral-dark" />,
       condition: true,
     },
     {

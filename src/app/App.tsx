@@ -26,6 +26,7 @@ const CmsArticleEditForm = lazy(() => import("@pages/article-management/CmsArtic
 const CmsArticleAddForm = lazy(() => import("@pages/article-management/CmsArticleAddForm"));
 const CmsMedia = lazy(() => import("@pages/media-management/MediaPage"));
 const CmsDashboard = lazy(() => import("@pages/dashboard/CmsDashboard"));
+const CmsEventManagement = lazy(() => import("@pages/event-management/CmsEventManagement"));
 
 export default function App() {
   const cmsPrivateRoutes = [
@@ -46,6 +47,7 @@ export default function App() {
     { path: "/cms/mentor/addevent", element: <CmsMentorAddEventForm /> },
     { path: "/cms/mentor/editevent/:id", element: <CmsMentorEditEventForm /> },
     { path: "/cms/mentor/editevent/:id/participants/add", element: <CmsMentorAddParticipantForm /> },
+    { path: "/cms/events", element: <CmsEventManagement /> },
     { path: "/cms/media", element: <CmsMedia /> },
   ];
 

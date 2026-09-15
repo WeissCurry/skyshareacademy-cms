@@ -7,20 +7,19 @@ export interface MentorForm {
   gambar_timeline?: File | string;
   link_cta?: string;
   link_join_program?: string;
+  // Keep existing event fields preserved in payload so they are not wiped out when saving mentor form
   is_event_active?: boolean;
   event_image_url?: File | string;
   event_cta_link?: string;
   // Temporary states for pasted URLs
   url_alur?: string;
   url_timeline?: string;
-  url_event?: string;
 }
 
 export function useMentorForm() {
   const [mentorForm, setMentorForm] = useState<MentorForm>({});
   const [imagePreviewAlur, setImagePreviewAlur] = useState("");
   const [imagePreviewTimeline, setImagePreviewTimeline] = useState("");
-  const [imagePreviewEvent, setImagePreviewEvent] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -36,7 +35,6 @@ export function useMentorForm() {
       setMentorForm(data);
       setImagePreviewAlur(data.gambar_alur_acara || "");
       setImagePreviewTimeline(data.gambar_timeline || "");
-      setImagePreviewEvent(data.event_image_url || "");
     } catch (error) {
       console.error(error);
     } finally {
@@ -58,8 +56,12 @@ export function useMentorForm() {
     if (mentorForm.gambar_timeline instanceof File || typeof mentorForm.gambar_timeline === "string") formData.append("gambar_timeline", mentorForm.gambar_timeline);
     if (mentorForm.link_cta) formData.append("link_cta", mentorForm.link_cta);
     if (mentorForm.link_join_program) formData.append("link_join_program", mentorForm.link_join_program);
+
+    // Pertahankan nilai event yang sudah ada di backend
     formData.append("is_event_active", String(mentorForm.is_event_active || false));
-    if (mentorForm.event_image_url instanceof File || typeof mentorForm.event_image_url === "string") formData.append("event_image_url", mentorForm.event_image_url);
+    if (mentorForm.event_image_url instanceof File || typeof mentorForm.event_image_url === "string") {
+      formData.append("event_image_url", mentorForm.event_image_url);
+    }
     if (mentorForm.event_cta_link) formData.append("event_cta_link", mentorForm.event_cta_link);
 
     setLoadingMessage("Saving changes...");
@@ -97,7 +99,6 @@ export function useMentorForm() {
       mentorForm,
       imagePreviewAlur,
       imagePreviewTimeline,
-      imagePreviewEvent,
       isUploading,
       isSaveModalOpen,
       isCancelModalOpen,
@@ -108,7 +109,6 @@ export function useMentorForm() {
       setMentorForm,
       setImagePreviewAlur,
       setImagePreviewTimeline,
-      setImagePreviewEvent,
       setIsUploading,
       setIsSaveModalOpen,
       setIsCancelModalOpen,
