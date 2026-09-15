@@ -5,8 +5,7 @@ import Delete from "@shared/assets/images/mascot-icons/Delete.png";
 import Add from "@shared/assets/images/mascot-icons/Plus.png";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
 import LoadingModal from "@shared/ui/LoadingModal";
-
-
+import Sidebar from "@widgets/Sidebar";
 
 import { useDashboardAkun } from "./hooks/useDashboardAkun";
 
@@ -28,9 +27,9 @@ function CmsDashboardAkun() {
   return (
     <>
       <div className="bg-background flex flex-col pb-44 pt-12 items-center self-stretch h-auto">
-        <div className=" flex gap-4 ">
-          <div className=""></div>
-          <div className=" w-full">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
+          <div className="shrink-0"><Sidebar /></div>
+          <div className="w-full min-w-0">
             <div className=" ">
               <h1 className="headline-1">Kelola akun</h1>
               <p className="paragraph">

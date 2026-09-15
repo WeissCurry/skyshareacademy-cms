@@ -114,8 +114,8 @@ function CmsArticleDashboardTable() {
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        <div className="self-start"><Sidebar /></div>
-        <div className="w-full">
+        <div className="self-start shrink-0"><Sidebar /></div>
+        <div className="w-full min-w-0">
           <div className="flex justify-between items-end mb-8">
             <div>
               <h1 className="headline-1">Articles Management</h1>

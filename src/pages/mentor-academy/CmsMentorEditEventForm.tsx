@@ -30,6 +30,7 @@ function CmsMentorEditEventForm() {
         setIsDeleteModalOpen,
         setErrorMessage,
         handleFileChange,
+        handleUrlChange,
         handleEditEvent,
         toggleRow,
         handleEpisodeManualCheck,
@@ -42,8 +43,8 @@ function CmsMentorEditEventForm() {
     return (
         <div className="bg-background flex flex-col pt-12 items-center self-stretch pb-20">
             <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-                <div><Sidebar /></div>
-                <div className="w-full">
+                <div className="shrink-0"><Sidebar /></div>
+                <div className="w-full min-w-0">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate("/cms/mentoracademy")} className="hover:scale-110 transition-transform">
                             <img className="w-10 rotate-90" src={ArrowLeft} alt="Back" />
@@ -60,6 +61,7 @@ function CmsMentorEditEventForm() {
                             setEventForm={setEventForm}
                             imagePreviewUrl={imagePreviewUrl}
                             handleFileChange={handleFileChange}
+                            onUrlChange={handleUrlChange}
                         />
 
                         <MentorParticipantTable 

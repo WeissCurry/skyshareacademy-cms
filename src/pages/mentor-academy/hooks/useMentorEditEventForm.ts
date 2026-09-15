@@ -114,6 +114,11 @@ export function useMentorEditEventForm(id: string | undefined) {
         }
     };
 
+    const handleUrlChange = (url: string) => {
+        setEventForm(prev => ({ ...prev, poster_event: url }));
+        setImagePreviewUrl(url);
+    };
+
     const handleEditEvent = async () => {
         setIsUploading(true);
         try {
@@ -206,6 +211,7 @@ export function useMentorEditEventForm(id: string | undefined) {
             setIsDeleteModalOpen,
             setErrorMessage,
             handleFileChange,
+            handleUrlChange,
             handleEditEvent,
             toggleRow,
             handleEpisodeManualCheck,

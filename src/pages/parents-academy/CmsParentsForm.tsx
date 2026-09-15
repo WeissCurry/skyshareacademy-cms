@@ -38,8 +38,8 @@ function CmsParentsForm() {
   return (
     <div className="bg-background flex flex-col pt-12 items-center self-stretch min-h-screen pb-20">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        <div><Sidebar /></div>
-        <div className="w-full">
+        <div className="shrink-0"><Sidebar /></div>
+        <div className="w-full min-w-0">
           <div>
             <h1 className="headline-1">Parents Academy</h1>
             <p className="paragraph">Kelola konten Parents Academy Anda di sini.</p>

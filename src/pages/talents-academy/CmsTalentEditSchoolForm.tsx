@@ -2,6 +2,7 @@ import { useEffect, useState, type ChangeEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
+import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
 import Modal from "@shared/ui/modals"; 
 
@@ -255,11 +256,11 @@ function CmsTalentEditSchoolForm() {
   return (
     <>
       <div className="bg-background flex flex-col pt-12 items-center self-stretch">
-        <div className="content-1 flex gap-4">
-          <div>
+        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
+          <div className="shrink-0">
             <Sidebar />
           </div>
-          <div className="w-full">
+          <div className="w-full min-w-0">
             <div className="flex gap-4 items-center mb-2">
               <button onClick={() => Navigate("/cms/talentacademy")} className="hover:scale-110 transition-transform">
                 <img className="w-10 rotate-90 invert" src={ArrowLeft} alt="Back" />
@@ -320,6 +321,10 @@ function CmsTalentEditSchoolForm() {
 
                   <div className="flex justify-center mt-4">
                     <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
+                  </div>
+
+                  <div className="mt-4">
+                    <MediaLibraryMini onSelect={handleUrlChange} />
                   </div>
                 </div>
               </div>

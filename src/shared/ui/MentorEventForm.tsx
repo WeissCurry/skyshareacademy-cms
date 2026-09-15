@@ -1,4 +1,5 @@
 import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
+import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
 interface EventForm {
     nama_event: string;
@@ -13,14 +14,15 @@ interface MentorEventFormProps {
     setEventForm: (form: EventForm) => void;
     imagePreviewUrl: string;
     handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onUrlChange?: (value: string) => void;
 }
 
-const MentorEventForm = ({ eventForm, setEventForm, imagePreviewUrl, handleFileChange }: MentorEventFormProps) => {
+const MentorEventForm = ({ eventForm, setEventForm, imagePreviewUrl, handleFileChange, onUrlChange }: MentorEventFormProps) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-1">
                 <div className="poster-event mt-6">
-                    <div className="bg-neutral-white rounded-xl border-2 border-gray-400 px-6 pt-7 pb-4 h-[417px]">
+                    <div className="bg-neutral-white rounded-xl border-2 border-gray-400 px-6 pt-7 pb-4 min-h-[417px]">
                         <div className="border-2 border-dashed flex justify-center items-center border-gray-400 rounded-xl h-auto aspect-[4/5] w-full mx-auto">
                             {imagePreviewUrl && (
                                 <img
@@ -46,6 +48,11 @@ const MentorEventForm = ({ eventForm, setEventForm, imagePreviewUrl, handleFileC
                         <div className="flex justify-center mb-1 text-center">
                             <h4 className="text-sm">Ukuran Ideal <span className="font-bold">(1080 x 1350)</span></h4>
                         </div>
+                        {onUrlChange && (
+                            <div className="mt-2">
+                                <MediaLibraryMini onSelect={onUrlChange} buttonLabel="Pilih Poster dari Media Library" />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

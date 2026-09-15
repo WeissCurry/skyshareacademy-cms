@@ -5,7 +5,7 @@ interface EventForm {
     deskripsi_event: string;
     total_peserta: string;
     kategori: string;
-    poster_event: File | null;
+    poster_event: File | string | null;
 }
 
 interface EventFormFieldsProps {

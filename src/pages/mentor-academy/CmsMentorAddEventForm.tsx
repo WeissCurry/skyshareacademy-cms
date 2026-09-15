@@ -27,6 +27,7 @@ function CmsMentorAddEventForm() {
         setIsCancelModalOpen,
         handleAddEvent,
         handleFileChange,
+        handleUrlChange,
         updateFormValue,
         closeSaveModal,
         closeCancelModal,
@@ -35,11 +36,11 @@ function CmsMentorAddEventForm() {
     return (
         <>
             <div className="bg-background flex flex-col pt-12 items-center self-stretch">
-                <div className="content-1 flex gap-4">
-                    <div>
+                <div className="content-1 flex gap-4 w-full max-w-[1100px]">
+                    <div className="shrink-0">
                         <Sidebar />
                     </div>
-                    <div className="w-full">
+                    <div className="w-full min-w-0">
                         <div>
                             <h1 className="headline-1">Add Event</h1>
                             <p className="paragraph">
@@ -50,6 +51,7 @@ function CmsMentorAddEventForm() {
                             <PosterUploadSection 
                                 imagePreviewUrl={imagePreviewUrl}
                                 onFileChange={handleFileChange}
+                                onUrlChange={handleUrlChange}
                             />
 
                             <EventFormFields 

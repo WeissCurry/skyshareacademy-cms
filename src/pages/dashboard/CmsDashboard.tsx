@@ -66,10 +66,10 @@ function DashboardSkeleton() {
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch text-black font-sans">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
         {/* Sidebar remains fully visible and interactive */}
-        <div className="self-start">
+        <div className="self-start shrink-0">
           <Sidebar />
         </div>
-        <div className="w-full animate-pulse">
+        <div className="w-full min-w-0 animate-pulse">
           {/* Header Skeleton */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
@@ -365,11 +365,11 @@ export default function CmsDashboard() {
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch text-black font-sans">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
         {/* Embedded Sidebar Layout */}
-        <div className="self-start">
+        <div className="self-start shrink-0">
           <Sidebar />
         </div>
 
-        <div className="w-full">
+        <div className="w-full min-w-0">
           {/* Header Title Section */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>

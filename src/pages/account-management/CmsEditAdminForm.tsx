@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import { useParams, useNavigate } from "react-router-dom";
+import Sidebar from "@widgets/Sidebar";
 import Caution from "@shared/assets/images/mascot-icons/Info Square.png";
 import Xbutton from "@shared/assets/images/mascot-icons/Fill 300.png";
 import Ceklist from "@shared/assets/images/mascot-icons/Tick Square.png";
@@ -97,9 +98,11 @@ function CmsEditAdminForm() {
   return (
     <>
       <div className="bg-background flex flex-col pb-52 pt-12 items-center self-stretch h-auto">
-        <div className="content flex gap-4">
-          <div className="w-96"></div>
-          <div className="w-full">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
+          <div className="shrink-0">
+            <Sidebar />
+          </div>
+          <div className="w-full min-w-0">
             <div>
               <h1 className="headline-1">Edit Admin</h1>
               <p className="paragraph">

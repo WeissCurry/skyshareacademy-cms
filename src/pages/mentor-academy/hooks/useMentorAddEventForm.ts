@@ -7,7 +7,7 @@ export interface EventForm {
     deskripsi_event: string;
     total_peserta: string;
     kategori: string;
-    poster_event: File | null;
+    poster_event: File | string | null;
 }
 
 export function useMentorAddEventForm() {
@@ -69,6 +69,11 @@ export function useMentorAddEventForm() {
         }
     };
 
+    const handleUrlChange = (url: string) => {
+        setEventForm(prev => ({ ...prev, poster_event: url }));
+        setImagePreviewUrl(url);
+    };
+
     const updateFormValue = (updates: Partial<EventForm>) => {
         setEventForm(prev => ({ ...prev, ...updates }));
     };
@@ -98,6 +103,7 @@ export function useMentorAddEventForm() {
             setIsCancelModalOpen,
             handleAddEvent,
             handleFileChange,
+            handleUrlChange,
             updateFormValue,
             closeSaveModal,
             closeCancelModal,

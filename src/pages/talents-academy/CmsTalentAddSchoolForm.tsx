@@ -1,7 +1,8 @@
-import { useState, type ChangeEvent } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
+import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
 import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
@@ -11,23 +12,50 @@ import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
 import Show from "@shared/assets/images/mascot-icons/Show.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
 
+interface MediaImage {
+  public_id: string;
+  secure_url: string;
+  created_at: string;
+}
+
 interface SchoolForm {
   gambar_logo_sekolah: File | string | null;
   nama_sekolah: string;
+  alamat: string;
+  embed_map: string;
 }
 
 function CmsTalentAddSchoolForm() {
   const [schoolForm, setSchoolForm] = useState<SchoolForm>({
     gambar_logo_sekolah: null,
     nama_sekolah: "",
+    alamat: "",
+    embed_map: "",
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [urlValue, setUrlValue] = useState("");
+  const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
+  const [isMediaLoading, setIsMediaLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchMedia = async () => {
+      try {
+        setIsMediaLoading(true);
+        const response = await skyshareApi.get("/media?limit=10");
+        setMediaImages(response.data.data || []);
+      } catch (error) {
+        console.error("Gagal memuat data media:", error);
+      } finally {
+        setIsMediaLoading(false);
+      }
+    };
+    fetchMedia();
+  }, []);
 
   const handleAddSchool = async () => {
     const formData = new FormData();
@@ -35,6 +63,8 @@ function CmsTalentAddSchoolForm() {
       formData.append("gambar_logo_sekolah", schoolForm.gambar_logo_sekolah);
     }
     formData.append("nama_sekolah", schoolForm.nama_sekolah);
+    formData.append("alamat", schoolForm.alamat);
+    formData.append("embed_map", schoolForm.embed_map);
 
     setIsUploading(true);
     try {
@@ -66,8 +96,8 @@ function CmsTalentAddSchoolForm() {
   return (
     <div className="bg-background flex flex-col pt-12 items-center self-stretch pb-20">
       <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        <div><Sidebar /></div>
-        <div className="w-full">
+        <div className="shrink-0"><Sidebar /></div>
+        <div className="w-full min-w-0">
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/cms/talentacademy")} className="hover:scale-110 transition-transform">
               <img className="w-10 rotate-90 invert" src={ArrowLeft} alt="Back" />
@@ -125,15 +155,39 @@ function CmsTalentAddSchoolForm() {
                 <div className="flex justify-center mt-4">
                   <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
                 </div>
+
+                <div className="mt-6">
+                  <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} onSelect={handleUrlChange} />
+                </div>
               </div>
 
               <div>
-                <label className="font-bold block mb-2">Nama Sekolah</label>
+                <label className="font-bold block mb-2">Nama Sekolah <span className="text-red-500">*</span></label>
                 <input
                   value={schoolForm.nama_sekolah}
                   onChange={(e) => setSchoolForm({ ...schoolForm, nama_sekolah: e.target.value })}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                   placeholder="Masukkan nama sekolah..."
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-2">Alamat Sekolah <span className="text-red-500">*</span></label>
+                <input
+                  value={schoolForm.alamat}
+                  onChange={(e) => setSchoolForm({ ...schoolForm, alamat: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
+                  placeholder="Masukkan alamat sekolah..."
+                />
+              </div>
+
+              <div>
+                <label className="font-bold block mb-2">Embed Google Maps (HTML) <span className="text-red-500">*</span></label>
+                <input
+                  value={schoolForm.embed_map}
+                  onChange={(e) => setSchoolForm({ ...schoolForm, embed_map: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
+                  placeholder="Example : https://www.google.com/maps/embed?pb=..."
                 />
               </div>
 

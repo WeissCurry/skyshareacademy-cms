@@ -1,12 +1,14 @@
 import { type ChangeEvent } from "react";
 import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
+import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
 interface PosterUploadSectionProps {
     imagePreviewUrl: string;
     onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    onUrlChange?: (url: string) => void;
 }
 
-export default function PosterUploadSection({ imagePreviewUrl, onFileChange }: PosterUploadSectionProps) {
+export default function PosterUploadSection({ imagePreviewUrl, onFileChange, onUrlChange }: PosterUploadSectionProps) {
     return (
         <div className="poster-event mt-6">
             <div className="bg-neutral-white p-4 gap-4 flex items-center">
@@ -57,6 +59,12 @@ export default function PosterUploadSection({ imagePreviewUrl, onFileChange }: P
                         <span className=" font-bold">(1080 x 1350)</span>
                     </h4>
                 </div>
+
+                {onUrlChange && (
+                    <div className="mt-2">
+                        <MediaLibraryMini onSelect={onUrlChange} buttonLabel="Pilih Poster dari Media Library" />
+                    </div>
+                )}
             </div>
         </div>
     );

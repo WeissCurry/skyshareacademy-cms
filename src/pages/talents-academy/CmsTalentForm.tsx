@@ -99,10 +99,10 @@ function CmsTalentForm() {
     <>
       <div className="bg-background flex flex-col pt-12 items-center self-stretch">
         <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-          <div>
+          <div className="shrink-0">
             <Sidebar />
           </div>
-          <div className="w-full">
+          <div className="w-full min-w-0">
             <div>
               <h1 className="headline-1">Talent Academy</h1>
               <p className="paragraph">Kelola konten Talent Academy Anda di sini.</p>

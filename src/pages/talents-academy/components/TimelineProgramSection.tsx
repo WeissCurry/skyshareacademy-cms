@@ -2,6 +2,7 @@ import type { ChangeEvent } from "react";
 import Time from "@shared/assets/images/mascot-icons/Time Circle.png";
 import Show from "@shared/assets/images/mascot-icons/Show.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
+import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
 interface TimelineProgramSectionProps {
   imagePreviewUrlTimeline: string;
@@ -68,6 +69,10 @@ export default function TimelineProgramSection({
 
         <div className="flex justify-center mt-4">
           <h4 className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Pilih salah satu: Upload file atau tempel link dari Media Library</h4>
+        </div>
+
+        <div className="mt-4">
+          <MediaLibraryMini onSelect={onUrlChange} />
         </div>
       </div>
     </div>
