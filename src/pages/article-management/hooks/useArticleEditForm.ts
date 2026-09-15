@@ -1,6 +1,7 @@
 import { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export interface Category {
   id: string;
@@ -119,6 +120,7 @@ export function useArticleEditForm() {
     setIsUploading(true);
     try {
       await skyshareApi.put(`/article/${id}`, formData);
+      logActivity(`Mengedit artikel (ID: ${id})`);
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       const err = error as Error;

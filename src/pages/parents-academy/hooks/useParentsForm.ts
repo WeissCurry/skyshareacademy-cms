@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export interface ParentsForm {
   file_booklet?: string;
@@ -57,6 +58,7 @@ export function useParentsForm() {
     setIsUploading(true);
     try {
       await skyshareApi.put("/parent", formData);
+      logActivity("Memperbarui konten Parents Academy");
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       const err = error as Error;

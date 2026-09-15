@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export interface EventForm {
     nama_event: string;
@@ -43,12 +44,13 @@ export function useMentorAddEventForm() {
         setIsUploading(true);
         try {
             const responseFromServer = await skyshareApi({
-                url: "/event/add",
+                url: "/mentor/add",
                 method: "POST",
                 data: formData,
             });
             
             if (responseFromServer.data.status === "success") {
+                logActivity("Menambahkan event baru ke Mentor Academy");
                 setIsSaveModalOpen(true);
             } else {
                 setIsErrorModal(true);

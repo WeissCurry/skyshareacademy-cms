@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import { convertToWebP } from "@shared/utils/imageUtils";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export interface BaseAcademyForm {
   file_booklet?: File | string | null;
@@ -114,6 +115,13 @@ export function useAcademyForm<T extends BaseAcademyForm>({
     setIsUploading(true);
     try {
       await skyshareApi.put(endpoint, formData);
+      const sectionNameMap: Record<string, string> = {
+        "/talent": "Talent Academy",
+        "/parent": "Parents Academy",
+        "/skyshare": "Skyshare",
+      };
+      const sectionName = sectionNameMap[endpoint] ?? endpoint.replace("/", "");
+      logActivity(`Memperbarui konten ${sectionName}`);
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       const err = error as { message?: string };

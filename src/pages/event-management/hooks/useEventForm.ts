@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export interface EventPopupForm {
   is_event_active?: boolean;
@@ -69,6 +70,7 @@ export function useEventForm() {
       }
 
       await skyshareApi.put("/mentor", formData);
+      logActivity("Memperbarui pengaturan Event Popup / Pengumuman Global");
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       const err = error as Error;

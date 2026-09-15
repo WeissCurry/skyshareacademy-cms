@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "@widgets/Sidebar";
 import Caution from "@shared/assets/images/mascot-icons/Info Square.png";
@@ -43,6 +44,7 @@ function CmsAddAdminForm() {
         url: "/admin/register",
         data: inputAdmin,
       });
+      logActivity(`Menambahkan akun admin baru: ${name}`);
       setErrorMessage("Saved Successfully");
       setImageIcon(Ceklist);
       setImageMascot(Mascot2);

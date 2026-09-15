@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export function useLoginForm() {
   const [email, setEmail] = useState("");
@@ -28,6 +29,9 @@ export function useLoginForm() {
       localStorage.setItem("authorization", token);
       skyshareApi.defaults.headers.common["authorization"] = `${token}`;
       
+      // Fire-and-forget login activity log
+      logActivity("Admin login ke CMS Dashboard", dataFromServer.data.data.name || email);
+
       if (dataFromServer.data.data.role === "superadmin") {
         navigate("/cms/kelolaakun");
       } else {

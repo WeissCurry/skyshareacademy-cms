@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 import { Link } from "react-router-dom";
 import EditIcon from "@shared/assets/images/mascot-icons/Edit.png";
 import EditSquare from "@shared/assets/images/mascot-icons/Edit Square.png";
@@ -102,6 +103,7 @@ function CmsArticleDashboardTable() {
     setIsDeleting(true);
     try {
       await skyshareApi.delete(`/article/${selectedArticleId}`);
+      logActivity(`Menghapus artikel (ID: ${selectedArticleId})`);
       setIsConfirmOpen(false);
       getDataArticles(currentPage, searchQuery, selectedCategory);
     } catch (error) {

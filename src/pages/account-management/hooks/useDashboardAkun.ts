@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 export interface Admin {
   id: string | number;
@@ -47,6 +48,7 @@ export function useDashboardAkun() {
     if (!selectedUser) return;
     try {
       await skyshareApi.delete(`/admin/admin/${selectedUser.id}`);
+      logActivity(`Menghapus akun admin: ${selectedUser.name}`);
       setDataAdmins(prev => prev.filter((admin) => admin.id !== selectedUser.id));
       closeModal();
     } catch (error) {

@@ -16,7 +16,12 @@ import {
   FiMaximize2,
   FiX,
   FiSearch,
+  FiClock,
+  FiShield,
+  FiUser,
+  FiFileText,
 } from "react-icons/fi";
+import { type ActivityLogEntry } from "@shared/utils/useActivityLogger";
 
 interface TodayStats {
   pageviews: number;
@@ -207,6 +212,24 @@ export default function CmsDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
 
+  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+  const [logSearchQuery, setLogSearchQuery] = useState("");
+
+  const fetchActivityLogs = useCallback(async () => {
+    try {
+      setLoadingLogs(true);
+      const response = await skyshareApi.get("/analytics/logs?limit=50");
+      if (response.data && response.data.data) {
+        setActivityLogs(response.data.data.logs || []);
+      }
+    } catch (error) {
+      console.error("Failed to load activity logs:", error);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }, []);
+
   // Load idmap.svg statically on mount
   useEffect(() => {
     fetch("/idmap.svg")
@@ -214,8 +237,6 @@ export default function CmsDashboard() {
       .then((text) => setSvgContent(text))
       .catch((err) => console.error("Failed to load idmap.svg:", err));
   }, []);
-
-
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -232,9 +253,10 @@ export default function CmsDashboard() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchDashboardData();
+      fetchActivityLogs();
     }, 0);
     return () => clearTimeout(timer);
-  }, [fetchDashboardData]);
+  }, [fetchDashboardData, fetchActivityLogs]);
 
   // Use the premium flat skeleton loader when loading
   if (loading && !data) {
@@ -254,6 +276,33 @@ export default function CmsDashboard() {
   const filteredProvinces = (activeData.provinces || []).filter((prov) =>
     prov.province.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const filteredLogs = activityLogs.filter((log) => {
+    if (!logSearchQuery) return true;
+    const query = logSearchQuery.toLowerCase();
+    return (
+      (log.action && log.action.toLowerCase().includes(query)) ||
+      (log.admin_name && log.admin_name.toLowerCase().includes(query)) ||
+      (log.ip_address && log.ip_address.toLowerCase().includes(query))
+    );
+  });
+
+  const formatLogDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return `${d.toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })} ${d.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })}`;
+    } catch {
+      return dateStr;
+    }
+  };
 
   const totalUniqueVisitors = activeData.timeSeries.reduce(
     (acc, point) => acc + point.unique_visitors,
@@ -916,6 +965,124 @@ export default function CmsDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+
+          {/* Row 5: System Activity Log (Changelog / Audit Trail) */}
+          <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 mb-8 shadow-sm">
+            <div className="bg-background flex flex-col md:flex-row md:items-center justify-between rounded-xl py-3 px-4 mb-4 border-2 border-black gap-4">
+              <div className="flex items-center gap-3">
+                <FiClock className="w-5 h-5 text-primary-1" />
+                <h4 className="headline-4">System Activity Log</h4>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Cari aksi, admin, atau IP..."
+                    value={logSearchQuery}
+                    onChange={(e) => setLogSearchQuery(e.target.value)}
+                    className="h-10 pl-10 pr-4 text-xs font-bold bg-white border-2 border-black rounded-xl outline-none focus:bg-gray-50 transition-colors w-48 sm:w-60"
+                  />
+                </div>
+                <button
+                  onClick={fetchActivityLogs}
+                  disabled={loadingLogs}
+                  className="h-10 w-10 flex items-center justify-center bg-white border-2 border-black rounded-xl hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  title="Segarkan Riwayat Log"
+                >
+                  <FiRefreshCw className={`w-3.5 h-3.5 ${loadingLogs ? "animate-spin" : ""}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Activity Log Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="py-4 px-4 w-[22%] text-left font-bold text-sm text-black">
+                      <div className="flex items-center gap-2">
+                        <FiClock className="w-4 h-4 text-black" />
+                        <span>Timestamp</span>
+                      </div>
+                    </th>
+                    <th className="py-4 px-4 w-[20%] text-left font-bold text-sm text-black">
+                      <div className="flex items-center gap-2">
+                        <FiUser className="w-4 h-4 text-black" />
+                        <span>Administrator</span>
+                      </div>
+                    </th>
+                    <th className="py-4 px-4 w-[40%] text-left font-bold text-sm text-black">
+                      <div className="flex items-center gap-2">
+                        <FiFileText className="w-4 h-4 text-black" />
+                        <span>Log</span>
+                      </div>
+                    </th>
+                    <th className="py-4 px-4 w-[18%] text-right font-bold text-sm text-black">
+                      <div className="flex items-center justify-end gap-2">
+                        <FiGlobe className="w-4 h-4 text-black" />
+                        <span>IP Address</span>
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredLogs.length > 0 ? (
+                    filteredLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-5 px-4 text-sm font-bold text-black whitespace-nowrap">
+                          {formatLogDate(log.createdAt)}
+                        </td>
+                        <td className="py-5 px-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 border border-black rounded-lg text-xs font-mono font-bold text-black shadow-[1.5px_1.5px_0px_#000]">
+                            <FiShield className="w-3.5 h-3.5 text-amber-700" />
+                            {log.admin_name}
+                          </span>
+                        </td>
+                        <td className="py-5 px-4">
+                          <span className="text-sm font-bold text-black leading-relaxed">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="py-5 px-4 text-right whitespace-nowrap">
+                          <span className="inline-block font-mono text-xs font-bold bg-gray-100 px-2.5 py-1 border border-black rounded-lg text-gray-800 shadow-[1.5px_1.5px_0px_#000]">
+                            {log.ip_address || "127.0.0.1"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="text-center py-12 text-gray-500 font-bold text-sm">
+                        {loadingLogs ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <FiRefreshCw className="w-4 h-4 animate-spin text-primary-1" />
+                            <span>Memuat riwayat aktivitas...</span>
+                          </div>
+                        ) : logSearchQuery ? (
+                          <span>Tidak ada aktivitas yang cocok dengan "{logSearchQuery}".</span>
+                        ) : (
+                          <span>Belum ada riwayat aktivitas yang tercatat.</span>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Footer Summary */}
+            <div className="pt-4 border-t border-gray-200 mt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 font-bold gap-2">
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Tercatat otomatis di database PostgreSQL server
+              </span>
+              <span>
+                Menampilkan <span className="text-black font-extrabold">{filteredLogs.length}</span> dari <span className="text-black font-extrabold">{activityLogs.length}</span> aktivitas
+              </span>
             </div>
           </div>
         </div>
