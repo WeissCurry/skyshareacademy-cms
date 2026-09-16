@@ -5,11 +5,23 @@ export interface ImagesCloudinary {
   asset_id: string;
   secure_url: string;
   public_id: string;
+  bytes?: number;
+}
+
+export function formatBytes(bytes: number, decimals: number = 2): string {
+  if (!bytes || bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 export function useMediaPage() {
   const [images, setImages] = useState<ImagesCloudinary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalBytes, setTotalBytes] = useState<number>(0);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -31,6 +43,12 @@ export function useMediaPage() {
       const response = await skyshareApi.get(url);
       setImages(response.data.data);
       setNextCursor(response.data.next_cursor || null);
+      if (typeof response.data.total_bytes === "number") {
+        setTotalBytes(response.data.total_bytes);
+      }
+      if (typeof response.data.total_count === "number") {
+        setTotalCount(response.data.total_count);
+      }
     } catch (error) {
       console.error("Gagal mengambil gambar", error);
     } finally {
@@ -190,6 +208,8 @@ export function useMediaPage() {
     state: {
       images,
       loading,
+      totalBytes,
+      totalCount,
       isUploading,
       isSuccessModalOpen,
       isDeleteModalOpen,
@@ -224,6 +244,7 @@ export function useMediaPage() {
       toggleSelectImage,
       selectAllOnPage,
       copyToClipboard,
+      formatBytes,
     }
   };
 }

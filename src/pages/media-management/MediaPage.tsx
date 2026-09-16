@@ -4,8 +4,6 @@ import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
 
-
-
 import { useMediaPage } from "./hooks/useMediaPage";
 
 const CmsMedia = () => {
@@ -14,6 +12,7 @@ const CmsMedia = () => {
   const {
     images,
     loading,
+    totalBytes,
     isUploading,
     isSuccessModalOpen,
     isDeleteModalOpen,
@@ -44,6 +43,7 @@ const CmsMedia = () => {
     toggleSelectImage,
     selectAllOnPage,
     copyToClipboard,
+    formatBytes,
   } = actions;
 
   return (
@@ -57,7 +57,9 @@ const CmsMedia = () => {
           <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
               <h1 className="headline-1">Media Library</h1>
-              <p className="paragraph">Kelola aset gambar Anda ({images.length} item di halaman ini)</p>
+              <p className="paragraph">
+                Kelola aset gambar Anda ({images.length} item di halaman ini • {formatBytes(totalBytes)})
+              </p>
             </div>
             
             <div className="flex gap-3 flex-wrap">
