@@ -93,8 +93,8 @@ function CmsTalentAddGroupForm() {
   return (
     <>
       <div className="bg-background flex pb-56 flex-col pt-12 items-center self-stretch">
-        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-          <div className="shrink-0">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+          <div className="hidden md:block shrink-0">
             <Sidebar />
           </div>
           <div className="w-full min-w-0">
@@ -216,7 +216,7 @@ function CmsTalentAddGroupForm() {
                 Batal
               </button>
               <button
-                onClick={() => {}}
+                onClick={() => { }}
                 className="bg-red-500 w-1/2 hover:bg-red-400 text-white px-4 py-2 rounded-lg"
               >
                 Hapus
@@ -315,3 +315,4 @@ function CmsTalentAddGroupForm() {
 }
 
 export default CmsTalentAddGroupForm;
+

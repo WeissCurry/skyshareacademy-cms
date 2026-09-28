@@ -11,7 +11,7 @@ import { useMentorEditEventForm, COURSE_STRUCTURE } from "./hooks/useMentorEditE
 function CmsMentorEditEventForm() {
     const { id } = useParams();
     const { state, actions } = useMentorEditEventForm(id);
-    
+
     const {
         eventForm,
         participants,
@@ -42,8 +42,8 @@ function CmsMentorEditEventForm() {
 
     return (
         <div className="bg-background flex flex-col pt-12 items-center self-stretch pb-20">
-            <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-                <div className="shrink-0"><Sidebar /></div>
+            <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+                <div className="hidden md:block shrink-0"><Sidebar /></div>
                 <div className="w-full min-w-0">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate("/cms/mentoracademy")} className="hover:scale-110 transition-transform">
@@ -56,7 +56,7 @@ function CmsMentorEditEventForm() {
                     </div>
 
                     <div className="shadow-md bg-neutral-white mt-10 border-2 border-black rounded-2xl pb-10 px-8 w-full">
-                        <MentorEventForm 
+                        <MentorEventForm
                             eventForm={eventForm}
                             setEventForm={setEventForm}
                             imagePreviewUrl={imagePreviewUrl}
@@ -64,7 +64,7 @@ function CmsMentorEditEventForm() {
                             onUrlChange={handleUrlChange}
                         />
 
-                        <MentorParticipantTable 
+                        <MentorParticipantTable
                             participants={participants}
                             courseStructure={COURSE_STRUCTURE}
                             expandedRows={expandedRows}
@@ -93,3 +93,4 @@ function CmsMentorEditEventForm() {
 }
 
 export default CmsMentorEditEventForm;
+

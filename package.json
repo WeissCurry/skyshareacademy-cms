@@ -12,6 +12,7 @@
   "dependencies": {
     "@tinymce/tinymce-react": "^6.3.0",
     "axios": "^1.15.0",
+    "framer-motion": "^13.4.4",
     "html-react-parser": "^6.0.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",

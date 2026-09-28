@@ -1,14 +1,13 @@
-import { FaCopy, FaExternalLinkAlt, FaTrash, FaCloudUploadAlt, FaCheck, FaSquare, FaCheckSquare, FaRedo } from "react-icons/fa";
 import Sidebar from "@widgets/Sidebar";
 import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
-
+import { FaCloudUploadAlt, FaCopy, FaTrash, FaCheck, FaSquare, FaExternalLinkAlt, FaRedo } from "react-icons/fa";
 import { useMediaPage } from "./hooks/useMediaPage";
 
 const CmsMedia = () => {
   const { state, actions } = useMediaPage();
-  
+
   const {
     images,
     loading,
@@ -17,11 +16,11 @@ const CmsMedia = () => {
     isSuccessModalOpen,
     isDeleteModalOpen,
     isBulkDeleteModalOpen,
+    selectedIds,
     isDragging,
     isSelectMode,
-    selectedIds,
-    nextCursor,
     currentPage,
+    nextCursor,
   } = state;
 
   const {
@@ -48,7 +47,7 @@ const CmsMedia = () => {
 
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch pb-20">
-      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
+      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
         <div className="hidden md:block shrink-0">
           <Sidebar />
         </div>
@@ -62,13 +61,13 @@ const CmsMedia = () => {
               </p>
             </div>
             
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-3 flex-wrap w-full md:w-auto">
               <button 
                 onClick={() => {
                   setIsSelectMode(!isSelectMode);
                   setSelectedIds([]);
                 }}
-                className={`py-3 px-6 rounded-xl font-bold flex items-center gap-2 border-2 border-black transition-all ${isSelectMode ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}`}
+                className={`py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 border-2 border-black transition-all w-full sm:w-auto ${isSelectMode ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'}`}
               >
                 {isSelectMode ? <FaCheck /> : <FaSquare />} {isSelectMode ? "Cancel Select" : "Select Mode"}
               </button>
@@ -82,39 +81,38 @@ const CmsMedia = () => {
               />
               <label 
                 htmlFor="media-upload"
-                className="bg-primary-1 text-white py-3 px-6 rounded-xl font-bold flex items-center gap-2 cursor-pointer hover:bg-primary-2 active:translate-y-0.5 transition-all"
+                className="bg-primary-1 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-primary-2 active:translate-y-0.5 transition-all w-full sm:w-auto"
               >
                 <FaCloudUploadAlt className="text-xl" /> Upload
               </label>
             </div>
           </div>
 
+          {/* Bulk Actions Bar */}
           {isSelectMode && (
-            <div className="mb-6 flex justify-between items-center bg-primary-1/5 p-4 rounded-xl border-2 border-primary-1/20 border-dashed">
+            <div className="bg-white border-2 border-black rounded-xl p-4 mb-6 flex justify-between items-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-in fade-in">
               <div className="flex items-center gap-4">
+                <span className="font-bold">{selectedIds.length} Gambar Dipilih</span>
                 <button 
-                  onClick={selectAllOnPage}
-                  className="text-sm font-bold flex items-center gap-2 hover:text-primary-1"
+                  onClick={selectAllOnPage} 
+                  className="text-primary-1 font-bold text-sm hover:underline"
                 >
-                  {selectedIds.length === images.length ? <FaCheckSquare /> : <FaSquare />}
-                  Select All on Page
+                  {selectedIds.length === images.length ? "Batal Pilih Semua" : "Pilih Semua di Halaman Ini"}
                 </button>
-                <span className="text-sm font-medium text-gray-600">{selectedIds.length} item dipilih</span>
               </div>
-              
-              {selectedIds.length > 0 && (
-                <button 
-                  onClick={() => setIsBulkDeleteModalOpen(true)}
-                  className="bg-red-500 text-white py-2 px-4 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-red-600 shadow-sm transition-all"
-                >
-                  <FaTrash /> Hapus {selectedIds.length} Item
-                </button>
-              )}
+              <button 
+                onClick={() => setIsBulkDeleteModalOpen(true)}
+                disabled={selectedIds.length === 0}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                <FaTrash /> Hapus ({selectedIds.length})
+              </button>
             </div>
           )}
 
+          {/* Drag & Drop Area + Gallery */}
           <div 
-            className={`bg-white border-2 border-black rounded-2xl p-6 relative transition-all duration-300 ${isDragging ? 'ring-4 ring-primary-1 ring-offset-2 border-primary-1' : ''}`}
+            className={`bg-white border-2 border-black rounded-2xl p-6 relative transition-all min-h-[400px] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${isDragging ? 'border-dashed border-primary-1 bg-primary-1/5' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}

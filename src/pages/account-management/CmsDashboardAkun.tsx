@@ -11,7 +11,7 @@ import { useDashboardAkun } from "./hooks/useDashboardAkun";
 
 function CmsDashboardAkun() {
   const { state, actions } = useDashboardAkun();
-  
+
   const {
     isModalOpen,
     dataAdmins,
@@ -27,8 +27,8 @@ function CmsDashboardAkun() {
   return (
     <>
       <div className="bg-background flex flex-col pb-44 pt-12 items-center self-stretch h-auto">
-        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-          <div className="shrink-0"><Sidebar /></div>
+        <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+          <div className="hidden md:block shrink-0"><Sidebar /></div>
           <div className="w-full min-w-0">
             <div className=" ">
               <h1 className="headline-1">Kelola akun</h1>
@@ -137,3 +137,4 @@ function CmsDashboardAkun() {
 }
 
 export default CmsDashboardAkun;
+

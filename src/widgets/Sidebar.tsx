@@ -12,7 +12,12 @@ interface AdminData {
   role: string;
 }
 
-function Sidebar() {
+export interface SidebarProps {
+  onNavigate?: () => void;
+  className?: string;
+}
+
+function Sidebar({ onNavigate, className }: SidebarProps = {}) {
   const [dataAdmin, setDataAdmin] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -95,7 +100,7 @@ function Sidebar() {
   ];
 
   return (
-    <div className="py-4 px-3 w-72 h-auto flex justify-center items-center rounded-xl bg-neutral-white">
+    <div className={`py-4 px-3 w-72 h-auto flex justify-center items-center rounded-xl bg-neutral-white ${className || ""}`}>
       <ul>
         {menuItems.map((menu) => {
           if (menu.condition) {
@@ -111,11 +116,17 @@ function Sidebar() {
             return (
               <li
                 key={menu.id}
-                className="py-4 w-64 px-4 hover:bg-background rounded-xl"
+                className="py-4 w-64 px-4 hover:bg-background rounded-xl transition-colors"
               >
-                <Link className="flex gap-4 items-center" to={menu.to}>
+                <Link
+                  className="flex gap-4 items-center"
+                  to={menu.to}
+                  onClick={() => {
+                    if (onNavigate) onNavigate();
+                  }}
+                >
                   {iconComponent}
-                  <p className="text-base">{menu.label}</p>
+                  <p className="text-base font-semibold">{menu.label}</p>
                 </Link>
               </li>
             );

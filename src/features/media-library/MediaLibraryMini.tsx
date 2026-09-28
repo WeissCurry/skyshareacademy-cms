@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { FaCopy, FaImages, FaChevronDown, FaTimes, FaSyncAlt } from "react-icons/fa";
+import {
+  FaCopy,
+  FaImages,
+  FaChevronDown,
+  FaTimes,
+  FaSyncAlt,
+  FaCheck,
+} from "react-icons/fa";
 import skyshareApi from "@shared/api/skyshareApi";
 
 export interface MediaImage {
@@ -14,6 +21,9 @@ export interface MediaLibraryMiniProps {
   onSelect?: (url: string) => void;
   buttonLabel?: string;
   defaultOpen?: boolean;
+  multiSelect?: boolean;
+  selectedUrls?: string[];
+  onMultiSelect?: (urls: string[]) => void;
 }
 
 const MediaLibraryMini = ({
@@ -22,6 +32,9 @@ const MediaLibraryMini = ({
   onSelect,
   buttonLabel = "Pilih dari Media Library",
   defaultOpen = false,
+  multiSelect = false,
+  selectedUrls = [],
+  onMultiSelect,
 }: MediaLibraryMiniProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [internalImages, setInternalImages] = useState<MediaImage[]>([]);
@@ -33,7 +46,7 @@ const MediaLibraryMini = ({
   const fetchInternalMedia = async () => {
     try {
       setInternalLoading(true);
-      const res = await skyshareApi.get("/media?limit=30");
+      const res = await skyshareApi.get("/media?limit=50");
       setInternalImages(res.data?.data || []);
       setHasFetched(true);
     } catch (err) {
@@ -76,9 +89,18 @@ const MediaLibraryMini = ({
   };
 
   const handleSelectImage = (url: string) => {
-    if (onSelect) {
-      onSelect(url);
-      setIsOpen(false); // Automatically close the mini window on select
+    if (multiSelect) {
+      if (onMultiSelect) {
+        const next = selectedUrls.includes(url)
+          ? selectedUrls.filter((u) => u !== url)
+          : [...selectedUrls, url];
+        onMultiSelect(next);
+      }
+    } else {
+      if (onSelect) {
+        onSelect(url);
+        setIsOpen(false);
+      }
     }
   };
 
@@ -95,8 +117,15 @@ const MediaLibraryMini = ({
               : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300 hover:border-gray-400"
           }`}
         >
-          <FaImages className={`text-sm ${isOpen ? "text-white" : "text-primary-1"}`} />
+          <FaImages
+            className={`text-sm ${isOpen ? "text-white" : "text-primary-1"}`}
+          />
           <span>{isOpen ? "Tutup Media Library" : buttonLabel}</span>
+          {multiSelect && selectedUrls.length > 0 && (
+            <span className="bg-primary-1 text-white text-[10px] px-2 py-0.5 rounded-full font-black">
+              {selectedUrls.length}
+            </span>
+          )}
           <FaChevronDown
             className={`text-[10px] transition-transform duration-200 ${
               isOpen ? "rotate-180" : ""
@@ -112,7 +141,9 @@ const MediaLibraryMini = ({
             className="text-xs text-gray-500 hover:text-black flex items-center gap-1.5 transition-colors"
             title="Muat ulang media"
           >
-            <FaSyncAlt className={`text-[11px] ${activeLoading ? "animate-spin" : ""}`} />
+            <FaSyncAlt
+              className={`text-[11px] ${activeLoading ? "animate-spin" : ""}`}
+            />
             <span className="text-[11px] font-semibold">Refresh</span>
           </button>
         )}
@@ -123,9 +154,13 @@ const MediaLibraryMini = ({
         <div className="mt-3 p-4 bg-gray-50/90 rounded-2xl border-2 border-gray-200 shadow-inner animate-in fade-in duration-200">
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200">
             <div>
-              <p className="text-xs font-bold text-gray-800">Media Library (Quick Select)</p>
-              <p className="text-[11px] text-gray-400">
-                Klik gambar untuk langsung menggunakannya tanpa perlu copy link.
+              <p className="text-xs font-bold text-gray-800">
+                Media Library ({multiSelect ? "Multi-Select" : "Quick Select"})
+              </p>
+              <p className="text-[11px] text-gray-500">
+                {multiSelect
+                  ? "Klik gambar untuk memilih atau membatalkan pilihan. Beberapa gambar terpilih akan dirotasi secara acak (random)."
+                  : "Klik gambar untuk langsung menggunakannya tanpa perlu copy link."}
               </p>
             </div>
             <button
@@ -158,11 +193,18 @@ const MediaLibraryMini = ({
             ) : (
               activeImages.map((img) => {
                 const isCopied = copiedUrl === img.secure_url;
+                const isSelected =
+                  multiSelect && selectedUrls.includes(img.secure_url);
+
                 return (
                   <div
                     key={img.public_id}
                     onClick={() => handleSelectImage(img.secure_url)}
-                    className="relative w-24 h-24 rounded-xl overflow-hidden group shrink-0 border-2 border-gray-200 hover:border-primary-1 transition-all cursor-pointer bg-white shadow-sm hover:shadow-md"
+                    className={`relative w-24 h-24 rounded-xl overflow-hidden group shrink-0 border-2 transition-all cursor-pointer bg-white shadow-sm hover:shadow-md ${
+                      isSelected
+                        ? "border-primary-1 ring-2 ring-primary-1/50"
+                        : "border-gray-200 hover:border-primary-1"
+                    }`}
                   >
                     <img
                       src={img.secure_url}
@@ -171,10 +213,21 @@ const MediaLibraryMini = ({
                       loading="lazy"
                     />
 
+                    {/* Multi-select check badge */}
+                    {isSelected && (
+                      <div className="absolute top-1.5 right-1.5 bg-primary-1 text-white p-1 rounded-full shadow-md z-10">
+                        <FaCheck className="w-2.5 h-2.5" />
+                      </div>
+                    )}
+
                     {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity gap-1.5 p-1">
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity gap-1.5 p-1 z-20">
                       <span className="text-[10px] text-white font-bold bg-primary-1 px-2 py-0.5 rounded shadow">
-                        PILIH
+                        {multiSelect
+                          ? isSelected
+                            ? "BATAL PILIH"
+                            : "PILIH"
+                          : "PILIH"}
                       </span>
                       <button
                         type="button"

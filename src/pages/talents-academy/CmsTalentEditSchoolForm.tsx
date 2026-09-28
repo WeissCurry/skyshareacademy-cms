@@ -4,7 +4,7 @@ import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
-import Modal from "@shared/ui/modals"; 
+import Modal from "@shared/ui/modals";
 
 import Edit1 from "@shared/assets/images/mascot-icons/Edit Square.png";
 import Delete from "@shared/assets/images/mascot-icons/Delete.png";
@@ -122,7 +122,7 @@ function CmsTalentEditSchoolForm() {
     formData.append("nama_sekolah", schoolForm.nama_sekolah ?? "");
     formData.append("alamat", schoolForm.alamat ?? "");
     formData.append("embed_map", schoolForm.embed_map ?? "");
-    
+
     openModal('loading', { message: 'Menyimpan perubahan...' });
 
     try {
@@ -172,7 +172,7 @@ function CmsTalentEditSchoolForm() {
   function handleNavigate(id: string | number) {
     Navigate(`/cms/talent/editgroup/${id}`);
   }
-  
+
   // --- Fungsi untuk merender konten modal secara dinamis ---
   const renderModalContent = () => {
     const { type, props } = modalState;
@@ -230,16 +230,16 @@ function CmsTalentEditSchoolForm() {
             </div>
           </>
         );
-      
+
       case 'loading':
         return (
-            <div className="flex flex-col items-center justify-center p-5">
-                  <svg className="animate-spin h-8 w-8 text-primary-1 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" ></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" ></path>
-                </svg>
-                <p className="text-primary-1">{props.message || 'Loading...'}</p>
-            </div>
+          <div className="flex flex-col items-center justify-center p-5">
+            <svg className="animate-spin h-8 w-8 text-primary-1 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" ></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" ></path>
+            </svg>
+            <p className="text-primary-1">{props.message || 'Loading...'}</p>
+          </div>
         )
 
       default:
@@ -249,15 +249,15 @@ function CmsTalentEditSchoolForm() {
 
   // --- Handler untuk tombol close modal yang memiliki aksi navigasi ---
   const handleCloseAndNavigate = () => {
-      closeModal();
-      Navigate('/cms/talentacademy');
+    closeModal();
+    Navigate('/cms/talentacademy');
   }
 
   return (
     <>
       <div className="bg-background flex flex-col pt-12 items-center self-stretch">
-        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-          <div className="shrink-0">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+          <div className="hidden md:block shrink-0">
             <Sidebar />
           </div>
           <div className="w-full min-w-0">
@@ -334,10 +334,10 @@ function CmsTalentEditSchoolForm() {
                   <form className="w-full" action="">
                     <label className="block font-bold mb-1" htmlFor="nama_sekolah">Nama Sekolah <span className="text-red-500">*</span></label>
                     <input id="nama_sekolah" placeholder="Masukkan nama sekolah" value={schoolForm.nama_sekolah || ''} type="text" onChange={(e) => setSchoolForm({ ...schoolForm, nama_sekolah: e.target.value })} className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none" />
-                    
+
                     <label className="block font-bold mt-4 mb-1" htmlFor="alamat_sekolah">Alamat Sekolah <span className="text-red-500">*</span></label>
                     <input id="alamat_sekolah" placeholder="Masukkan alamat sekolah" value={schoolForm.alamat || ''} type="text" onChange={(e) => setSchoolForm({ ...schoolForm, alamat: e.target.value })} className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none" />
-                    
+
                     <label className="block font-bold mt-4 mb-1" htmlFor="embed_map">Masukkan Embed Google Maps (HTML) <span className="text-red-500">*</span></label>
                     <input id="embed_map" value={schoolForm.embed_map || ''} placeholder="Example : https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.6197699153263!2d106.71407467533372!3d-6.3135771617850365!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69e55a184cee4d%3A0xc038909b2253775e!2sSMA%20Negeri%209%20Kota%20Tangerang%20Selatan!5e0!3m2!1sid!2sid!4v1714293197913!5m2!1sid!2sid" type="text" onChange={(e) => setSchoolForm({ ...schoolForm, embed_map: e.target.value })} className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none" />
                   </form>
@@ -402,15 +402,15 @@ function CmsTalentEditSchoolForm() {
           </div>
         </div>
       </div>
-      
+
       {/* --- HANYA SATU KOMPONEN MODAL DI SINI UNTUK SEMUA KEBUTUHAN --- */}
-      <Modal 
-        isOpen={modalState.isOpen} 
+      <Modal
+        isOpen={modalState.isOpen}
         onClose={
-            // Tentukan aksi onClose berdasarkan tipe modal
-            modalState.type === 'saveSuccess' || modalState.type === 'cancel'
-                ? handleCloseAndNavigate
-                : closeModal
+          // Tentukan aksi onClose berdasarkan tipe modal
+          modalState.type === 'saveSuccess' || modalState.type === 'cancel'
+            ? handleCloseAndNavigate
+            : closeModal
         }
         showCloseButton={modalState.type !== 'loading'}
       >
@@ -419,4 +419,5 @@ function CmsTalentEditSchoolForm() {
     </>
   );
 }
+
 export default CmsTalentEditSchoolForm;

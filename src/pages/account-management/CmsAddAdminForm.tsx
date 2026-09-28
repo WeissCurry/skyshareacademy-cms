@@ -100,8 +100,8 @@ function CmsAddAdminForm() {
   return (
     <>
       <div className="bg-background flex flex-col pb-44 pt-12 items-center self-stretch h-auto">
-        <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-          <div className="shrink-0">
+        <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+          <div className="hidden md:block shrink-0">
             <Sidebar />
           </div>
           <div className="w-full min-w-0">
@@ -126,9 +126,8 @@ function CmsAddAdminForm() {
                     name="name"
                     placeholder="Masukkan Name"
                     type="text"
-                    className={`w-full  px-4 py-2 border-2 rounded-lg outline-none ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full  px-4 py-2 border-2 rounded-lg outline-none ${errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
                   {errors.name && (
                     <p className="text-red-500 mb-6 text-sm">{errors.name}</p>
@@ -144,9 +143,8 @@ function CmsAddAdminForm() {
                     name="username"
                     placeholder="Masukkan Email"
                     type="text"
-                    className={`w-full px-4 py-2 border-2 rounded-lg outline-none ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-2 border-2 rounded-lg outline-none ${errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
                   {errors.email && (
                     <p className="text-red-500 text-sm">{errors.email}</p>
@@ -165,9 +163,8 @@ function CmsAddAdminForm() {
                     name="password"
                     placeholder="Masukkan Password"
                     type="password"
-                    className={`w-full px-4 py-2 border-2 rounded-lg outline-none ${
-                      errors.password ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full px-4 py-2 border-2 rounded-lg outline-none ${errors.password ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
                   {errors.password && (
                     <p className="text-red-500 text-sm">{errors.password}</p>
@@ -265,10 +262,9 @@ function CmsAddAdminForm() {
               <path
                 className="opacity-75"
                 fill="currentColor"
-                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            <p className="text-primary-1">Uploading article...</p>
           </div>
         </div>
       )}

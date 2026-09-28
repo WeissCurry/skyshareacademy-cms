@@ -115,8 +115,8 @@ function CmsArticleDashboardTable() {
 
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch">
-      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        <div className="self-start shrink-0"><Sidebar /></div>
+      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+        <div className="hidden md:block self-start shrink-0"><Sidebar /></div>
         <div className="w-full min-w-0">
           <div className="flex justify-between items-end mb-8">
             <div>
@@ -173,7 +173,7 @@ function CmsArticleDashboardTable() {
                 </select>
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -191,7 +191,7 @@ function CmsArticleDashboardTable() {
                       <tr key={article.id} className="hover:bg-gray-50 transition-colors">
                         <td className="pr-4 py-6 text-sm font-bold text-black">{(currentPage - 1) * 10 + index + 1}</td>
                         <td className="pr-4 py-6 text-sm text-black">{new Date(article.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</td>
-                        <td 
+                        <td
                           className="pr-20 py-6 text-sm text-black relative cursor-help"
                           onMouseEnter={() => setHoveredArticleId(article.id)}
                           onMouseLeave={() => setHoveredArticleId(null)}
@@ -199,17 +199,15 @@ function CmsArticleDashboardTable() {
                           <div className="max-w-[250px] truncate">
                             <span className="hover:underline decoration-2 decoration-orange-400">{article.title}</span>
                           </div>
-                          
+
                           {/* Premium Custom Neobrutalist Tooltip with Dynamic Positioning and Smooth Animation */}
-                          <div className={`absolute left-0 bg-white border-2 border-black rounded-lg p-3 z-50 min-w-[280px] max-w-[380px] whitespace-normal pointer-events-none transition-all duration-200 ease-out shadow-[4px_4px_0_#000] transform ${
-                            index < 5 
-                              ? "top-full mt-2 origin-top" 
+                          <div className={`absolute left-0 bg-white border-2 border-black rounded-lg p-3 z-50 min-w-[280px] max-w-[380px] whitespace-normal pointer-events-none transition-all duration-200 ease-out shadow-[4px_4px_0_#000] transform ${index < 5
+                              ? "top-full mt-2 origin-top"
                               : "bottom-full mb-3 origin-bottom"
-                          } ${
-                            hoveredArticleId === article.id 
-                              ? "opacity-100 scale-100 visible" 
+                            } ${hoveredArticleId === article.id
+                              ? "opacity-100 scale-100 visible"
                               : "opacity-0 scale-95 invisible"
-                          }`}>
+                            }`}>
                             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Full Article Title</p>
                             <p className="text-xs font-bold text-black leading-relaxed">{article.title}</p>
                           </div>
@@ -223,15 +221,15 @@ function CmsArticleDashboardTable() {
                         </td>
                         <td className="pl-4 py-6">
                           <div className="flex justify-center gap-3">
-                            <Link 
-                              to={`/cms/article/edit/${article.id}`} 
+                            <Link
+                              to={`/cms/article/edit/${article.id}`}
                               className="bg-primary-1 hover:bg-primary-2 h-10 w-10 rounded-xl flex justify-center items-center border border-black shadow-[2px_2px_0_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#000] transition-all"
                               title="Edit"
                             >
                               <img className="w-5 h-5" src={EditSquare} alt="Edit" />
                             </Link>
-                            <button 
-                              onClick={() => handleDeleteClick(article.id)} 
+                            <button
+                              onClick={() => handleDeleteClick(article.id)}
                               className="bg-red-500 hover:bg-red-600 h-10 w-10 rounded-xl flex justify-center items-center border border-black shadow-[2px_2px_0_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_#000] transition-all"
                               title="Delete"
                             >
@@ -254,12 +252,12 @@ function CmsArticleDashboardTable() {
 
             {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="px-6 py-4 mt-6 bg-gray-50 border-2 border-black rounded-xl flex items-center justify-between shadow-[2px_2px_0_#000]">
+              <div className="px-6 py-4 mt-6 bg-gray-50 border-2 border-black rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left shadow-[2px_2px_0_#000]">
                 <p className="text-sm text-gray-500 font-bold">
                   Showing <span className="font-extrabold">{(currentPage - 1) * pagination.limit + 1}</span> to <span className="font-extrabold">{Math.min(currentPage * pagination.limit, pagination.total)}</span> of <span className="font-extrabold">{pagination.total}</span> results
                 </p>
-                <div className="flex gap-2">
-                  <button 
+                <div className="flex gap-2 w-full sm:w-auto justify-center">
+                  <button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => prev - 1)}
                     className="px-4 py-2 bg-white border-2 border-black rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000]"
@@ -269,7 +267,7 @@ function CmsArticleDashboardTable() {
                   <div className="flex items-center px-4 font-bold">
                     {currentPage} / {pagination.totalPages}
                   </div>
-                  <button 
+                  <button
                     disabled={currentPage === pagination.totalPages}
                     onClick={() => setCurrentPage(prev => prev + 1)}
                     className="px-4 py-2 bg-white border-2 border-black rounded-lg font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000]"
@@ -283,11 +281,11 @@ function CmsArticleDashboardTable() {
         </div>
       </div>
 
-      <ConfirmModal 
-        isOpen={isConfirmOpen} 
-        onClose={() => setIsConfirmOpen(false)} 
-        onConfirm={confirmDelete} 
-        title="Delete Article?" 
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Article?"
         message="This action cannot be undone. The article will be permanently removed."
         type="danger"
         confirmText="Delete"
@@ -298,3 +296,4 @@ function CmsArticleDashboardTable() {
 }
 
 export default CmsArticleDashboardTable;
+

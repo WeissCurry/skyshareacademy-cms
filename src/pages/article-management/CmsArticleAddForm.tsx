@@ -18,7 +18,7 @@ import { useArticleAddForm } from "./hooks/useArticleAddForm";
 
 function CmsArticleAddForm() {
   const { state, actions } = useArticleAddForm();
-  
+
   const {
     isDropdownOpen,
     isDropdownAddOpen,
@@ -61,8 +61,8 @@ function CmsArticleAddForm() {
 
   return (
     <div className="bg-background flex flex-col pt-12 items-center self-stretch h-auto pb-44">
-      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        <div className="shrink-0"><Sidebar /></div>
+      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+        <div className="hidden md:block shrink-0"><Sidebar /></div>
         <div className="flex-1 min-w-0">
           <div className="flex gap-4">
             <button onClick={() => navigate("/cms/article")} className="hover:scale-110 transition-transform mt-1">
@@ -73,9 +73,9 @@ function CmsArticleAddForm() {
               <p className="text-sm font-medium text-black mt-1">Masukkan data pada field yang tertera</p>
             </div>
           </div>
-          
+
           <div className="bg-neutral-white mt-8 border-2 border-black rounded-xl p-8 w-full overflow-hidden space-y-8 shadow-sm">
-            
+
             {/* Heading Image */}
             <div>
               <label className="font-bold block mb-2 text-sm">Upload gambar heading <span className="text-orange-500">*</span></label>
@@ -138,7 +138,7 @@ function CmsArticleAddForm() {
                 placeholder="Masukkan judul artikel..."
               />
             </div>
-            
+
             {/* CTA Link */}
             <div>
               <label className="font-bold block mb-2 text-sm">CTA Link</label>
@@ -153,7 +153,7 @@ function CmsArticleAddForm() {
             {/* Category */}
             <div className="relative">
               <label className="font-bold block mb-2 text-sm">Kategori <span className="text-orange-500">*</span></label>
-              <div 
+              <div
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl flex justify-between items-center cursor-pointer hover:border-black transition-colors"
               >
@@ -193,7 +193,7 @@ function CmsArticleAddForm() {
                       </div>
                     ))}
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsDropdownAddOpen(true)}
                     className="w-full p-4 bg-gray-50 flex items-center justify-center gap-2 font-bold hover:bg-gray-100 border-t text-sm"
                   >
@@ -232,9 +232,9 @@ function CmsArticleAddForm() {
             <div className="min-w-0">
               <label className="font-bold block mb-2 text-sm">Berikan isi <span className="text-orange-500">*</span></label>
               <div className="border-2 border-gray-300 rounded-xl overflow-hidden mt-2">
-                <RichTextEditor 
-                  value={articleForm.content} 
-                  onChange={(content) => setFormValue({ content })} 
+                <RichTextEditor
+                  value={articleForm.content}
+                  onChange={(content) => setFormValue({ content })}
                 />
               </div>
             </div>
@@ -258,3 +258,4 @@ function CmsArticleAddForm() {
 }
 
 export default CmsArticleAddForm;
+

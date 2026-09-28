@@ -778,14 +778,6 @@ export default function CmsDashboard() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-6 bg-background border-2 border-black rounded-xl p-3 flex gap-2.5 text-[10px] text-gray-600 leading-relaxed font-bold">
-                <FiCompass className="w-5 h-5 flex-shrink-0 text-primary-1 mt-0.5" />
-                <div>
-                  <span className="text-black block mb-0.5 font-black">Kecepatan Ideal</span>
-                  Indikator hijau menunjukkan kecepatan muat ideal bagi kenyamanan pengunjung.
-                </div>
-              </div>
             </div>
           </div>
 
