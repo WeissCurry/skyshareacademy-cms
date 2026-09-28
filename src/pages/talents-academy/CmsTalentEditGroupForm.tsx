@@ -9,6 +9,8 @@ import Mascot2 from "@shared/assets/images/mascot-icons/pose=1.webp";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
 import Coution from "@shared/assets/images/mascot-icons/Info Square.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 interface School {
   id: string | number;
@@ -42,7 +44,7 @@ function CmsTalentEditGroupForm() {
   const handleEditGroups = async () => {
     const inputData = {
       name: groupName,
-      link: groupLink,
+      link: ensureHttps(groupLink),
       school_id: schoolId,
     };
     setIsUploading(true);
@@ -53,6 +55,11 @@ function CmsTalentEditGroupForm() {
         data: inputData,
       });
       if (response.data.status === "success") {
+        try {
+          await logActivity(`Memperbarui grup: ${groupName}`);
+        } catch (logErr) {
+          console.error("Failed to log activity:", logErr);
+        }
         setIsSaveModalOpen(true);
       } else {
         setIsErrorModal(true);
@@ -152,8 +159,9 @@ function CmsTalentEditGroupForm() {
                       </div>
                     </label>
                     <input
-                      defaultValue={dataGroups?.link}
+                      value={groupLink}
                       onChange={(e: ChangeEvent<HTMLInputElement>) => setGroupLink(e.target.value)}
+                      onBlur={(e: ChangeEvent<HTMLInputElement>) => setGroupLink(ensureHttps(e.target.value))}
                       placeholder="https://"
                       type="text"
                       className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"

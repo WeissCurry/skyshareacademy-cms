@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import { ensureHttps } from "@shared/utils/urlUtils";
 import { type PopupItem, type PopupConfigData } from "../types/popup";
 
 export function useMultiPopupForm() {
@@ -152,10 +153,16 @@ export function useMultiPopupForm() {
     setLoadingMessage("Menyimpan konfigurasi popup...");
     setIsUploading(true);
     try {
+      const sanitizedPopups = config.popups.map((p) => ({
+        ...p,
+        image_url: ensureHttps(p.image_url),
+        cta_link: p.cta_link ? ensureHttps(p.cta_link) : "",
+      }));
+
       await skyshareApi.put("/popup-config", {
         is_active: config.is_active,
         randomize: config.randomize,
-        popups: config.popups,
+        popups: sanitizedPopups,
       });
 
       try {

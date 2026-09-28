@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
@@ -69,6 +70,11 @@ function CmsTalentAddSchoolForm() {
     setIsUploading(true);
     try {
       await skyshareApi.post("/school/add", formData);
+      try {
+        await logActivity(`Menambahkan sekolah baru: ${schoolForm.nama_sekolah}`);
+      } catch (logErr) {
+        console.error("Failed to log activity:", logErr);
+      }
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       const err = error as Error;

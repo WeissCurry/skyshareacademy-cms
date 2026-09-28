@@ -2,6 +2,7 @@ import type { ChangeEvent } from "react";
 import Show from "@shared/assets/images/mascot-icons/Show.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 interface EventHighlightSectionProps {
   isActive: boolean;
@@ -107,6 +108,7 @@ export default function EventHighlightSection({
               type="text"
               value={ctaLink || ""}
               onChange={(e) => onCtaChange(e.target.value)}
+              onBlur={(e) => onCtaChange(ensureHttps(e.target.value))}
               className="w-full px-4 py-3 border-gray-300 border-2 rounded-lg outline-none focus:border-black transition-colors"
             />
           </div>

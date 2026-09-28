@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import { convertToWebP } from "@shared/utils/imageUtils";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 export interface BaseAcademyForm {
   file_booklet?: File | string | null;
@@ -96,11 +97,14 @@ export function useAcademyForm<T extends BaseAcademyForm>({
   const handleSave = async (extraFields?: (fd: FormData) => void) => {
     const formData = new FormData();
     
+    const URL_FIELDS = ["link_cta", "link_join_program", "event_cta_link", "cta_link"];
+
     Object.entries(form).forEach(([key, value]) => {
       if (value instanceof File) {
         formData.append(key, value);
       } else if (typeof value === "string") {
-        formData.append(key, value.trim());
+        const finalValue = URL_FIELDS.includes(key) ? ensureHttps(value) : value.trim();
+        formData.append(key, finalValue);
       } else if (typeof value === "boolean") {
         formData.append(key, String(value));
       } else if (value !== null && value !== undefined) {

@@ -1,5 +1,7 @@
 import { useState, useEffect, type ChangeEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
+import { ensureHttps } from "@shared/utils/urlUtils";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 interface Group {
   id: string | number;
@@ -130,8 +132,10 @@ export function useTalentForm() {
 
   const handleSubmit = async (): Promise<boolean> => {
     const formData = new FormData();
-    if (talentForm.file_booklet instanceof File || typeof talentForm.file_booklet === "string") {
+    if (talentForm.file_booklet instanceof File) {
       formData.append("file_booklet", talentForm.file_booklet);
+    } else if (typeof talentForm.file_booklet === "string") {
+      formData.append("file_booklet", ensureHttps(talentForm.file_booklet));
     }
     if (talentForm.gambar_alur_acara instanceof File || typeof talentForm.gambar_alur_acara === "string") {
       formData.append("gambar_alur_acara", talentForm.gambar_alur_acara);
@@ -139,9 +143,9 @@ export function useTalentForm() {
     if (talentForm.gambar_timeline instanceof File || typeof talentForm.gambar_timeline === "string") {
       formData.append("gambar_timeline", talentForm.gambar_timeline);
     }
-    formData.append("link_cta", talentForm.link_cta);
+    formData.append("link_cta", ensureHttps(talentForm.link_cta));
     formData.append("school_id", JSON.stringify(talentForm.school_ids));
-    formData.append("link_join_program", talentForm.link_join_program);
+    formData.append("link_join_program", ensureHttps(talentForm.link_join_program));
 
     setIsUploading(true);
     try {
@@ -150,7 +154,15 @@ export function useTalentForm() {
         method: "PUT",
         data: formData,
       });
-      return response.data.status === "success";
+      if (response.data.status === "success") {
+        try {
+          await logActivity("Memperbarui konten Talent Academy");
+        } catch (logErr) {
+          console.error("Failed to log activity:", logErr);
+        }
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error(error);
       return false;
@@ -162,8 +174,14 @@ export function useTalentForm() {
   const handleDeleteSchool = async (schoolId: string | number): Promise<void> => {
     setIsDeleting(true);
     try {
+      const schoolToDelete = schools.find((s) => s.id === schoolId);
       await skyshareApi.delete(`/school/${schoolId}`);
       setSchools((prev) => prev.filter((school) => school.id !== schoolId));
+      try {
+        await logActivity(`Menghapus sekolah: ${schoolToDelete?.nama_sekolah || schoolId}`);
+      } catch (logErr) {
+        console.error("Failed to log activity:", logErr);
+      }
     } catch (error) {
       console.error(error);
     } finally {

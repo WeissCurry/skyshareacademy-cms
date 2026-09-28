@@ -9,6 +9,8 @@ export interface ActivityLogEntry {
   createdAt: string;
 }
 
+const MAX_ACTION_LENGTH = 120;
+
 /**
  * Directly records an admin action activity log to the server.
  * Fails gracefully without breaking calling workflows.
@@ -18,8 +20,9 @@ export async function logActivity(
   adminName?: string
 ): Promise<boolean> {
   try {
+    const trimmedAction = action ? action.trim().slice(0, MAX_ACTION_LENGTH) : "";
     await skyshareApi.post("/analytics/log", {
-      action,
+      action: trimmedAction,
       admin_name: adminName,
     });
     return true;

@@ -1,6 +1,6 @@
-// import type { ChangeEvent } from "react";
 import Book from "@shared/assets/images/mascot-icons/Document.png";
 import ChainAsset from "@shared/assets/images/mascot-icons/Link.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 interface BookletSectionProps {
     fileBooklet?: string | File | null;
@@ -25,8 +25,9 @@ export default function BookletSection({ fileBooklet, onBookletChange }: Booklet
                     <input
                         placeholder="https://"
                         type="text"
-                        defaultValue={typeof fileBooklet === "string" ? fileBooklet : undefined}
+                        value={typeof fileBooklet === "string" ? fileBooklet : ""}
                         onChange={(e) => onBookletChange(e.target.value)}
+                        onBlur={(e) => onBookletChange(ensureHttps(e.target.value))}
                         className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
                     />
                 </form>

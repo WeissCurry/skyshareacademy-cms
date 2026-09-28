@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type ChangeEvent } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 export interface EventPopupForm {
   is_event_active?: boolean;
@@ -66,7 +67,7 @@ export function useEventForm() {
         formData.append("event_image_url", eventForm.event_image_url);
       }
       if (eventForm.event_cta_link) {
-        formData.append("event_cta_link", eventForm.event_cta_link);
+        formData.append("event_cta_link", ensureHttps(eventForm.event_cta_link));
       }
 
       await skyshareApi.put("/mentor", formData);

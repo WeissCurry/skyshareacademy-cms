@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 import Modal from "@shared/ui/modals";
 
@@ -128,6 +129,11 @@ function CmsTalentEditSchoolForm() {
     try {
       const responseFromServer = await skyshareApi.put(`/school/${id}`, formData);
       if (responseFromServer.data.status === "success") {
+        try {
+          await logActivity(`Memperbarui data sekolah: ${schoolForm.nama_sekolah || ""}`);
+        } catch (logErr) {
+          console.error("Failed to log activity:", logErr);
+        }
         openModal('saveSuccess');
       } else {
         openModal('error', { message: 'Gagal menyimpan data.' });
@@ -143,8 +149,14 @@ function CmsTalentEditSchoolForm() {
     closeModal(); // Tutup modal konfirmasi
     openModal('loading', { message: 'Menghapus grup...' });
     try {
+      const groupToDelete = dataGroups.find((g) => g.id === groupId);
       await skyshareApi.delete(`/group/${groupId}`);
       setDataGroups(dataGroups.filter((group) => group.id !== groupId));
+      try {
+        await logActivity(`Menghapus grup: ${groupToDelete?.name || groupId}`);
+      } catch (logErr) {
+        console.error("Failed to log activity:", logErr);
+      }
       closeModal(); // Tutup modal loading setelah selesai
     } catch (error) {
       console.error("Error saat menghapus:", error);

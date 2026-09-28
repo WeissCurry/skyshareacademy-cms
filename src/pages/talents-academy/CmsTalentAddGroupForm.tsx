@@ -9,6 +9,8 @@ import Mascot2 from "@shared/assets/images/mascot-icons/pose=1.webp";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
 import Coution from "@shared/assets/images/mascot-icons/Info Square.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
+import { logActivity } from "@shared/utils/useActivityLogger";
 
 interface School {
   id: string | number;
@@ -34,7 +36,7 @@ function CmsTalentAddGroupForm() {
   const handleAddGroups = async () => {
     const inputData = {
       name: groupName,
-      link: groupLink,
+      link: ensureHttps(groupLink),
       school_id: schoolId,
     };
     // setIsUploading(true); // Redundant if not handled in onSubmit? Wait, it is handled.
@@ -45,6 +47,11 @@ function CmsTalentAddGroupForm() {
         data: inputData,
       });
       if (response.data.status === "success") {
+        try {
+          await logActivity(`Menambahkan grup baru: ${groupName}`);
+        } catch (logErr) {
+          console.error("Failed to log activity:", logErr);
+        }
         setIsSaveModalOpen(true);
       } else {
         setIsErrorModal(true);
@@ -126,7 +133,9 @@ function CmsTalentAddGroupForm() {
                       </div>
                     </label>
                     <input
+                      value={groupLink}
                       onChange={(e) => setGroupLink(e.target.value)}
+                      onBlur={(e) => setGroupLink(ensureHttps(e.target.value))}
                       placeholder="https://"
                       type="text"
                       className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"

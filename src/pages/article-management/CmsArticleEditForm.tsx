@@ -12,6 +12,7 @@ import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 import Show from "@shared/assets/images/mascot-icons/Show.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
 import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 import { useArticleEditForm } from "./hooks/useArticleEditForm";
 
@@ -138,6 +139,7 @@ function CmsArticleEditForm() {
               <input
                 value={articleForm.link}
                 onChange={(e) => setFormValue({ link: e.target.value })}
+                onBlur={(e) => setFormValue({ link: ensureHttps(e.target.value) })}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="https://..."
               />

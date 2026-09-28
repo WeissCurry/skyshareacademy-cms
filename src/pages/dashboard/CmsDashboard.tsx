@@ -17,7 +17,7 @@ import {
   FiX,
   FiSearch,
   FiClock,
-  FiShield,
+  // FiShield,
   FiUser,
   FiFileText,
 } from "react-icons/fi";
@@ -215,13 +215,23 @@ export default function CmsDashboard() {
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [logSearchQuery, setLogSearchQuery] = useState("");
+  const [logPage, setLogPage] = useState(1);
+  const [logTotalPages, setLogTotalPages] = useState(1);
+  const [logTotalCount, setLogTotalCount] = useState(0);
+  const LOG_PAGE_SIZE = 10;
 
-  const fetchActivityLogs = useCallback(async () => {
+  const fetchActivityLogs = useCallback(async (pageToFetch = 1) => {
     try {
       setLoadingLogs(true);
-      const response = await skyshareApi.get("/analytics/logs?limit=50");
+      const response = await skyshareApi.get(
+        `/analytics/logs?limit=${LOG_PAGE_SIZE}&page=${pageToFetch}`
+      );
       if (response.data && response.data.data) {
-        setActivityLogs(response.data.data.logs || []);
+        const resData = response.data.data;
+        setActivityLogs(resData.logs || []);
+        setLogTotalCount(resData.total || (resData.logs ? resData.logs.length : 0));
+        setLogTotalPages(resData.totalPages || 1);
+        setLogPage(resData.page || pageToFetch);
       }
     } catch (error) {
       console.error("Failed to load activity logs:", error);
@@ -980,7 +990,8 @@ export default function CmsDashboard() {
                   />
                 </div>
                 <button
-                  onClick={fetchActivityLogs}
+                  type="button"
+                  onClick={() => fetchActivityLogs(logPage)}
                   disabled={loadingLogs}
                   className="h-10 w-10 flex items-center justify-center bg-white border-2 border-black rounded-xl hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   title="Segarkan Riwayat Log"
@@ -1004,7 +1015,7 @@ export default function CmsDashboard() {
                     <th className="py-4 px-4 w-[20%] text-left font-bold text-sm text-black">
                       <div className="flex items-center gap-2">
                         <FiUser className="w-4 h-4 text-black" />
-                        <span>Administrator</span>
+                        <span>Accounts</span>
                       </div>
                     </th>
                     <th className="py-4 px-4 w-[40%] text-left font-bold text-sm text-black">
@@ -1030,12 +1041,15 @@ export default function CmsDashboard() {
                         </td>
                         <td className="py-5 px-4 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 border border-black rounded-lg text-xs font-mono font-bold text-black shadow-[1.5px_1.5px_0px_#000]">
-                            <FiShield className="w-3.5 h-3.5 text-amber-700" />
+                            {/* <FiShield className="w-3.5 h-3.5 text-amber-700" /> */}
                             {log.admin_name}
                           </span>
                         </td>
                         <td className="py-5 px-4">
-                          <span className="text-sm font-bold text-black leading-relaxed">
+                          <span
+                            className="text-sm font-bold text-black leading-relaxed block max-w-[340px] truncate"
+                            title={log.action}
+                          >
                             {log.action}
                           </span>
                         </td>
@@ -1066,14 +1080,40 @@ export default function CmsDashboard() {
               </table>
             </div>
 
-            {/* Footer Summary */}
-            <div className="pt-4 border-t border-gray-200 mt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 font-bold gap-2">
+            {/* Footer Summary & Pagination Controls */}
+            <div className="pt-4 border-t border-gray-200 mt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 font-bold gap-3">
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Tercatat otomatis di database PostgreSQL server
+                server
               </span>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fetchActivityLogs(logPage - 1)}
+                  disabled={logPage <= 1 || loadingLogs}
+                  className="px-3 py-1.5 border-2 border-black rounded-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:translate-y-[1px] transition-all bg-white text-black shadow-[1.5px_1.5px_0px_#000]"
+                >
+                  ← Prev
+                </button>
+
+                <span className="px-3 py-1.5 bg-black text-white rounded-lg font-black text-xs">
+                  {logPage} / {logTotalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => fetchActivityLogs(logPage + 1)}
+                  disabled={logPage >= logTotalPages || loadingLogs}
+                  className="px-3 py-1.5 border-2 border-black rounded-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 active:translate-y-[1px] transition-all bg-white text-black shadow-[1.5px_1.5px_0px_#000]"
+                >
+                  Next →
+                </button>
+              </div>
+
               <span>
-                Menampilkan <span className="text-black font-extrabold">{filteredLogs.length}</span> dari <span className="text-black font-extrabold">{activityLogs.length}</span> aktivitas
+                Menampilkan <span className="text-black font-extrabold">{filteredLogs.length}</span> dari <span className="text-black font-extrabold">{logTotalCount || activityLogs.length}</span> aktivitas
               </span>
             </div>
           </div>

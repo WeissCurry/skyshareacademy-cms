@@ -2,6 +2,7 @@ import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 export interface Category {
   id: string;
@@ -101,7 +102,7 @@ export function useArticleAddForm() {
     }
     formData.append("title", articleForm.title);
     formData.append("content", articleForm.content);
-    formData.append("link", articleForm.link);
+    formData.append("link", ensureHttps(articleForm.link));
     formData.append("category_id", articleForm.category_id);
 
     setIsUploading(true);

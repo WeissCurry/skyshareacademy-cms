@@ -1,4 +1,5 @@
 import ChainAsset from "@shared/assets/images/mascot-icons/Link.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 interface JoinButtonSectionProps {
   linkCta: string;
@@ -30,7 +31,7 @@ export default function JoinButtonSection({
           </label>
           <input
             placeholder="Example: Join Talent Academy Season 6"
-            defaultValue={linkCta}
+            value={linkCta}
             onChange={(e) => onCtaChange(e.target.value)}
             type="text"
             className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
@@ -45,8 +46,9 @@ export default function JoinButtonSection({
           <input
             placeholder="https://"
             type="text"
-            defaultValue={linkJoinProgram}
+            value={linkJoinProgram}
             onChange={(e) => onJoinProgramChange(e.target.value)}
+            onBlur={(e) => onJoinProgramChange(ensureHttps(e.target.value))}
             className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
           />
         </form>

@@ -1,4 +1,5 @@
 import ChainAsset from "@shared/assets/images/mascot-icons/Link.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 interface ActionButtonsSectionProps {
   linkCta?: string;
@@ -32,6 +33,7 @@ export default function ActionButtonsSection({
             type="text"
             value={linkCta || ""}
             onChange={(e) => onCtaChange(e.target.value)}
+            onBlur={(e) => onCtaChange(ensureHttps(e.target.value))}
             className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none focus:border-black transition-colors"
           />
         </div>
@@ -42,6 +44,7 @@ export default function ActionButtonsSection({
             type="text"
             value={linkJoinProgram || ""}
             onChange={(e) => onJoinProgramChange(e.target.value)}
+            onBlur={(e) => onJoinProgramChange(ensureHttps(e.target.value))}
             className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none focus:border-black transition-colors"
           />
         </div>

@@ -2,6 +2,7 @@ import React from "react";
 import { FiTrash2, FiExternalLink, FiEye, FiEyeOff } from "react-icons/fi";
 import { type PopupItem } from "../types/popup";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 interface PopupItemCardProps {
   item: PopupItem;
@@ -105,6 +106,7 @@ export default function PopupItemCard({
               type="text"
               value={item.image_url}
               onChange={(e) => onUpdate(item.id, { image_url: e.target.value })}
+              onBlur={(e) => onUpdate(item.id, { image_url: ensureHttps(e.target.value) })}
               placeholder="https://res.cloudinary.com/..."
               className="w-full text-xs font-bold px-3 py-2 border-2 border-black rounded-xl bg-background focus:bg-white focus:outline-none"
             />
@@ -122,6 +124,9 @@ export default function PopupItemCard({
                   value={item.cta_link || ""}
                   onChange={(e) =>
                     onUpdate(item.id, { cta_link: e.target.value })
+                  }
+                  onBlur={(e) =>
+                    onUpdate(item.id, { cta_link: ensureHttps(e.target.value) })
                   }
                   placeholder="https://wa.me/... atau /program"
                   className="w-full text-xs font-bold pl-3 pr-8 py-2 border-2 border-black rounded-xl bg-background focus:bg-white focus:outline-none"

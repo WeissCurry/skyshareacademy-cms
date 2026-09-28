@@ -1,5 +1,6 @@
 import Book from "@shared/assets/images/mascot-icons/Document.png";
 import ChainAsset from "@shared/assets/images/mascot-icons/Link.png";
+import { ensureHttps } from "@shared/utils/urlUtils";
 
 interface BookletSectionProps {
     value?: string | File | null;
@@ -26,6 +27,7 @@ export default function BookletSection({ value, onChange }: BookletSectionProps)
                         type="text"
                         value={typeof value === "string" ? value : ""}
                         onChange={(e) => onChange(e.target.value)}
+                        onBlur={(e) => onChange(ensureHttps(e.target.value))}
                         className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
                     />
                 </form>
