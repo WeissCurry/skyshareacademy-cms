@@ -20,6 +20,8 @@ import {
   // FiShield,
   FiUser,
   FiFileText,
+  FiDownload,
+  FiChevronDown,
 } from "react-icons/fi";
 import { type ActivityLogEntry } from "@shared/utils/useActivityLogger";
 
@@ -66,12 +68,149 @@ interface DashboardData {
   provinces?: ProvinceStat[];
 }
 
+// Utility function to download CSV with UTF-8 BOM
+const downloadCSV = (filename: string, rows: (string | number)[][]) => {
+  const bom = "\uFEFF"; // UTF-8 BOM ensures proper character rendering in Excel
+  const csv =
+    bom +
+    rows
+      .map((r) =>
+        r
+          .map((c) => {
+            const str = String(c ?? "");
+            return `"${str.replace(/"/g, '""')}"`;
+          })
+          .join(",")
+      )
+      .join("\r\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+// Handler for generating and triggering analytics reports
+const handleDownloadReport = (
+  data: DashboardData,
+  days: number,
+  points: TimeSeriesPoint[],
+  type: "full" | "summary" | "trend" | "pages" | "traffic" | "provinces" | "all_separate" = "full"
+) => {
+  const dateStr = new Date().toISOString().split("T")[0];
+  const now = new Date().toLocaleDateString("id-ID");
+
+  if (type === "summary") {
+    downloadCSV(`skyshare_ringkasan_${days}hari_${dateStr}.csv`, [
+      ["Laporan Ringkasan Analytics", `Periode: ${days} Hari Terakhir`, `Diunduh: ${now}`],
+      [],
+      ["Metrik", "Nilai"],
+      ["Pageviews Hari Ini", String(data.today.pageviews)],
+      ["Pengunjung Unik Hari Ini", String(data.today.unique_visitors)],
+      ["Avg Load Time (ms)", String(data.performance.avg_load_time)],
+      ["Avg FCP (ms)", String(data.performance.avg_fcp)],
+      ["Avg LCP (ms)", String(data.performance.avg_lcp)],
+      ["Avg CLS", String(data.performance.avg_cls)],
+      ["Avg FID (ms)", String(data.performance.avg_fid)],
+    ]);
+    return;
+  }
+
+  if (type === "trend") {
+    downloadCSV(`skyshare_tren_${days}hari_${dateStr}.csv`, [
+      ["Tanggal", "Pageviews", "Pengunjung Unik"],
+      ...points.map((p) => [p.date, String(p.pageviews), String(p.unique_visitors)]),
+    ]);
+    return;
+  }
+
+  if (type === "pages") {
+    downloadCSV(`skyshare_halaman_${days}hari_${dateStr}.csv`, [
+      ["Rank", "URL Path", "Kunjungan"],
+      ...data.topPages.map((p, i) => [String(i + 1), p.path, String(p.views)]),
+    ]);
+    return;
+  }
+
+  if (type === "traffic") {
+    downloadCSV(`skyshare_traffic_${days}hari_${dateStr}.csv`, [
+      ["Rank", "Sumber Referensi", "Kunjungan"],
+      ...data.topReferrers.map((r, i) => [String(i + 1), r.referrer, String(r.views)]),
+    ]);
+    return;
+  }
+
+  if (type === "provinces") {
+    downloadCSV(`skyshare_wilayah_${days}hari_${dateStr}.csv`, [
+      ["Rank", "Provinsi", "Pengunjung"],
+      ...(data.provinces || []).map((p, i) => [String(i + 1), p.province, String(p.visitors)]),
+    ]);
+    return;
+  }
+
+  if (type === "all_separate") {
+    handleDownloadReport(data, days, points, "summary");
+    setTimeout(() => handleDownloadReport(data, days, points, "trend"), 250);
+    setTimeout(() => handleDownloadReport(data, days, points, "pages"), 500);
+    setTimeout(() => handleDownloadReport(data, days, points, "traffic"), 750);
+    if (data.provinces && data.provinces.length > 0) {
+      setTimeout(() => handleDownloadReport(data, days, points, "provinces"), 1000);
+    }
+    return;
+  }
+
+  // Default: Comprehensive Laporan Lengkap (Semua Data dalam 1 CSV)
+  const fullRows: (string | number)[][] = [
+    ["=== LAPORAN WEBSITE ANALYTICS SKYSHARE ACADEMY ==="],
+    ["Periode Analisis", `${days} Hari Terakhir`],
+    ["Tanggal Unduh", now],
+    [],
+    ["--- 1. RINGKASAN METRIK & PERFORMA ---"],
+    ["Metrik", "Nilai", "Keterangan"],
+    ["Pageviews Hari Ini", data.today.pageviews, "Total tayangan halaman hari ini"],
+    ["Pengunjung Unik Hari Ini", data.today.unique_visitors, "Jumlah pengunjung unik hari ini"],
+    ["Avg Load Time", `${(data.performance.avg_load_time / 1000).toFixed(2)}s`, "Rata-rata waktu muat total"],
+    ["Avg FCP (First Contentful Paint)", `${(data.performance.avg_fcp / 1000).toFixed(2)}s`, "Waktu render konten pertama"],
+    ["Avg LCP (Largest Contentful Paint)", `${(data.performance.avg_lcp / 1000).toFixed(2)}s`, "Waktu render konten utama terbesar"],
+    ["Avg CLS (Cumulative Layout Shift)", data.performance.avg_cls.toFixed(3), "Indeks stabilitas tata letak"],
+    ["Avg FID (First Input Delay)", `${data.performance.avg_fid}ms`, "Waktu respons interaksi pertama"],
+    [],
+    ["--- 2. TREN HARIAN ---"],
+    ["Tanggal", "Pageviews", "Pengunjung Unik"],
+    ...points.map((p) => [p.date, p.pageviews, p.unique_visitors]),
+    [],
+    ["--- 3. HALAMAN POPULER ---"],
+    ["Peringkat", "URL Path", "Jumlah Kunjungan"],
+    ...data.topPages.map((p, i) => [i + 1, p.path, p.views]),
+    [],
+    ["--- 4. SUMBER TRAFFIC ---"],
+    ["Peringkat", "Sumber Referensi", "Jumlah Kunjungan"],
+    ...data.topReferrers.map((r, i) => [i + 1, r.referrer, r.views]),
+  ];
+
+  if (data.provinces && data.provinces.length > 0) {
+    fullRows.push(
+      [],
+      ["--- 5. DISTRIBUSI WILAYAH ---"],
+      ["Peringkat", "Provinsi", "Jumlah Pengunjung"],
+      ...data.provinces.map((p, i) => [i + 1, p.province, p.visitors])
+    );
+  }
+
+  downloadCSV(`skyshare_laporan_analytics_${days}hari_${dateStr}.csv`, fullRows);
+};
+
 function DashboardSkeleton() {
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch text-black font-sans">
-      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        {/* Sidebar remains fully visible and interactive */}
-        <div className="self-start shrink-0">
+      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+        {/* Sidebar remains fully visible and interactive on desktop */}
+        <div className="hidden md:block self-start shrink-0">
           <Sidebar />
         </div>
         <div className="w-full min-w-0 animate-pulse">
@@ -210,7 +349,8 @@ export default function CmsDashboard() {
   const [svgContent, setSvgContent] = useState<string>("");
   const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const [isDownloadMenuOpen, setIsDownloadMenuOpen] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
 
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -267,6 +407,21 @@ export default function CmsDashboard() {
     }, 0);
     return () => clearTimeout(timer);
   }, [fetchDashboardData, fetchActivityLogs]);
+
+  // Close download menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(e.target as Node)) {
+        setIsDownloadMenuOpen(false);
+      }
+    };
+    if (isDownloadMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDownloadMenuOpen]);
 
   // Use the premium flat skeleton loader when loading
   if (loading && !data) {
@@ -422,9 +577,9 @@ export default function CmsDashboard() {
 
   return (
     <div className="bg-background min-h-screen flex flex-col pt-12 items-center self-stretch text-black font-sans">
-      <div className="content-1 flex gap-4 w-full max-w-[1100px]">
-        {/* Embedded Sidebar Layout */}
-        <div className="self-start shrink-0">
+      <div className="content-1 flex gap-4 w-full max-w-[1100px] px-4 md:px-0">
+        {/* Embedded Sidebar Layout (Desktop) */}
+        <div className="hidden md:block self-start shrink-0">
           <Sidebar />
         </div>
 
@@ -438,32 +593,142 @@ export default function CmsDashboard() {
               </p>
             </div>
 
-            {/* High-Contrast Neobrutalist Days Selector */}
-            <div className="flex items-center gap-2 bg-neutral-white border-2 border-black rounded-xl p-1 shadow-sm">
-              <button
-                onClick={() => setFilterDays(7)}
-                disabled={loading}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 7 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
-                  }`}
-              >
-                7 Hari
-              </button>
-              <button
-                onClick={() => setFilterDays(30)}
-                disabled={loading}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 30 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
-                  }`}
-              >
-                30 Hari
-              </button>
-              <button
-                onClick={() => setFilterDays(90)}
-                disabled={loading}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 90 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
-                  }`}
-              >
-                90 Hari
-              </button>
+            {/* Header Controls: Days Selector & Download Report */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+              {/* High-Contrast Neobrutalist Days Selector */}
+              <div className="flex items-center justify-center gap-1 sm:gap-2 bg-neutral-white border-2 border-black rounded-xl p-1 shadow-sm w-full sm:w-auto">
+                <button
+                  onClick={() => setFilterDays(7)}
+                  disabled={loading}
+                  className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 7 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                    }`}
+                >
+                  7 Hari
+                </button>
+                <button
+                  onClick={() => setFilterDays(30)}
+                  disabled={loading}
+                  className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 30 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                    }`}
+                >
+                  30 Hari
+                </button>
+                <button
+                  onClick={() => setFilterDays(90)}
+                  disabled={loading}
+                  className={`flex-1 sm:flex-none px-3 py-1.5 text-xs font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${filterDays === 90 ? "bg-primary-1 text-white border-2 border-black" : "hover:bg-gray-100 text-gray-700"
+                    }`}
+                >
+                  90 Hari
+                </button>
+              </div>
+
+              {/* Download Report Button with Dropdown */}
+              <div className="relative w-full sm:w-auto inline-flex" ref={downloadMenuRef}>
+                <div className="inline-flex w-full sm:w-auto rounded-xl shadow-[2px_2px_0px_#000] border-2 border-black overflow-hidden bg-black text-white">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadReport(activeData, filterDays, chartPoints, "full")}
+                    disabled={loading || !data}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2 font-bold text-xs hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-900 transition-colors"
+                    title="Unduh laporan lengkap CSV"
+                  >
+                    <FiDownload className="w-4 h-4 flex-shrink-0" />
+                    <span>Report</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDownloadMenuOpen((prev) => !prev)}
+                    disabled={loading || !data}
+                    className="px-2 py-2 border-l border-gray-700 hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed active:bg-gray-900 transition-colors flex items-center justify-center"
+                    title="Pilih format unduhan laporan"
+                  >
+                    <FiChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isDownloadMenuOpen ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
+
+                {/* Dropdown Options Menu */}
+                {isDownloadMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-60 bg-neutral-white border-2 border-black rounded-xl shadow-[4px_4px_0px_#000] py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-gray-400 border-b border-gray-100 mb-1">
+                      Pilihan Unduh CSV
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDownloadReport(activeData, filterDays, chartPoints, "full");
+                        setIsDownloadMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-black hover:bg-amber-100 flex items-center justify-between transition-colors"
+                    >
+                      <span>📊 Laporan Lengkap (1 File)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDownloadReport(activeData, filterDays, chartPoints, "summary");
+                        setIsDownloadMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-black hover:bg-amber-100 flex items-center justify-between transition-colors"
+                    >
+                      <span>📋 Ringkasan & Web Vitals</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDownloadReport(activeData, filterDays, chartPoints, "trend");
+                        setIsDownloadMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-black hover:bg-amber-100 flex items-center justify-between transition-colors"
+                    >
+                      <span>📈 Tren Kunjungan Harian</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDownloadReport(activeData, filterDays, chartPoints, "pages");
+                        setIsDownloadMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-black hover:bg-amber-100 flex items-center justify-between transition-colors"
+                    >
+                      <span>📄 Halaman Terpopuler</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDownloadReport(activeData, filterDays, chartPoints, "traffic");
+                        setIsDownloadMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-black hover:bg-amber-100 flex items-center justify-between transition-colors"
+                    >
+                      <span>🌐 Sumber Traffic</span>
+                    </button>
+                    {activeData.provinces && activeData.provinces.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleDownloadReport(activeData, filterDays, chartPoints, "provinces");
+                          setIsDownloadMenuOpen(false);
+                        }}
+                        className="w-full text-left px-3.5 py-2 text-xs font-bold text-black hover:bg-amber-100 flex items-center justify-between transition-colors"
+                      >
+                        <span>🗺️ Distribusi Wilayah</span>
+                      </button>
+                    )}
+                    <div className="border-t border-gray-200 my-1"></div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleDownloadReport(activeData, filterDays, chartPoints, "all_separate");
+                        setIsDownloadMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 text-xs font-bold text-primary-1 hover:bg-primary-1/10 flex items-center justify-between transition-colors"
+                    >
+                      <span>📦 Unduh Semua (5 File Terpisah)</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -479,7 +744,7 @@ export default function CmsDashboard() {
                   Hari Ini
                 </span>
               </div>
-              <h3 className="text-3xl font-black tracking-tight">{activeData.today.unique_visitors}</h3>
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{activeData.today.unique_visitors}</h3>
               <p className="text-gray-500 text-xs font-bold mt-1">Pengunjung Unik</p>
               <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 text-gray-500 text-[10px] font-bold">
                 <span>Pageviews:</span>
@@ -497,7 +762,7 @@ export default function CmsDashboard() {
                   {filterDays} Hari
                 </span>
               </div>
-              <h3 className="text-3xl font-black tracking-tight">{totalUniqueVisitors}</h3>
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{totalUniqueVisitors}</h3>
               <p className="text-gray-500 text-xs font-bold mt-1">Total Kunjungan</p>
               <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 text-gray-500 text-[10px] font-bold">
                 <span>Rerata Harian:</span>
@@ -519,7 +784,7 @@ export default function CmsDashboard() {
                   Speed
                 </span>
               </div>
-              <h3 className="text-3xl font-black tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
                 {activeData.performance.avg_load_time > 0
                   ? `${(activeData.performance.avg_load_time / 1000).toFixed(2)}s`
                   : "0.00s"}
@@ -545,7 +810,7 @@ export default function CmsDashboard() {
                   Layout
                 </span>
               </div>
-              <h3 className="text-3xl font-black tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
                 {activeData.performance.avg_cls.toFixed(3)}
               </h3>
               <p className="text-gray-500 text-xs font-bold mt-1">Stabilitas (CLS)</p>
@@ -559,7 +824,7 @@ export default function CmsDashboard() {
           {/* Row 2: SVG Chart and Performance Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* SVG Interactive Chart Box */}
-            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between shadow-sm">
+            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between shadow-sm min-h-[260px]">
               <div>
                 <div className="bg-background flex flex-col sm:flex-row justify-between sm:items-center rounded-xl py-3 px-4 mb-4 gap-2 border-2 border-black">
                   <div className="flex items-center gap-3">
@@ -715,7 +980,7 @@ export default function CmsDashboard() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-3 flex justify-between text-[10px] text-gray-500 font-bold mt-4">
+              <div className="border-t border-gray-100 pt-3 flex flex-wrap justify-between gap-1 text-[10px] text-gray-500 font-bold mt-4">
                 <span>📅 Mulai: {new Date(chartPoints[0]?.date).toLocaleDateString("id-ID")}</span>
                 <span>📅 Akhir: {new Date(chartPoints[chartPoints.length - 1]?.date).toLocaleDateString("id-ID")}</span>
               </div>
@@ -792,7 +1057,7 @@ export default function CmsDashboard() {
           </div>
 
           {/* Row 3: Geographical Map and Province Distribution */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
             {/* Province Distribution Table Card */}
             <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 flex flex-col justify-between shadow-sm min-h-[380px]">
@@ -844,7 +1109,7 @@ export default function CmsDashboard() {
             </div>
 
             {/* Indonesia Map Card */}
-            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between shadow-sm min-h-[380px]">
+            <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 md:col-span-2 flex flex-col justify-between shadow-sm min-h-[380px]">
               <div>
                 <div className="bg-background flex items-center justify-between gap-3 rounded-xl py-3 px-4 mb-4 border-2 border-black">
                   <div className="flex items-center gap-3">
@@ -876,7 +1141,7 @@ export default function CmsDashboard() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-3 flex justify-between text-[10px] text-gray-500 font-bold mt-4">
+              <div className="border-t border-gray-100 pt-3 flex flex-wrap gap-y-1 justify-between text-[10px] text-gray-500 font-bold mt-4">
                 <span>💡 Sorot provinsi untuk melihat jumlah pengunjung spesifik.</span>
                 <span>🇮🇩 Peta Jangkauan Indonesia</span>
               </div>
@@ -978,22 +1243,22 @@ export default function CmsDashboard() {
                 <h4 className="headline-4">System Activity Log</h4>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="relative">
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <div className="relative flex-1 md:flex-none">
                   <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Cari aksi, admin, atau IP..."
                     value={logSearchQuery}
                     onChange={(e) => setLogSearchQuery(e.target.value)}
-                    className="h-10 pl-10 pr-4 text-xs font-bold bg-white border-2 border-black rounded-xl outline-none focus:bg-gray-50 transition-colors w-48 sm:w-60"
+                    className="h-10 pl-10 pr-4 text-xs font-bold bg-white border-2 border-black rounded-xl outline-none focus:bg-gray-50 transition-colors w-full md:w-48 lg:w-60"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => fetchActivityLogs(logPage)}
                   disabled={loadingLogs}
-                  className="h-10 w-10 flex items-center justify-center bg-white border-2 border-black rounded-xl hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="h-10 w-10 flex-shrink-0 flex items-center justify-center bg-white border-2 border-black rounded-xl hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   title="Segarkan Riwayat Log"
                 >
                   <FiRefreshCw className={`w-3.5 h-3.5 ${loadingLogs ? "animate-spin" : ""}`} />
@@ -1006,25 +1271,25 @@ export default function CmsDashboard() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200">
-                    <th className="py-4 px-4 w-[22%] text-left font-bold text-sm text-black">
-                      <div className="flex items-center gap-2">
-                        <FiClock className="w-4 h-4 text-black" />
+                    <th className="py-4 px-3 sm:px-4 w-[28%] sm:w-[22%] text-left font-bold text-xs sm:text-sm text-black">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <FiClock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black flex-shrink-0" />
                         <span>Timestamp</span>
                       </div>
                     </th>
-                    <th className="py-4 px-4 w-[20%] text-left font-bold text-sm text-black">
-                      <div className="flex items-center gap-2">
-                        <FiUser className="w-4 h-4 text-black" />
+                    <th className="py-4 px-3 sm:px-4 w-[26%] sm:w-[20%] text-left font-bold text-xs sm:text-sm text-black">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <FiUser className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black flex-shrink-0" />
                         <span>Accounts</span>
                       </div>
                     </th>
-                    <th className="py-4 px-4 w-[40%] text-left font-bold text-sm text-black">
-                      <div className="flex items-center gap-2">
-                        <FiFileText className="w-4 h-4 text-black" />
+                    <th className="py-4 px-3 sm:px-4 w-[46%] sm:w-[40%] text-left font-bold text-xs sm:text-sm text-black">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <FiFileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black flex-shrink-0" />
                         <span>Log</span>
                       </div>
                     </th>
-                    <th className="py-4 px-4 w-[18%] text-right font-bold text-sm text-black">
+                    <th className="py-4 px-4 w-[18%] text-right font-bold text-sm text-black hidden sm:table-cell">
                       <div className="flex items-center justify-end gap-2">
                         <FiGlobe className="w-4 h-4 text-black" />
                         <span>IP Address</span>
@@ -1036,24 +1301,24 @@ export default function CmsDashboard() {
                   {filteredLogs.length > 0 ? (
                     filteredLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="py-5 px-4 text-sm font-bold text-black whitespace-nowrap">
+                        <td className="py-4 sm:py-5 px-3 sm:px-4 text-xs sm:text-sm font-bold text-black whitespace-nowrap">
                           {formatLogDate(log.createdAt)}
                         </td>
-                        <td className="py-5 px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-100 border border-black rounded-lg text-xs font-mono font-bold text-black shadow-[1.5px_1.5px_0px_#000]">
+                        <td className="py-4 sm:py-5 px-3 sm:px-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1 bg-yellow-100 border border-black rounded-lg text-[11px] sm:text-xs font-mono font-bold text-black shadow-[1.5px_1.5px_0px_#000]">
                             {/* <FiShield className="w-3.5 h-3.5 text-amber-700" /> */}
                             {log.admin_name}
                           </span>
                         </td>
-                        <td className="py-5 px-4">
+                        <td className="py-4 sm:py-5 px-3 sm:px-4">
                           <span
-                            className="text-sm font-bold text-black leading-relaxed block max-w-[340px] truncate"
+                            className="text-xs sm:text-sm font-bold text-black leading-relaxed block max-w-[220px] sm:max-w-[340px] truncate"
                             title={log.action}
                           >
                             {log.action}
                           </span>
                         </td>
-                        <td className="py-5 px-4 text-right whitespace-nowrap">
+                        <td className="py-4 sm:py-5 px-4 text-right whitespace-nowrap hidden sm:table-cell">
                           <span className="inline-block font-mono text-xs font-bold bg-gray-100 px-2.5 py-1 border border-black rounded-lg text-gray-800 shadow-[1.5px_1.5px_0px_#000]">
                             {log.ip_address || "127.0.0.1"}
                           </span>
@@ -1081,7 +1346,7 @@ export default function CmsDashboard() {
             </div>
 
             {/* Footer Summary & Pagination Controls */}
-            <div className="pt-4 border-t border-gray-200 mt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 font-bold gap-3">
+            <div className="pt-4 border-t border-gray-200 mt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-gray-500 font-bold gap-3 text-center sm:text-left">
               <span className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 server
@@ -1112,7 +1377,7 @@ export default function CmsDashboard() {
                 </button>
               </div>
 
-              <span>
+              <span className="text-center sm:text-right">
                 Menampilkan <span className="text-black font-extrabold">{filteredLogs.length}</span> dari <span className="text-black font-extrabold">{logTotalCount || activityLogs.length}</span> aktivitas
               </span>
             </div>
@@ -1147,14 +1412,14 @@ export default function CmsDashboard() {
       {/* Fullscreen Interactive Modal */}
       {isFullscreenMapOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 md:p-8 animate-backdrop-in"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-8 animate-backdrop-in"
           onClick={() => {
             setIsFullscreenMapOpen(false);
             setSearchQuery("");
           }}
         >
           <div
-            className="bg-background border-4 border-black rounded-3xl p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] w-full max-w-[1250px] h-[90vh] flex flex-col justify-between animate-modal-in"
+            className="bg-background border-4 border-black rounded-3xl p-4 sm:p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] w-full max-w-[1250px] h-[92vh] sm:h-[90vh] flex flex-col justify-between animate-modal-in overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1180,9 +1445,9 @@ export default function CmsDashboard() {
             </div>
 
             {/* Modal Grid Body */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden min-h-0">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 overflow-y-auto md:overflow-hidden min-h-0">
               {/* Kolom Kiri: Peta SVG Interaktif */}
-              <div className="lg:col-span-2 bg-white border-2 border-black rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden h-full">
+              <div className="md:col-span-2 bg-white border-2 border-black rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center relative overflow-hidden min-h-[220px] md:h-full">
                 <div className="absolute top-4 left-4 bg-background border border-black rounded-lg px-2.5 py-1 text-[9px] font-black uppercase text-gray-500">
                   PETA INTERAKTIF
                 </div>
@@ -1199,7 +1464,7 @@ export default function CmsDashboard() {
               </div>
 
               {/* Kolom Rerata/Kanan: Tabel Distribusi Detail dengan Pencarian */}
-              <div className="bg-white border-2 border-black rounded-2xl p-5 flex flex-col h-full overflow-hidden">
+              <div className="bg-white border-2 border-black rounded-2xl p-4 md:p-5 flex flex-col max-h-[300px] md:max-h-none md:h-full overflow-hidden">
                 <div className="relative mb-4">
                   <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
