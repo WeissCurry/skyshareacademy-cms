@@ -152,6 +152,23 @@ function CmsArticleAddForm() {
               />
             </div>
 
+            {/* CTA Label */}
+            <div>
+              <label className="font-bold block mb-2 text-sm">
+                Label Tombol CTA{" "}
+                <span className="text-gray-400 font-normal text-xs">
+                  (opsional, default: "Pelajari Lebih Lanjut")
+                </span>
+              </label>
+              <input
+                value={articleForm.cta_label}
+                onChange={(e) => setFormValue({ cta_label: e.target.value })}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
+                placeholder="Pelajari Lebih Lanjut"
+                maxLength={100}
+              />
+            </div>
+
             {/* Category */}
             <div className="relative">
               <label className="font-bold block mb-2 text-sm">Kategori <span className="text-orange-500">*</span></label>

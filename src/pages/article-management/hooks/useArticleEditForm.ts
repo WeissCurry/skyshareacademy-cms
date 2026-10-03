@@ -15,6 +15,7 @@ export interface ArticleForm {
   title: string;
   content: string;
   link: string;
+  cta_label: string;
   category_id: string;
 }
 
@@ -37,6 +38,7 @@ export function useArticleEditForm() {
     title: "",
     content: "",
     link: "",
+    cta_label: "",
     category_id: "",
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
@@ -85,7 +87,8 @@ export function useArticleEditForm() {
         setArticleForm({
           title: article.title,
           content: article.content,
-          link: article.link,
+          link: article.link || "",
+          cta_label: article.cta_label || "",
           category_id: article.category_id,
           image_heading: article.image_heading
         });
@@ -115,6 +118,7 @@ export function useArticleEditForm() {
     formData.append("title", articleForm.title);
     formData.append("content", articleForm.content);
     formData.append("link", ensureHttps(articleForm.link));
+    formData.append("cta_label", articleForm.cta_label || "");
     formData.append("category_id", articleForm.category_id);
     
     setLoadingMessage("Saving changes...");

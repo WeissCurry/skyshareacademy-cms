@@ -15,6 +15,7 @@ export interface ArticleForm {
   title: string;
   content: string;
   link: string;
+  cta_label: string;
   category_id: string;
 }
 
@@ -41,6 +42,7 @@ export function useArticleAddForm() {
     title: "",
     content: "",
     link: "",
+    cta_label: "",
     category_id: "",
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
@@ -103,6 +105,7 @@ export function useArticleAddForm() {
     formData.append("title", articleForm.title);
     formData.append("content", articleForm.content);
     formData.append("link", ensureHttps(articleForm.link));
+    formData.append("cta_label", articleForm.cta_label || "");
     formData.append("category_id", articleForm.category_id);
 
     setIsUploading(true);
