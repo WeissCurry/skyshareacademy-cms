@@ -9,6 +9,24 @@ export function useEventDashboard() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const itemsPerPage = 10;
+
+  const handleSearchQuery = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
+  const handleSelectedDate = (val: string | null) => {
+    setSelectedDate(val);
+    setCurrentPage(1);
+  };
+
+  const handleSelectedRole = (val: string) => {
+    setSelectedRole(val);
+    setCurrentPage(1);
+  };
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     eventId: number | null;
@@ -93,6 +111,10 @@ export function useEventDashboard() {
 
     if (!matchesSearch) return false;
 
+    if (selectedRole !== "all" && ev.target_role !== selectedRole) {
+      return false;
+    }
+
     if (selectedDate && ev.event_date) {
       const evDateStr = new Date(ev.event_date).toISOString().slice(0, 10);
       if (evDateStr !== selectedDate) return false;
@@ -100,6 +122,13 @@ export function useEventDashboard() {
 
     return true;
   });
+
+  const totalItems = filteredEvents.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return {
     state: {
@@ -109,12 +138,20 @@ export function useEventDashboard() {
       errorMessage,
       searchQuery,
       selectedDate,
+      selectedRole,
+      currentPage,
+      totalPages,
+      totalItems,
+      itemsPerPage,
       deleteModal,
+      paginatedEvents,
     },
     actions: {
       fetchEvents,
-      setSearchQuery,
-      setSelectedDate,
+      setSearchQuery: handleSearchQuery,
+      setSelectedDate: handleSelectedDate,
+      setSelectedRole: handleSelectedRole,
+      setCurrentPage,
       confirmDelete,
       cancelDelete,
       executeDelete,

@@ -5,6 +5,7 @@ import type { CmsEvent } from "../types/event";
 
 interface EventListTableProps {
   events: CmsEvent[];
+  startIndex?: number;
   isLoading: boolean;
   onDelete: (event: CmsEvent) => void;
   onToggleStatus: (event: CmsEvent) => void;
@@ -12,6 +13,7 @@ interface EventListTableProps {
 
 export default function EventListTable({
   events,
+  startIndex = 0,
   isLoading,
   onDelete,
   onToggleStatus,
@@ -90,7 +92,7 @@ export default function EventListTable({
               return (
                 <tr key={ev.id} className="hover:bg-gray-50/70 transition-colors">
                   <td className="py-4 px-4 font-semibold text-gray-400">
-                    {index + 1}
+                    {startIndex + index + 1}
                   </td>
                   <td className="py-4 px-4">
                     <div className="w-20 h-14 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
