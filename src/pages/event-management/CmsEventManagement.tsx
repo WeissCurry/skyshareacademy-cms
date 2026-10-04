@@ -70,9 +70,10 @@ export default function CmsEventManagement() {
           {/* Controls Container: Search, Filter, and Pagination */}
           <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[3px_3px_0_#000] flex flex-col lg:flex-row flex-wrap gap-4 items-center justify-between">
 
-            {/* Search & Filter */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1 items-center">
-              <div className="relative w-full sm:w-64">
+            <div className="flex flex-col md:flex-row gap-3 w-full items-center">
+
+              {/* BARIS 1 (Mobile) / Kiri (Desktop): Search Input */}
+              <div className="relative w-full md:w-64 shrink-0">
                 <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-base" />
                 <input
                   type="text"
@@ -82,7 +83,9 @@ export default function CmsEventManagement() {
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border-2 border-black rounded-lg text-sm focus:bg-white outline-none transition-colors font-medium placeholder:font-normal placeholder:text-gray-400"
                 />
               </div>
-              <div className="relative w-full sm:w-44">
+
+              {/* BARIS 2 (Mobile) / Tengah (Desktop): Select Dropdown */}
+              <div className="relative w-full md:w-44 shrink-0">
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
@@ -100,35 +103,41 @@ export default function CmsEventManagement() {
                   <option value="parent">Parents Academy</option>
                 </select>
               </div>
-              <div className="text-sm text-gray-600 font-bold px-3 py-2 bg-gray-100 border-2 border-gray-200 rounded-lg whitespace-nowrap">
-                Total: {totalItems} Event
+
+              {/* BARIS 3 (Mobile) / Kanan (Desktop): Info Total & Pagination */}
+              <div className="flex flex-row items-center justify-between w-full md:w-auto md:flex-1 md:justify-end gap-3">
+
+                {/* Total Event Badge */}
+                <div className="text-sm text-gray-600 font-bold px-3 py-2 bg-gray-100 border-2 border-gray-200 rounded-lg whitespace-nowrap shrink-0">
+                  {totalItems} Event
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => prev - 1)}
+                      className="px-3 py-1.5 bg-white border-2 border-black rounded-lg font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000] active:translate-y-[1px] active:translate-x-[1px] active:shadow-[0.5px_0.5px_0_#000]"
+                    >
+                      Prev
+                    </button>
+                    <span className="text-sm font-bold min-w-[3rem] text-center">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => prev + 1)}
+                      className="px-3 py-1.5 bg-white border-2 border-black rounded-lg font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000] active:translate-y-[1px] active:translate-x-[1px] active:shadow-[0.5px_0.5px_0_#000]"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
+
             </div>
 
-            {/* Pagination Controls */}
-            <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-              {totalPages > 1 && (
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(prev => prev - 1)}
-                    className="px-3 py-1.5 bg-white border-2 border-black rounded-lg font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000] active:translate-y-[1px] active:translate-x-[1px] active:shadow-[0.5px_0.5px_0_#000]"
-                  >
-                    Prev
-                  </button>
-                  <span className="text-sm font-bold w-12 text-center">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <button
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(prev => prev + 1)}
-                    className="px-3 py-1.5 bg-white border-2 border-black rounded-lg font-bold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-gray-100 transition-all shadow-[1.5px_1.5px_0_#000] active:translate-y-[1px] active:translate-x-[1px] active:shadow-[0.5px_0.5px_0_#000]"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Events List Table */}
