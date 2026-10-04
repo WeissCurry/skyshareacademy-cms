@@ -8,6 +8,9 @@ import { logActivity } from "@shared/utils/useActivityLogger";
 import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
+import Button from "@shared/ui/Button";
+import FormField from "@shared/ui/FormField";
+import FormInput from "@shared/ui/FormInput";
 
 import ArrowLeft from "@shared/assets/images/mascot-icons/Arrow - Down 3.png";
 import Show from "@shared/assets/images/mascot-icons/Show.png";
@@ -113,8 +116,7 @@ function CmsTalentAddSchoolForm() {
 
           <div className="shadow-md bg-neutral-white mt-10 border-2 border-black rounded-2xl p-10 max-w-2xl mx-auto">
             <div className="space-y-8">
-              <div>
-                <label className="font-bold block mb-4">Logo Sekolah</label>
+              <FormField label="Logo Sekolah">
                 <div className="border-2 border-dashed border-gray-300 rounded-2xl p-6 flex flex-col items-center justify-center bg-gray-50 h-64 relative group overflow-hidden">
                   {imagePreviewUrl ? (
                     <div className="flex justify-center h-full p-2 w-full">
@@ -165,41 +167,39 @@ function CmsTalentAddSchoolForm() {
                 <div className="mt-6">
                   <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} onSelect={handleUrlChange} />
                 </div>
-              </div>
+              </FormField>
 
-              <div>
-                <label className="font-bold block mb-2">Nama Sekolah <span className="text-red-500">*</span></label>
-                <input
+              <FormField label="Nama Sekolah" required>
+                <FormInput
                   value={schoolForm.nama_sekolah}
                   onChange={(e) => setSchoolForm({ ...schoolForm, nama_sekolah: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                   placeholder="Masukkan nama sekolah..."
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label className="font-bold block mb-2">Alamat Sekolah <span className="text-red-500">*</span></label>
-                <input
+              <FormField label="Alamat Sekolah" required>
+                <FormInput
                   value={schoolForm.alamat}
                   onChange={(e) => setSchoolForm({ ...schoolForm, alamat: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                   placeholder="Masukkan alamat sekolah..."
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label className="font-bold block mb-2">Embed Google Maps (HTML) <span className="text-red-500">*</span></label>
-                <input
+              <FormField label="Embed Google Maps (HTML)" required>
+                <FormInput
                   value={schoolForm.embed_map}
                   onChange={(e) => setSchoolForm({ ...schoolForm, embed_map: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                   placeholder="Example : https://www.google.com/maps/embed?pb=..."
                 />
-              </div>
+              </FormField>
 
               <div className="flex gap-4 pt-4">
-                <button onClick={() => setIsCancelModalOpen(true)} className="flex-1 py-3 bg-gray-100 rounded-xl font-bold hover:bg-gray-200">Batal</button>
-                <button onClick={handleAddSchool} className="flex-1 py-3 bg-primary-1 text-white rounded-xl font-bold hover:bg-primary-2 shadow-lg shadow-primary-1/20 transition-all active:scale-95">Tambah Sekolah</button>
+                <Button variant="secondary" fullWidth onClick={() => setIsCancelModalOpen(true)}>
+                  Batal
+                </Button>
+                <Button variant="primary" fullWidth onClick={handleAddSchool}>
+                  Tambah Sekolah
+                </Button>
               </div>
             </div>
           </div>

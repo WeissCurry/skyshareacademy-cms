@@ -22,6 +22,8 @@ export function useEventAddForm() {
     documentation_urls: [],
     target_role: "all",
     is_active: true,
+    cta_link: "",
+    cta_label: "",
   });
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
@@ -143,6 +145,8 @@ export function useEventAddForm() {
       "documentation_urls",
       JSON.stringify(formData.documentation_urls || [])
     );
+    payload.append("cta_link", formData.cta_link || "");
+    payload.append("cta_label", formData.cta_label || "");
 
     setIsUploading(true);
     try {

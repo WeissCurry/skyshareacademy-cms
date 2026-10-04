@@ -8,9 +8,11 @@ import Mascot1 from "@shared/assets/images/mascot-icons/pose=8.webp";
 import Mascot2 from "@shared/assets/images/mascot-icons/pose=1.webp";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
 import Coution from "@shared/assets/images/mascot-icons/Info Square.png";
-import Chain from "@shared/assets/images/mascot-icons/Link.png";
 import { ensureHttps } from "@shared/utils/urlUtils";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import Button from "@shared/ui/Button";
+import FormField from "@shared/ui/FormField";
+import FormInput from "@shared/ui/FormInput";
 
 interface School {
   id: string | number;
@@ -115,32 +117,27 @@ function CmsTalentAddGroupForm() {
               <div className="join-button mt-6">
                 <div className="bg-neutral-white p-4 gap-4 flex items-center">
                   <form className="w-full" onSubmit={handleAddGroups}>
-                    <label className="block font-bold mb-1" htmlFor="cta">
-                      Nama Grup <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      onChange={(e) => setGroupName(e.target.value)}
-                      placeholder="Masukkan nama grup"
-                      type="text"
-                      className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
-                      required
-                    />
-                    <label className="block font-bold mt-4 mb-1" htmlFor="cta">
-                      <div className="flex gap-1">
-                        <img className="w-6 h-6" src={Chain} alt="" />
-                        Link Instagram Grup{" "}
-                        <span className="text-red-500">*</span>
-                      </div>
-                    </label>
-                    <input
-                      value={groupLink}
-                      onChange={(e) => setGroupLink(e.target.value)}
-                      onBlur={(e) => setGroupLink(ensureHttps(e.target.value))}
-                      placeholder="https://"
-                      type="text"
-                      className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none"
-                      required
-                    />
+                    <div className="flex flex-col gap-4">
+                      <FormField label="Nama Grup" required>
+                        <FormInput
+                          onChange={(e) => setGroupName(e.target.value)}
+                          placeholder="Masukkan nama grup"
+                          type="text"
+                          required
+                        />
+                      </FormField>
+
+                      <FormField label="Link Instagram Grup" required>
+                        <FormInput
+                          value={groupLink}
+                          onChange={(e) => setGroupLink(e.target.value)}
+                          onBlur={(e) => setGroupLink(ensureHttps(e.target.value))}
+                          placeholder="https://"
+                          type="text"
+                          required
+                        />
+                      </FormField>
+                    </div>
 
                     <div className=" mt-4 border-2 border-gray-300 rounded-md">
                       <table>
@@ -181,24 +178,28 @@ function CmsTalentAddGroupForm() {
                       </table>
                     </div>
 
-                    <div className="mt-4 flex gap-5 justify-end">
-                      <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="bg-gray-300 w-56 py-2 rounded-md hover:bg-gray-200 text-black font-bold"
-                      >
-                        Batal
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAddGroups();
-                        }}
-                        type="button"
-                        className="bg-primary-1 w-56 py-2 rounded-md hover:bg-primary-2 text-white font-bold"
-                      >
-                        Simpan
-                      </button>
+                    <div className="mt-6 flex gap-4 justify-end">
+                      <div className="w-48">
+                        <Button
+                          variant="secondary"
+                          fullWidth
+                          onClick={handleCancel}
+                        >
+                          Batal
+                        </Button>
+                      </div>
+                      <div className="w-48">
+                        <Button
+                          variant="primary"
+                          fullWidth
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAddGroups();
+                          }}
+                        >
+                          Simpan
+                        </Button>
+                      </div>
                     </div>
                   </form>
                 </div>

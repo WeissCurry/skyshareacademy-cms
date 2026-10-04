@@ -3,6 +3,10 @@ import Sidebar from "@widgets/Sidebar";
 import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
+import Button from "@shared/ui/Button";
+import FormField from "@shared/ui/FormField";
+import FormInput from "@shared/ui/FormInput";
+import FormTextarea from "@shared/ui/FormTextarea";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 import Show from "@shared/assets/images/mascot-icons/Show.png";
 import Chain from "@shared/assets/images/mascot-icons/Link.png";
@@ -16,7 +20,7 @@ import { TARGET_PROGRAMS } from "./types/event";
 export default function CmsEventAddForm() {
   const { state, actions } = useEventAddForm();
   const [isProgramDropdownOpen, setIsProgramDropdownOpen] = useState(false);
-  const [docUrlInput, setDocUrlInput] = useState("");
+
   const programDropdownRef = useRef<HTMLDivElement>(null);
   const {
     formData,
@@ -85,10 +89,7 @@ export default function CmsEventAddForm() {
 
           <div className="bg-neutral-white mt-8 border-2 border-black rounded-xl p-6 sm:p-8 w-full overflow-hidden space-y-8 shadow-sm">
             {/* Thumbnail Poster */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">
-                Poster / Thumbnail Event <span className="text-orange-500">*</span>
-              </label>
+            <FormField label="Poster / Thumbnail Event" required>
               <div className="border-2 border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white min-h-[180px] relative group overflow-hidden">
                 {imagePreviewUrl ? (
                   <div className="flex justify-center h-full p-2 w-full">
@@ -145,43 +146,33 @@ export default function CmsEventAddForm() {
                   onSelect={handleUrlChange}
                 />
               </div>
-            </div>
+            </FormField>
 
             {/* Judul Event */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">
-                Nama / Judul Event <span className="text-orange-500">*</span>
-              </label>
-              <input
+            <FormField label="Nama / Judul Event" required>
+              <FormInput
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormValue({ title: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="Contoh: UI/UX Masterclass Batch 4..."
               />
-            </div>
+            </FormField>
 
             {/* Grid Tanggal, Kategori, Target Program */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Tanggal Pelaksanaan (Date only) */}
-              <div>
-                <label className="font-bold block mb-2 text-sm">
-                  Tanggal Pelaksanaan <span className="text-orange-500">*</span>
-                </label>
-                <input
+              <FormField label="Tanggal Pelaksanaan" required>
+                <FormInput
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormValue({ event_date: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors text-sm"
                 />
-              </div>
+              </FormField>
 
 
               {/* Target Program (4 Pilihan - Seragam dengan Dropdown Kategori) */}
-              <div className="relative" ref={programDropdownRef}>
-                <label className="font-bold block mb-2 text-sm">
-                  Target Program
-                </label>
+              <FormField label="Target Program">
+                <div className="relative" ref={programDropdownRef}>
                 <div
                   onClick={() => {
                     setIsProgramDropdownOpen(!isProgramDropdownOpen);
@@ -209,9 +200,8 @@ export default function CmsEventAddForm() {
                       {TARGET_PROGRAMS.map((prog) => (
                         <div
                           key={prog.id}
-                          className={`flex items-center justify-between p-2.5 hover:bg-gray-100 rounded-lg cursor-pointer group transition-colors ${
-                            formData.target_role === prog.id ? "bg-gray-50 font-bold" : ""
-                          }`}
+                          className={`flex items-center justify-between p-2.5 hover:bg-gray-100 rounded-lg cursor-pointer group transition-colors ${formData.target_role === prog.id ? "bg-gray-50 font-bold" : ""
+                            }`}
                           onClick={() => {
                             setFormValue({ target_role: prog.id });
                             setIsProgramDropdownOpen(false);
@@ -234,21 +224,18 @@ export default function CmsEventAddForm() {
                   </div>
                 )}
               </div>
-            </div>
+            </FormField>
+          </div>
 
             {/* Deskripsi Event */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">
-                Deskripsi Event
-              </label>
-              <textarea
+            <FormField label="Deskripsi Event">
+              <FormTextarea
                 rows={5}
                 value={formData.description}
                 onChange={(e) => setFormValue({ description: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors text-sm"
                 placeholder="Jelaskan deskripsi kegiatan, materi yang dibahas, atau informasi penting lainnya..."
               />
-            </div>
+            </FormField>
 
             {/* Foto Dokumentasi (Opsional) */}
             <div className="pt-4 border-t border-gray-200">
@@ -320,36 +307,6 @@ export default function CmsEventAddForm() {
                   </div>
                 </label>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Atau tempel URL foto di sini..."
-                    value={docUrlInput}
-                    onChange={(e) => setDocUrlInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        if (docUrlInput.trim()) {
-                          addDocumentationUrls([docUrlInput.trim()]);
-                          setDocUrlInput("");
-                        }
-                      }
-                    }}
-                    className="flex-1 h-[48px] px-4 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (docUrlInput.trim()) {
-                        addDocumentationUrls([docUrlInput.trim()]);
-                        setDocUrlInput("");
-                      }
-                    }}
-                    className="px-4 h-[48px] bg-white border-2 border-black rounded-xl font-bold text-sm hover:bg-gray-100 transition-colors shrink-0 cursor-pointer"
-                  >
-                    Tambah
-                  </button>
-                </div>
               </div>
 
               {/* Media Library Selector for Documentation */}
@@ -361,6 +318,29 @@ export default function CmsEventAddForm() {
                   buttonLabel="Pilih Dokumentasi dari Media Library"
                 />
               </div>
+            </div>
+
+            {/* CTA Button (Opsional) */}
+            <div className="pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* CTA Link */}
+              <FormField label="CTA Link" optional>
+                <FormInput
+                  type="text"
+                  value={formData.cta_link}
+                  onChange={(e) => setFormValue({ cta_link: e.target.value })}
+                  placeholder="https://google.com/forms/..."
+                />
+              </FormField>
+
+              {/* CTA Label */}
+              <FormField label="Label Tombol CTA" optional>
+                <FormInput
+                  type="text"
+                  value={formData.cta_label}
+                  onChange={(e) => setFormValue({ cta_label: e.target.value })}
+                  placeholder="Contoh: Daftar Sekarang"
+                />
+              </FormField>
             </div>
 
             {/* Status Aktif */}
@@ -379,21 +359,22 @@ export default function CmsEventAddForm() {
 
             {/* Buttons */}
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-200">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => setIsCancelModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-3 border-2 border-gray-300 rounded-xl font-bold hover:bg-gray-100 transition-colors text-center"
+                className="w-full sm:w-auto"
               >
                 Batal
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
                 onClick={handleSubmit}
+                isLoading={isUploading}
                 disabled={isUploading}
-                className="w-full sm:w-auto px-8 py-3 bg-primary-1 text-white font-bold rounded-xl hover:bg-primary-2 transition-colors shadow-sm text-center disabled:opacity-50"
+                className="w-full sm:w-auto"
               >
-                {isUploading ? "Menyimpan..." : "Simpan Event"}
-              </button>
+                Simpan Event
+              </Button>
             </div>
           </div>
         </div>

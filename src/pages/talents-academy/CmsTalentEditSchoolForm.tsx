@@ -6,6 +6,9 @@ import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 import { logActivity } from "@shared/utils/useActivityLogger";
 
 import Modal from "@shared/ui/modals";
+import Button from "@shared/ui/Button";
+import FormField from "@shared/ui/FormField";
+import FormInput from "@shared/ui/FormInput";
 
 import Edit1 from "@shared/assets/images/mascot-icons/Edit Square.png";
 import Delete from "@shared/assets/images/mascot-icons/Delete.png";
@@ -342,17 +345,36 @@ function CmsTalentEditSchoolForm() {
               </div>
 
               <div className="join-button mt-6">
-                <div className="bg-neutral-white p-4 gap-4 flex items-center">
-                  <form className="w-full" action="">
-                    <label className="block font-bold mb-1" htmlFor="nama_sekolah">Nama Sekolah <span className="text-red-500">*</span></label>
-                    <input id="nama_sekolah" placeholder="Masukkan nama sekolah" value={schoolForm.nama_sekolah || ''} type="text" onChange={(e) => setSchoolForm({ ...schoolForm, nama_sekolah: e.target.value })} className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none" />
+                <div className="bg-neutral-white p-4 flex flex-col gap-4">
+                  <FormField label="Nama Sekolah" required htmlFor="nama_sekolah">
+                    <FormInput
+                      id="nama_sekolah"
+                      placeholder="Masukkan nama sekolah"
+                      value={schoolForm.nama_sekolah || ''}
+                      type="text"
+                      onChange={(e) => setSchoolForm({ ...schoolForm, nama_sekolah: e.target.value })}
+                    />
+                  </FormField>
 
-                    <label className="block font-bold mt-4 mb-1" htmlFor="alamat_sekolah">Alamat Sekolah <span className="text-red-500">*</span></label>
-                    <input id="alamat_sekolah" placeholder="Masukkan alamat sekolah" value={schoolForm.alamat || ''} type="text" onChange={(e) => setSchoolForm({ ...schoolForm, alamat: e.target.value })} className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none" />
+                  <FormField label="Alamat Sekolah" required htmlFor="alamat_sekolah">
+                    <FormInput
+                      id="alamat_sekolah"
+                      placeholder="Masukkan alamat sekolah"
+                      value={schoolForm.alamat || ''}
+                      type="text"
+                      onChange={(e) => setSchoolForm({ ...schoolForm, alamat: e.target.value })}
+                    />
+                  </FormField>
 
-                    <label className="block font-bold mt-4 mb-1" htmlFor="embed_map">Masukkan Embed Google Maps (HTML) <span className="text-red-500">*</span></label>
-                    <input id="embed_map" value={schoolForm.embed_map || ''} placeholder="Example : https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3965.6197699153263!2d106.71407467533372!3d-6.3135771617850365!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69e55a184cee4d%3A0xc038909b2253775e!2sSMA%20Negeri%209%20Kota%20Tangerang%20Selatan!5e0!3m2!1sid!2sid!4v1714293197913!5m2!1sid!2sid" type="text" onChange={(e) => setSchoolForm({ ...schoolForm, embed_map: e.target.value })} className="w-full px-4 py-2 border-gray-300 border-2 rounded-lg outline-none" />
-                  </form>
+                  <FormField label="Masukkan Embed Google Maps (HTML)" required htmlFor="embed_map">
+                    <FormInput
+                      id="embed_map"
+                      value={schoolForm.embed_map || ''}
+                      placeholder="Example : https://www.google.com/maps/embed?pb=..."
+                      type="text"
+                      onChange={(e) => setSchoolForm({ ...schoolForm, embed_map: e.target.value })}
+                    />
+                  </FormField>
                 </div>
 
                 <div className="daftar-sekolah mt-6">
@@ -403,10 +425,14 @@ function CmsTalentEditSchoolForm() {
 
                 <div className="mt-4 flex gap-5 justify-end">
                   <div className="w-56 py-2 flex">
-                    <button type="button" onClick={() => openModal('cancel')} className="bg-gray-300 w-full py-3 rounded-md hover:bg-gray-200 text-black font-bold">Batal</button>
+                    <Button variant="secondary" fullWidth onClick={() => openModal('cancel')}>
+                      Batal
+                    </Button>
                   </div>
                   <div className="w-56 py-2 flex">
-                    <button onClick={(e) => { e.preventDefault(); handleEditSchool(); }} type="submit" className="bg-primary-1 w-full py-3 rounded-md hover:bg-primary-2 text-white font-bold">Simpan</button>
+                    <Button variant="primary" fullWidth onClick={(e) => { e.preventDefault(); handleEditSchool(); }}>
+                      Simpan
+                    </Button>
                   </div>
                 </div>
               </div>

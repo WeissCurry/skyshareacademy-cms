@@ -7,6 +7,9 @@ import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
 import RichTextEditor from "@shared/ui/RichTextEditor";
+import Button from "@shared/ui/Button";
+import FormField from "@shared/ui/FormField";
+import FormInput from "@shared/ui/FormInput";
 import MediaLibraryMini from "@features/media-library/MediaLibraryMini";
 
 import Show from "@shared/assets/images/mascot-icons/Show.png";
@@ -71,8 +74,7 @@ function CmsArticleEditForm() {
           <div className="bg-neutral-white mt-8 border-2 border-black rounded-xl p-8 w-full overflow-hidden space-y-8 shadow-sm">
 
             {/* Heading Image */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">Upload gambar heading <span className="text-orange-500">*</span></label>
+            <FormField label="Upload gambar heading" required>
               <div className="border-2 border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center bg-white min-h-[160px] relative group overflow-hidden">
                 {imagePreviewUrl ? (
                   <div className="flex justify-center h-full p-2 w-full">
@@ -120,53 +122,46 @@ function CmsArticleEditForm() {
               <div className="mt-6">
                 <MediaLibraryMini images={mediaImages} isLoading={isMediaLoading} onSelect={handleUrlChange} />
               </div>
-            </div>
+            </FormField>
 
             {/* Title */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">Judul <span className="text-orange-500">*</span></label>
-              <input
+            <FormField label="Judul" required>
+              <FormInput
                 value={articleForm.title}
                 onChange={(e) => setFormValue({ title: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="Masukkan judul artikel"
               />
-            </div>
+            </FormField>
 
             {/* CTA Link */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">CTA Link</label>
-              <input
+            <FormField label="CTA Link">
+              <FormInput
                 value={articleForm.link}
                 onChange={(e) => setFormValue({ link: e.target.value })}
                 onBlur={(e) => setFormValue({ link: ensureHttps(e.target.value) })}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="https://..."
               />
-            </div>
+            </FormField>
 
             {/* CTA Label */}
-            <div>
-              <label className="font-bold block mb-2 text-sm">
-                Label Tombol CTA{" "}
-                <span className="text-gray-400 font-normal text-xs">
-                  (opsional, default: "Pelajari Lebih Lanjut")
-                </span>
-              </label>
-              <input
+            <FormField
+              label="Label Tombol CTA"
+              optional
+              optionalNote='(opsional, default: "Pelajari Lebih Lanjut")'
+            >
+              <FormInput
                 value={articleForm.cta_label}
                 onChange={(e) => setFormValue({ cta_label: e.target.value })}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl outline-none focus:border-black transition-colors"
                 placeholder="Pelajari Lebih Lanjut"
                 maxLength={100}
               />
-            </div>
+            </FormField>
 
             {/* Category */}
-            <div className="relative">
-              <label className="font-bold block mb-2 text-sm">Kategori <span className="text-orange-500">*</span></label>
-              <div
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            <FormField label="Kategori" required>
+              <div className="relative">
+                <div
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl flex justify-between items-center cursor-pointer hover:border-black transition-colors"
               >
                 {isCategorySelected ? (
@@ -207,23 +202,27 @@ function CmsArticleEditForm() {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            </FormField>
 
             {/* Content */}
-            <div className="min-w-0">
-              <label className="font-bold block mb-2 text-sm">Berikan isi <span className="text-orange-500">*</span></label>
+            <FormField label="Berikan isi" required className="min-w-0">
               <div className="border-2 border-gray-300 rounded-xl overflow-hidden mt-2">
                 <RichTextEditor
                   value={articleForm.content}
                   onChange={(content) => setFormValue({ content })}
                 />
               </div>
-            </div>
+            </FormField>
 
             {/* Actions */}
             <div className="flex justify-end gap-4 pt-6 mt-4">
-              <button onClick={() => setIsCancelModalOpen(true)} className="px-8 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-bold transition-colors text-sm">Batal</button>
-              <button onClick={handleArticleUpdate} className="px-10 py-3 bg-orange-400 hover:bg-orange-500 text-white rounded-lg font-bold transition-all active:scale-95 text-sm shadow-md">Simpan</button>
+              <Button variant="secondary" onClick={() => setIsCancelModalOpen(true)}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={handleArticleUpdate}>
+                Simpan
+              </Button>
             </div>
 
           </div>
