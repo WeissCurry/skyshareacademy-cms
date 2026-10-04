@@ -56,9 +56,9 @@ export default function EventListTable({
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "talent":
-        return { label: "Talents Academy", color: "bg-secondary-1/10 text-secondary-1 border-secondary-1" };
+        return { label: "Talents Academy", color: "bg-primary-1/10 text-primary-1 border-primary-1" };
       case "mentor":
-        return { label: "Mentor Academy", color: "bg-primary-1/10 text-primary-1 border-primary-1" };
+        return { label: "Mentor Academy", color: "bg-secondary-1/10 text-secondary-1 border-secondary-1" };
       case "parent":
         return { label: "Parents Academy", color: "bg-[#BF35DF]/10 text-[#BF35DF] border-[#BF35DF]" };
       default:
