@@ -4,10 +4,8 @@ export interface CmsEvent {
   description?: string | null;
   event_date?: string | null;
   event_type: string;
-  category_id?: number | string | null;
-  category_name?: string | null;
-  category_color?: string | null;
   thumbnail_url?: string | null;
+  documentation_urls?: string[] | null;
   target_role: "all" | "mentor" | "parent" | "talent";
   is_active: boolean;
   createdAt?: string;
@@ -19,16 +17,10 @@ export interface EventFormData {
   description: string;
   event_date: string;
   event_type: string;
-  category_id: string;
   thumbnail_url: File | string | null;
+  documentation_urls: string[];
   target_role: "all" | "mentor" | "parent" | "talent";
   is_active: boolean;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  color: string;
 }
 
 export interface TargetProgramOption {

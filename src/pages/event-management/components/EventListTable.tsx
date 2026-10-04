@@ -86,7 +86,6 @@ export default function EventListTable({
                 : false;
 
               const role = getRoleBadge(ev.target_role);
-              const categoryName = ev.category_name || ev.event_type || "Event";
 
               return (
                 <tr key={ev.id} className="hover:bg-gray-50/70 transition-colors">
@@ -113,16 +112,6 @@ export default function EventListTable({
                   </td>
                   <td className="py-4 px-4 max-w-xs">
                     <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                      {/* Category Badge with exact color from article category */}
-                      <span
-                        className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold text-white shadow-xs capitalize"
-                        style={{
-                          backgroundColor: ev.category_color || "#34BCEE",
-                        }}
-                      >
-                        {categoryName}
-                      </span>
-
                       {isPast ? (
                         <span className="text-[10px] font-semibold bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
                           Selesai

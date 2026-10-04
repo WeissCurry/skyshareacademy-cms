@@ -1,8 +1,8 @@
-import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
+import { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
-import type { EventFormData, CmsEvent, Category } from "../types/event";
+import type { EventFormData, CmsEvent } from "../types/event";
 import type { MediaImage } from "./useEventAddForm";
 
 export function useEventEditForm() {
@@ -14,21 +14,11 @@ export function useEventEditForm() {
     description: "",
     event_date: "",
     event_type: "workshop",
-    category_id: "",
     thumbnail_url: null,
+    documentation_urls: [],
     target_role: "all",
     is_active: true,
   });
-
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDropdownAddOpen, setIsDropdownAddOpen] = useState(false);
-  const [categoryName, setCategoryName] = useState("");
-  const [colorInput, setColorInput] = useState("#34BCEE");
-  const [categoryToDeleteId, setCategoryToDeleteId] = useState("");
-  const [deleteMessage, setDeleteMessage] = useState("");
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
   const [urlValue, setUrlValue] = useState<string>("");
@@ -39,18 +29,6 @@ export function useEventEditForm() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
   const [isMediaLoading, setIsMediaLoading] = useState<boolean>(false);
-
-  const fetchCategories = async (): Promise<Category[]> => {
-    try {
-      const response = await skyshareApi.get("/category");
-      const list: Category[] = response.data.data || [];
-      setCategories(list);
-      return list;
-    } catch (err) {
-      console.error("Failed to load categories:", err);
-      return [];
-    }
-  };
 
   const fetchMedia = async () => {
     setIsMediaLoading(true);
@@ -69,7 +47,7 @@ export function useEventEditForm() {
       if (!id) return;
       setIsLoading(true);
       try {
-        const [loadedCategories] = await Promise.all([fetchCategories(), fetchMedia()]);
+        await fetchMedia();
 
         const response = await skyshareApi.get(`/admin/events/${id}`);
         const event: CmsEvent = response.data.data;
@@ -82,23 +60,24 @@ export function useEventEditForm() {
             formattedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
           }
 
-          const matchedCat = loadedCategories.find(
-            (c) =>
-              (event.category_id && String(c.id) === String(event.category_id)) ||
-              (event.event_type && c.name.toLowerCase() === event.event_type.toLowerCase())
-          );
-
-          if (matchedCat) {
-            setSelectedCategory(matchedCat);
+          let docUrls: string[] = [];
+          if (Array.isArray(event.documentation_urls)) {
+            docUrls = event.documentation_urls;
+          } else if (typeof event.documentation_urls === "string") {
+            try {
+              docUrls = JSON.parse(event.documentation_urls);
+            } catch {
+              docUrls = [];
+            }
           }
 
           setFormData({
             title: event.title || "",
             description: event.description || "",
             event_date: formattedDate,
-            event_type: event.event_type || matchedCat?.name || "workshop",
-            category_id: matchedCat ? String(matchedCat.id) : event.category_id ? String(event.category_id) : "",
+            event_type: event.event_type || "workshop",
             thumbnail_url: event.thumbnail_url || null,
+            documentation_urls: Array.isArray(docUrls) ? docUrls : [],
             target_role: event.target_role || "all",
             is_active: event.is_active ?? true,
           });
@@ -119,47 +98,6 @@ export function useEventEditForm() {
     init();
   }, [id]);
 
-  const addCategory = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!categoryName.trim()) return;
-    try {
-      const response = await skyshareApi.post("/category/add", {
-        name: categoryName.trim(),
-        color: colorInput,
-      });
-      const newCat: Category = response.data.data;
-      setCategoryName("");
-      setIsDropdownAddOpen(false);
-      await fetchCategories();
-      if (newCat) {
-        setSelectedCategory(newCat);
-        setFormData((prev) => ({
-          ...prev,
-          category_id: String(newCat.id),
-          event_type: newCat.name,
-        }));
-      }
-    } catch (error) {
-      console.error("Error creating category:", error);
-    }
-  };
-
-  const deleteCategory = async () => {
-    if (!categoryToDeleteId) return;
-    try {
-      await skyshareApi.delete(`/category/${categoryToDeleteId}`);
-      if (selectedCategory && String(selectedCategory.id) === String(categoryToDeleteId)) {
-        setSelectedCategory(null);
-        setFormData((prev) => ({ ...prev, category_id: "" }));
-      }
-      setIsCategoryModalOpen(false);
-      await fetchCategories();
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      setIsCategoryModalOpen(false);
-    }
-  };
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -173,6 +111,53 @@ export function useEventEditForm() {
     setUrlValue(val);
     setFormData((prev) => ({ ...prev, thumbnail_url: val }));
     setImagePreviewUrl(val);
+  };
+
+  const addDocumentationUrls = (urls: string[]) => {
+    const cleaned = urls.filter((u) => u && typeof u === "string" && u.trim());
+    setFormData((prev) => ({
+      ...prev,
+      documentation_urls: Array.from(new Set([...prev.documentation_urls, ...cleaned])),
+    }));
+  };
+
+  const removeDocumentationUrl = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      documentation_urls: prev.documentation_urls.filter((_, i) => i !== index),
+    }));
+  };
+
+  const uploadDocumentationFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (fileArray.length === 0) return;
+    setIsUploading(true);
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of fileArray) {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await skyshareApi.post("/media", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const fileData = res.data?.data;
+        const url =
+          fileData?.file?.[0]?.path ||
+          fileData?.file?.[0]?.secure_url ||
+          fileData?.path ||
+          fileData?.secure_url;
+        if (url) uploadedUrls.push(url);
+      }
+      if (uploadedUrls.length > 0) {
+        addDocumentationUrls(uploadedUrls);
+        await fetchMedia();
+      }
+    } catch (err) {
+      console.error("Gagal mengunggah foto dokumentasi:", err);
+      setErrorMessage("Gagal mengunggah beberapa foto dokumentasi.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const setFormValue = (updates: Partial<EventFormData>) => {
@@ -197,12 +182,13 @@ export function useEventEditForm() {
     if (formData.event_date) {
       payload.append("event_date", formData.event_date);
     }
-    if (formData.category_id) {
-      payload.append("category_id", formData.category_id);
-    }
-    payload.append("event_type", selectedCategory?.name || formData.event_type || "workshop");
+    payload.append("event_type", formData.event_type || "workshop");
     payload.append("target_role", formData.target_role || "all");
     payload.append("is_active", String(formData.is_active));
+    payload.append(
+      "documentation_urls",
+      JSON.stringify(formData.documentation_urls || [])
+    );
 
     setIsUploading(true);
     try {
@@ -230,34 +216,19 @@ export function useEventEditForm() {
       errorMessage,
       mediaImages,
       isMediaLoading,
-      categories,
-      selectedCategory,
-      isDropdownOpen,
-      isDropdownAddOpen,
-      categoryName,
-      colorInput,
-      deleteMessage,
-      isCategoryModalOpen,
     },
     actions: {
       setFormValue,
       handleFileChange,
       handleUrlChange,
+      addDocumentationUrls,
+      removeDocumentationUrl,
+      uploadDocumentationFiles,
       handleSubmit,
       setIsSaveModalOpen,
       setIsCancelModalOpen,
       setErrorMessage,
       navigate,
-      setSelectedCategory,
-      setIsDropdownOpen,
-      setIsDropdownAddOpen,
-      setCategoryName,
-      setColorInput,
-      setCategoryToDeleteId,
-      setDeleteMessage,
-      setIsCategoryModalOpen,
-      addCategory,
-      deleteCategory,
     },
   };
 }
