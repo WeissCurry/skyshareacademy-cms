@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, memo } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import Sidebar from "@widgets/Sidebar";
 import LoadingModal from "@shared/ui/LoadingModal";
+import Skeleton from "@shared/ui/Skeleton";
 import EditIcon from "@shared/assets/images/mascot-icons/Edit.png";
 import InfoIcon from "@shared/assets/images/mascot-icons/Info Square.png";
 import {
@@ -92,7 +93,13 @@ const downloadCSV = (filename: string, rows: (string | number)[][]) => {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  URL.revokeObjectURL(url);
+};
+
+let activeReportTimers: number[] = [];
+const clearActiveReportTimers = () => {
+  activeReportTimers.forEach((t) => clearTimeout(t));
+  activeReportTimers = [];
 };
 
 // Handler for generating and triggering analytics reports
@@ -155,11 +162,13 @@ const handleDownloadReport = (
 
   if (type === "all_separate") {
     handleDownloadReport(data, days, points, "summary");
-    setTimeout(() => handleDownloadReport(data, days, points, "trend"), 250);
-    setTimeout(() => handleDownloadReport(data, days, points, "pages"), 500);
-    setTimeout(() => handleDownloadReport(data, days, points, "traffic"), 750);
+    const t1 = window.setTimeout(() => handleDownloadReport(data, days, points, "trend"), 250);
+    const t2 = window.setTimeout(() => handleDownloadReport(data, days, points, "pages"), 500);
+    const t3 = window.setTimeout(() => handleDownloadReport(data, days, points, "traffic"), 750);
+    activeReportTimers.push(t1, t2, t3);
     if (data.provinces && data.provinces.length > 0) {
-      setTimeout(() => handleDownloadReport(data, days, points, "provinces"), 1000);
+      const t4 = window.setTimeout(() => handleDownloadReport(data, days, points, "provinces"), 1000);
+      activeReportTimers.push(t4);
     }
     return;
   }
@@ -405,7 +414,10 @@ export default function CmsDashboard() {
       fetchDashboardData();
       fetchActivityLogs();
     }, 0);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearActiveReportTimers();
+    };
   }, [fetchDashboardData, fetchActivityLogs]);
 
   // Close download menu on click outside
@@ -1297,8 +1309,25 @@ export default function CmsDashboard() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredLogs.length > 0 ? (
+                <tbody className="divide-y divide-gray-100" role="status" aria-busy={loadingLogs}>
+                  {loadingLogs ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i} className="hover:bg-gray-50/50">
+                        <td className="py-4 sm:py-5 px-3 sm:px-4">
+                          <Skeleton className="h-4 w-28" />
+                        </td>
+                        <td className="py-4 sm:py-5 px-3 sm:px-4">
+                          <Skeleton className="h-6 w-24 rounded-lg" />
+                        </td>
+                        <td className="py-4 sm:py-5 px-3 sm:px-4">
+                          <Skeleton className="h-4 w-48" />
+                        </td>
+                        <td className="py-4 sm:py-5 px-4 text-right hidden sm:table-cell">
+                          <Skeleton className="h-6 w-20 rounded-lg ml-auto" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : filteredLogs.length > 0 ? (
                     filteredLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-gray-50 transition-colors">
                         <td className="py-4 sm:py-5 px-3 sm:px-4 text-xs sm:text-sm font-bold text-black whitespace-nowrap">
@@ -1328,12 +1357,7 @@ export default function CmsDashboard() {
                   ) : (
                     <tr>
                       <td colSpan={4} className="text-center py-12 text-gray-500 font-bold text-sm">
-                        {loadingLogs ? (
-                          <div className="flex items-center justify-center gap-2">
-                            <FiRefreshCw className="w-4 h-4 animate-spin text-primary-1" />
-                            <span>Memuat riwayat aktivitas...</span>
-                          </div>
-                        ) : logSearchQuery ? (
+                        {logSearchQuery ? (
                           <span>Tidak ada aktivitas yang cocok dengan "{logSearchQuery}".</span>
                         ) : (
                           <span>Belum ada riwayat aktivitas yang tercatat.</span>

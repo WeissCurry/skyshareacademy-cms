@@ -2,6 +2,7 @@ import Sidebar from "@widgets/Sidebar";
 import LoadingModal from "@shared/ui/LoadingModal";
 import SuccessModal from "@shared/ui/SuccessModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
+import Skeleton from "@shared/ui/Skeleton";
 import { FaCloudUploadAlt, FaCopy, FaTrash, FaCheck, FaSquare, FaExternalLinkAlt, FaRedo } from "react-icons/fa";
 import { useMediaPage } from "./hooks/useMediaPage";
 
@@ -127,13 +128,18 @@ const CmsMedia = () => {
               </div>
             )}
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-24">
-                <div className="animate-bounce mb-4">
-                  <div className="w-16 h-16 bg-primary-1 rounded-full flex items-center justify-center shadow-lg">
-                    <FaCloudUploadAlt className="text-white text-3xl animate-pulse" />
+              <div role="status" aria-busy="true" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+                <span className="sr-only">Memuat galeri media...</span>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden p-3 space-y-3">
+                    <Skeleton className="w-full h-44 rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="flex justify-between">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-3 w-12" />
+                    </div>
                   </div>
-                </div>
-                <p className="text-gray-500 font-bold text-lg">Memuat Galeri...</p>
+                ))}
               </div>
             ) : images.length === 0 ? (
               <div className="text-center py-24 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">

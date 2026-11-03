@@ -57,6 +57,15 @@ function CmsLoginForm() {
         className="bg-white border-2 rounded-xl shadow-lg shadow-gray-300 border-black px-6 pb-10 pt-8 w-full max-w-[400px]"
       >
         <h4 className="headline-4 text-center mb-6">Login Admin</h4>
+        {typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("expired") === "1" && (
+            <div
+              role="alert"
+              className="mb-4 p-3 bg-amber-50 border-2 border-amber-400 rounded-lg text-xs font-bold text-amber-900"
+            >
+              Sesi Anda telah berakhir. Silakan masuk kembali.
+            </div>
+          )}
         <input
           onChange={(e) => setEmail(e.target.value)}
           type="text"

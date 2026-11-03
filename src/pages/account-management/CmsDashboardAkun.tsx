@@ -4,8 +4,8 @@ import Edit1 from "@shared/assets/images/mascot-icons/Edit Square.png";
 import Delete from "@shared/assets/images/mascot-icons/Delete.png";
 import Add from "@shared/assets/images/mascot-icons/Plus.png";
 import Mascot from "@shared/assets/images/mascot-icons/pose=2.webp";
-import LoadingModal from "@shared/ui/LoadingModal";
 import Sidebar from "@widgets/Sidebar";
+import Skeleton from "@shared/ui/Skeleton";
 
 import { useDashboardAkun } from "./hooks/useDashboardAkun";
 
@@ -63,39 +63,62 @@ function CmsDashboardAkun() {
                       <th className="px-16 py-3 text-left">Manage</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {dataAdmins.map((admin, index) => {
-                      return (
-                        <tr key={admin.id} className="border-t border-gray-100">
-                          <td className="pl-3 py-4 text-left font-semibold">
-                            {index + 1}
+                  <tbody role="status" aria-busy={isLoading}>
+                    {isLoading ? (
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <tr key={i} className="border-t border-gray-100">
+                          <td className="pl-3 py-4 text-left">
+                            <Skeleton className="h-4 w-6" />
                           </td>
-                          <td className="pl-1 py-4 text-left">{admin.name}</td>
+                          <td className="pl-1 py-4 text-left">
+                            <Skeleton className="h-4 w-32" />
+                          </td>
                           <td className="pl-20 py-4 text-left">
-                            {admin.email}
+                            <Skeleton className="h-4 w-44" />
                           </td>
-                          <td className="px-16 py-4 text-left">{admin.role}</td>
+                          <td className="px-16 py-4 text-left">
+                            <Skeleton className="h-6 w-24 rounded-md" />
+                          </td>
                           <td className="px-16 py-4 text-left flex gap-4">
-                            <div className="w-10 flex items-center justify-center rounded-md py-2">
-                              <Link
-                                to={`/cms/edit/admin/${admin.id}`}
-                                className="bg-primary-1 hover:bg-primary-2 px-2 py-2 rounded-lg flex justify-center items-center"
-                              >
-                                <img className="w-5" src={Edit1} alt="" />
-                              </Link>
-                            </div>
-                            <div className="w-10 flex items-center justify-center rounded-md py-2">
-                              <button
-                                onClick={() => handleDelete(admin)}
-                                className="bg-red-500 hover:bg-red-400 px-2 py-2 rounded-lg flex justify-center items-center"
-                              >
-                                <img className="w-5" src={Delete} alt="" />
-                              </button>
-                            </div>
+                            <Skeleton className="h-9 w-9 rounded-lg" />
+                            <Skeleton className="h-9 w-9 rounded-lg" />
                           </td>
                         </tr>
-                      );
-                    })}
+                      ))
+                    ) : (
+                      dataAdmins.map((admin, index) => {
+                        return (
+                          <tr key={admin.id} className="border-t border-gray-100">
+                            <td className="pl-3 py-4 text-left font-semibold">
+                              {index + 1}
+                            </td>
+                            <td className="pl-1 py-4 text-left">{admin.name}</td>
+                            <td className="pl-20 py-4 text-left">
+                              {admin.email}
+                            </td>
+                            <td className="px-16 py-4 text-left">{admin.role}</td>
+                            <td className="px-16 py-4 text-left flex gap-4">
+                              <div className="w-10 flex items-center justify-center rounded-md py-2">
+                                <Link
+                                  to={`/cms/edit/admin/${admin.id}`}
+                                  className="bg-primary-1 hover:bg-primary-2 px-2 py-2 rounded-lg flex justify-center items-center"
+                                >
+                                  <img className="w-5" src={Edit1} alt="" />
+                                </Link>
+                              </div>
+                              <div className="w-10 flex items-center justify-center rounded-md py-2">
+                                <button
+                                  onClick={() => handleDelete(admin)}
+                                  className="bg-red-500 hover:bg-red-400 px-2 py-2 rounded-lg flex justify-center items-center"
+                                >
+                                  <img className="w-5" src={Delete} alt="" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -130,8 +153,6 @@ function CmsDashboardAkun() {
           </div>
         </div>
       )}
-
-      <LoadingModal isLoading={isLoading} message="Memuat Data Admin..." />
     </>
   );
 }
