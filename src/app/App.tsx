@@ -31,9 +31,31 @@ const CmsEventAddForm = lazy(() => import("@pages/event-management/CmsEventAddFo
 const CmsEventEditForm = lazy(() => import("@pages/event-management/CmsEventEditForm"));
 const CmsPopupManagement = lazy(() => import("@pages/popup-management/CmsPopupManagement"));
 
+// Mentor Access, KYC, Program Orders & Gated Content Pages
+const CmsReviewQueuePage = lazy(() => import("@pages/mentor-access/CmsReviewQueuePage"));
+const CmsProgramManagement = lazy(() => import("@pages/mentor-access/CmsProgramManagement"));
+const CmsMaterialsManagement = lazy(() => import("@pages/mentor-access/CmsMaterialsManagement"));
+const CmsAssignmentsManagement = lazy(() => import("@pages/mentor-access/CmsAssignmentsManagement"));
+const CmsAssessmentsPage = lazy(() => import("@pages/mentor-access/CmsAssessmentsPage"));
+const CmsAttendanceOtpPage = lazy(() => import("@pages/mentor-access/CmsAttendanceOtpPage"));
+const CmsContributorsPage = lazy(() => import("@pages/mentor-access/CmsContributorsPage"));
+const CmsArticleReviewQueuePage = lazy(() => import("@pages/mentor-access/CmsArticleReviewQueuePage"));
+const CmsQrisSettingsPage = lazy(() => import("@pages/mentor-access/CmsQrisSettingsPage"));
+const CmsAccessAuditLogsPage = lazy(() => import("@pages/mentor-access/CmsAccessAuditLogsPage"));
+
 export default function App() {
   const cmsPrivateRoutes = [
     { path: "/cms/dashboard", element: <CmsDashboard /> },
+    { path: "/cms/review-queue", element: <CmsReviewQueuePage /> },
+    { path: "/cms/programs", element: <CmsProgramManagement /> },
+    { path: "/cms/materials", element: <CmsMaterialsManagement /> },
+    { path: "/cms/assignments", element: <CmsAssignmentsManagement /> },
+    { path: "/cms/assessments", element: <CmsAssessmentsPage /> },
+    { path: "/cms/attendance", element: <CmsAttendanceOtpPage /> },
+    { path: "/cms/contributors", element: <CmsContributorsPage /> },
+    { path: "/cms/article-reviews", element: <CmsArticleReviewQueuePage /> },
+    { path: "/cms/settings/qris", element: <CmsQrisSettingsPage /> },
+    { path: "/cms/audit-logs", element: <CmsAccessAuditLogsPage /> },
     { path: "/cms/kelolaakun", element: <CmsDashboardAkun /> },
     { path: "/cms/add/admin", element: <CmsAddAdminForm /> },
     { path: "/cms/edit/admin/:id", element: <CmsEditAdminForm /> },
