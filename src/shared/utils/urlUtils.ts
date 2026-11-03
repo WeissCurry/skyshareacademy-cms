@@ -29,3 +29,31 @@ export function ensureHttps(url: string | null | undefined): string {
 
   return `https://${trimmed}`;
 }
+
+/**
+ * Resolves an asset URL (e.g. uploaded images, signed file tokens, QRIS).
+ * If the URL is already absolute (http://, https://, blob:, data:), returns it as is.
+ * Otherwise, prepends the configured API base URL so the browser loads it from the API origin,
+ * preventing 404s when SPA and API are hosted on different origins or ports.
+ */
+export function resolveAssetUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("blob:") ||
+    trimmed.startsWith("data:")
+  ) {
+    return trimmed;
+  }
+
+  const baseUrl = (
+    import.meta.env.VITE_API_BASE_URL || "https://api.skyshareacademy.id"
+  ).replace(/\/+$/, "");
+
+  const path = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return `${baseUrl}${path}`;
+}

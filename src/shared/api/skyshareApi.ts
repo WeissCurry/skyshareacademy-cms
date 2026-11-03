@@ -1,9 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 
 const skyshareApi = axios.create({
-  // baseURL: 'http://localhost:3000',
-  // headers: { Authorization: `${localStorage.getItem('authorization')}` },
-  baseURL: 'https://api.skyshareacademy.id'
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://api.skyshareacademy.id',
 });
 
 skyshareApi.interceptors.request.use(
@@ -17,6 +15,23 @@ skyshareApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Optional: Add request/response interceptors here if needed
+let isHandling401 = false;
+
+skyshareApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (!isHandling401) {
+        isHandling401 = true;
+        localStorage.removeItem('authorization');
+        const pathname = window.location.pathname;
+        if (pathname !== '/cms' && pathname !== '/cms/') {
+          window.location.href = '/cms?expired=1';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default skyshareApi;

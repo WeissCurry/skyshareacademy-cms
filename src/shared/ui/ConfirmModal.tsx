@@ -1,5 +1,7 @@
+import { useRef } from "react";
 import MascotWarning from "@shared/assets/images/mascot-icons/pose=1.webp";
 import Info from "@shared/assets/images/mascot-icons/Info Square.png";
+import { useModalA11y } from "@shared/hooks/useModalA11y";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -22,10 +24,24 @@ const ConfirmModal = ({
   confirmText = "Confirm",
   cancelText = "Cancel",
 }: ConfirmModalProps) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useModalA11y({
+    isOpen,
+    onClose,
+    containerRef: modalRef,
+  });
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all p-4">
+    <div
+      ref={modalRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all p-4"
+    >
       <div className="bg-white rounded-3xl p-10 flex flex-col items-center shadow-2xl border-4 border-black max-w-sm w-full animate-in zoom-in duration-300">
         <div className="mb-6">
           <img 
@@ -37,7 +53,7 @@ const ConfirmModal = ({
         <div className="flex flex-col items-center gap-3 text-center w-full">
           <div className="flex items-center gap-2">
             <img className="w-8 h-8" src={Info} alt="Info" />
-            <h3 className="text-2xl font-black text-gray-900">{title}</h3>
+            <h3 id="confirm-modal-title" className="text-2xl font-black text-gray-900">{title}</h3>
           </div>
           <p className="text-gray-500 font-medium">{message}</p>
           
