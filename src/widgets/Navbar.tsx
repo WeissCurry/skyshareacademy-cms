@@ -1,37 +1,17 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 
-import skyshareApi from "@shared/api/skyshareApi";
+import { useAdmin } from "@shared/context/AdminContext";
 import Logo from "@shared/assets/images/logo placeholder.png";
 import IconButton from "@shared/assets/images/mascot-icons/Logout.png";
 import MobileSidebarDrawer from "./MobileSidebarDrawer";
 
 function CmsNavbar() {
-  interface AdminData {
-    name: string;
-    role: string;
-  }
-  const [dataAdmin, setDataAdmin] = useState<AdminData | null>(null);
+  const { dataAdmin, logout } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const getDataadmin = async function () {
-      try {
-        const dataAdminFromServer = await skyshareApi.get("/admin/info");
-        setDataAdmin(dataAdminFromServer.data.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getDataadmin();
-  }, []);
-
   const navigate = useNavigate();
-  function logout() {
-    localStorage.removeItem("authorization");
-    delete skyshareApi.defaults.headers.common["authorization"];
-  }
+
   const handleLogout = () => {
     logout();
     navigate("/cms");
