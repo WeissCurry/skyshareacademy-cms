@@ -2,6 +2,8 @@ import { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import { fetchPrograms } from "@features/mentor-access/api";
+import type { ProgramItem } from "@features/mentor-access/types";
 import type { EventFormData, CmsEvent } from "../types/event";
 import type { MediaImage } from "./useEventAddForm";
 
@@ -17,12 +19,22 @@ export function useEventEditForm() {
     thumbnail_url: null,
     documentation_urls: [],
     target_role: "all",
+    program_id: null,
     is_active: true,
     cta_link: "",
     cta_label: "",
   });
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl && imagePreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
+
   const [urlValue, setUrlValue] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isUploading, setIsUploading] = useState<boolean>(false);
@@ -30,6 +42,7 @@ export function useEventEditForm() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
+  const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [isMediaLoading, setIsMediaLoading] = useState<boolean>(false);
 
   const fetchMedia = async () => {
@@ -44,12 +57,21 @@ export function useEventEditForm() {
     }
   };
 
+  const loadPrograms = async () => {
+    try {
+      const data = await fetchPrograms();
+      setPrograms(data);
+    } catch (err) {
+      console.error("Failed to load programs for event:", err);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       if (!id) return;
       setIsLoading(true);
       try {
-        await fetchMedia();
+        await Promise.all([fetchMedia(), loadPrograms()]);
 
         const response = await skyshareApi.get(`/admin/events/${id}`);
         const event: CmsEvent = response.data.data;
@@ -81,6 +103,7 @@ export function useEventEditForm() {
             thumbnail_url: event.thumbnail_url || null,
             documentation_urls: Array.isArray(docUrls) ? docUrls : [],
             target_role: event.target_role || "all",
+            program_id: event.program_id ?? null,
             is_active: event.is_active ?? true,
             cta_link: event.cta_link || "",
             cta_label: event.cta_label || "",
@@ -106,15 +129,25 @@ export function useEventEditForm() {
     const file = e.target.files?.[0];
     if (file) {
       setFormData((prev) => ({ ...prev, thumbnail_url: file }));
-      setImagePreviewUrl(URL.createObjectURL(file));
+      setImagePreviewUrl((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return URL.createObjectURL(file);
+      });
       setUrlValue("");
     }
   };
 
   const handleUrlChange = (val: string) => {
+    setImagePreviewUrl((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return val;
+    });
     setUrlValue(val);
     setFormData((prev) => ({ ...prev, thumbnail_url: val }));
-    setImagePreviewUrl(val);
   };
 
   const addDocumentationUrls = (urls: string[]) => {
@@ -188,6 +221,11 @@ export function useEventEditForm() {
     }
     payload.append("event_type", formData.event_type || "workshop");
     payload.append("target_role", formData.target_role || "all");
+    if (formData.program_id) {
+      payload.append("program_id", String(formData.program_id));
+    } else {
+      payload.append("program_id", "");
+    }
     payload.append("is_active", String(formData.is_active));
     payload.append(
       "documentation_urls",
@@ -221,6 +259,7 @@ export function useEventEditForm() {
       isCancelModalOpen,
       errorMessage,
       mediaImages,
+      programs,
       isMediaLoading,
     },
     actions: {

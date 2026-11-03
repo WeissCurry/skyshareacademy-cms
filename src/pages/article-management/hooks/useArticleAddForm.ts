@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
 import { ensureHttps } from "@shared/utils/urlUtils";
+import { fetchPrograms } from "@features/mentor-access/api";
+import type { ProgramItem } from "@features/mentor-access/types";
 
 export interface Category {
   id: string;
@@ -17,6 +19,8 @@ export interface ArticleForm {
   link: string;
   cta_label: string;
   category_id: string;
+  is_exclusive: boolean;
+  program_id: number | null;
 }
 
 export interface MediaImage {
@@ -36,6 +40,7 @@ export function useArticleAddForm() {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [categoryName, setCategoryName] = useState("");
   const [articleForm, setArticleForm] = useState<ArticleForm>({
     image_heading: null,
@@ -44,13 +49,24 @@ export function useArticleAddForm() {
     link: "",
     cta_label: "",
     category_id: "",
+    is_exclusive: false,
+    program_id: null,
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl && imagePreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
   const [urlValue, setUrlValue] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
   const [isMediaLoading, setIsMediaLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   
   const navigate = useNavigate();
 
@@ -60,6 +76,15 @@ export function useArticleAddForm() {
       setCategories(response.data.data);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const getProgramsList = async function () {
+    try {
+      const progs = await fetchPrograms();
+      setPrograms(progs);
+    } catch (error) {
+      console.error("Gagal mengambil data program untuk artikel:", error);
     }
   };
 
@@ -77,7 +102,7 @@ export function useArticleAddForm() {
 
   useEffect(() => {
     const init = async () => {
-      await Promise.all([getCategory(), fetchMedia()]);
+      await Promise.all([getCategory(), getProgramsList(), fetchMedia()]);
     };
     init();
   }, []);
@@ -98,6 +123,11 @@ export function useArticleAddForm() {
   };
 
   const handleArticleAdd = async function () {
+    if (articleForm.is_exclusive && !articleForm.program_id) {
+      setErrorMessage("Artikel eksklusif wajib memilih program pengikat.");
+      return;
+    }
+
     const formData = new FormData();
     if (articleForm.image_heading) {
       formData.append("image_heading", articleForm.image_heading);
@@ -107,15 +137,21 @@ export function useArticleAddForm() {
     formData.append("link", ensureHttps(articleForm.link));
     formData.append("cta_label", articleForm.cta_label || "");
     formData.append("category_id", articleForm.category_id);
+    formData.append("is_exclusive", String(articleForm.is_exclusive));
+    if (articleForm.is_exclusive && articleForm.program_id) {
+      formData.append("program_id", String(articleForm.program_id));
+    }
 
     setIsUploading(true);
+    setErrorMessage("");
     try {
-      const response = await skyshareApi.post("/article/add", formData);
+      const response = await skyshareApi.post("/admin/articles", formData);
       const articleId = response.data?.data?.id;
       logActivity(`Menerbitkan artikel baru${articleId ? ` (ID: ${articleId})` : ""}`);
       setIsSaveModalOpen(true);
     } catch (error) {
-      console.log(error);
+      console.error("Gagal menambahkan artikel:", error);
+      setErrorMessage((error as Error).message || "Gagal menyimpan artikel.");
     } finally {
       setIsUploading(false);
     }
@@ -125,15 +161,25 @@ export function useArticleAddForm() {
     const file = e.target.files?.[0];
     if (file) {
       setArticleForm({ ...articleForm, image_heading: file });
-      setImagePreviewUrl(URL.createObjectURL(file));
+      setImagePreviewUrl((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return URL.createObjectURL(file);
+      });
       setUrlValue("");
     }
   };
 
   const handleUrlChange = (value: string) => {
+    setImagePreviewUrl((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return value;
+    });
     setUrlValue(value);
     setArticleForm({ ...articleForm, image_heading: value });
-    setImagePreviewUrl(value);
   };
 
   const deleteCategory = async function () {
@@ -163,6 +209,7 @@ export function useArticleAddForm() {
       deleteMessage,
       categoryId,
       categories,
+      programs,
       categoryName,
       articleForm,
       imagePreviewUrl,
@@ -171,6 +218,7 @@ export function useArticleAddForm() {
       selectedCategory,
       mediaImages,
       isMediaLoading,
+      errorMessage,
     },
     actions: {
       setIsDropdownOpen,
@@ -183,6 +231,7 @@ export function useArticleAddForm() {
       setDeleteMessage,
       setCategoryId,
       setCategoryName,
+      setErrorMessage,
       setFormValue,
       handleFileChange,
       handleUrlChange,
@@ -194,3 +243,4 @@ export function useArticleAddForm() {
     }
   };
 }
+

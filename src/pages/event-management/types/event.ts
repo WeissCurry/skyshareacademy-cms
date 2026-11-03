@@ -9,6 +9,8 @@ export interface CmsEvent {
   cta_link?: string | null;
   cta_label?: string | null;
   target_role: "all" | "mentor" | "parent" | "talent";
+  program_id?: number | null;
+  program_title?: string | null;
   is_active: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -24,6 +26,7 @@ export interface EventFormData {
   cta_link?: string;
   cta_label?: string;
   target_role: "all" | "mentor" | "parent" | "talent";
+  program_id?: number | null;
   is_active: boolean;
 }
 

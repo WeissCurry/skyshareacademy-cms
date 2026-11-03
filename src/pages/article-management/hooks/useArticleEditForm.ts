@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
 import { ensureHttps } from "@shared/utils/urlUtils";
+import { fetchPrograms } from "@features/mentor-access/api";
+import type { ProgramItem } from "@features/mentor-access/types";
 
 export interface Category {
   id: string;
@@ -17,6 +19,8 @@ export interface ArticleForm {
   link: string;
   cta_label: string;
   category_id: string;
+  is_exclusive: boolean;
+  program_id: number | null;
 }
 
 export interface MediaImage {
@@ -34,12 +38,15 @@ export function useArticleEditForm() {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [articleForm, setArticleForm] = useState<ArticleForm>({
     title: "",
     content: "",
     link: "",
     cta_label: "",
     category_id: "",
+    is_exclusive: false,
+    program_id: null,
   });
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
   const [urlValue, setUrlValue] = useState("");
@@ -48,6 +55,7 @@ export function useArticleEditForm() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
   const [isMediaLoading, setIsMediaLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   
   const { id } = useParams();
   const navigate = useNavigate();
@@ -58,6 +66,15 @@ export function useArticleEditForm() {
       setCategories(response.data.data);
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const getProgramsList = async function () {
+    try {
+      const progs = await fetchPrograms();
+      setPrograms(progs);
+    } catch (error) {
+      console.error("Gagal mengambil data program untuk artikel:", error);
     }
   };
 
@@ -78,8 +95,14 @@ export function useArticleEditForm() {
       setLoadingMessage("Fetching article...");
       setIsUploading(true);
       try {
-        const [articleRes, categoriesRes] = await Promise.all([
-          skyshareApi.get(`/article/${id}`),
+        let articleRes;
+        try {
+          articleRes = await skyshareApi.get(`/admin/articles/${id}`);
+        } catch {
+          articleRes = await skyshareApi.get(`/article/${id}`);
+        }
+
+        const [categoriesRes] = await Promise.all([
           skyshareApi.get("/category")
         ]);
         
@@ -90,7 +113,9 @@ export function useArticleEditForm() {
           link: article.link || "",
           cta_label: article.cta_label || "",
           category_id: article.category_id,
-          image_heading: article.image_heading
+          image_heading: article.image_heading,
+          is_exclusive: Boolean(article.is_exclusive),
+          program_id: article.program_id || null,
         });
         setImagePreviewUrl(article.image_heading || "");
         setCategories(categoriesRes.data.data);
@@ -100,7 +125,7 @@ export function useArticleEditForm() {
           setSelectedCategory(cat);
           setIsCategorySelected(true);
         }
-        await fetchMedia();
+        await Promise.all([getProgramsList(), fetchMedia()]);
       } catch (error) {
         console.error(error);
       } finally {
@@ -111,6 +136,11 @@ export function useArticleEditForm() {
   }, [id]);
 
   const handleArticleUpdate = async function () {
+    if (articleForm.is_exclusive && !articleForm.program_id) {
+      setErrorMessage("Artikel eksklusif wajib memilih program pengikat.");
+      return;
+    }
+
     const formData = new FormData();
     if (articleForm.image_heading instanceof File || typeof articleForm.image_heading === "string") {
       formData.append("image_heading", articleForm.image_heading);
@@ -120,16 +150,22 @@ export function useArticleEditForm() {
     formData.append("link", ensureHttps(articleForm.link));
     formData.append("cta_label", articleForm.cta_label || "");
     formData.append("category_id", articleForm.category_id);
+    formData.append("is_exclusive", String(articleForm.is_exclusive));
+    if (articleForm.is_exclusive && articleForm.program_id) {
+      formData.append("program_id", String(articleForm.program_id));
+    }
     
     setLoadingMessage("Saving changes...");
     setIsUploading(true);
+    setErrorMessage("");
     try {
-      await skyshareApi.put(`/article/${id}`, formData);
+      await skyshareApi.put(`/admin/articles/${id}`, formData);
       logActivity(`Mengedit artikel (ID: ${id})`);
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       const err = error as Error;
-      console.log(err.message);
+      console.error("Gagal mengedit artikel:", err);
+      setErrorMessage(err.message || "Gagal memperbarui artikel.");
     } finally {
       setIsUploading(false);
     }
@@ -177,6 +213,7 @@ export function useArticleEditForm() {
       deleteMessage,
       categoryId,
       categories,
+      programs,
       articleForm,
       imagePreviewUrl,
       urlValue,
@@ -185,6 +222,7 @@ export function useArticleEditForm() {
       selectedCategory,
       mediaImages,
       isMediaLoading,
+      errorMessage,
     },
     actions: {
       setIsDropdownOpen,
@@ -195,6 +233,7 @@ export function useArticleEditForm() {
       setDeleteMessage,
       setSelectedCategory,
       setCategoryId,
+      setErrorMessage,
       setFormValue,
       handleFileChange,
       handleUrlChange,

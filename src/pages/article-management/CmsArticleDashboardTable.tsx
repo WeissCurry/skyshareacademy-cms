@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import EditIcon from "@shared/assets/images/mascot-icons/Edit.png";
 import EditSquare from "@shared/assets/images/mascot-icons/Edit Square.png";
 import Delete from "@shared/assets/images/mascot-icons/Delete.png";
@@ -9,6 +9,7 @@ import Add from "@shared/assets/images/mascot-icons/Plus.png";
 import Sidebar from "@widgets/Sidebar";
 import LoadingModal from "@shared/ui/LoadingModal";
 import ConfirmModal from "@shared/ui/ConfirmModal";
+import Skeleton from "@shared/ui/Skeleton";
 
 interface Article {
   id: string | number;
@@ -16,6 +17,9 @@ interface Article {
   createdAt: string;
   category_name: string;
   category_color: string;
+  is_exclusive?: boolean;
+  program_id?: number | null;
+  program_title?: string | null;
 }
 
 interface PaginationMeta {
@@ -35,30 +39,43 @@ function CmsArticleDashboardTable() {
   const [dataArticles, setDataarticles] = useState<Article[]>([]);
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingArticles, setIsLoadingArticles] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | number | null>(null);
 
   // Search and Filter States
+  const [searchParams] = useSearchParams();
+  const urlFilter = searchParams.get("filter");
+  const [customFilter, setCustomFilter] = useState<string | null>(null);
+  const exclusiveFilter = customFilter ?? (urlFilter === "exclusive" ? "exclusive" : "all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [hoveredArticleId, setHoveredArticleId] = useState<string | number | null>(null);
 
-  const getDataArticles = async function (page: number, search = "", categoryId = "") {
-    setIsDeleting(true);
+  const getDataArticles = async function (page: number, search = "", categoryId = "", accessFilter = "all") {
+    setIsLoadingArticles(true);
     try {
-      const response = await skyshareApi.get(
-        `/article?page=${page}&limit=10&search=${encodeURIComponent(search)}&category_id=${categoryId}`
-      );
-      setDataarticles(response.data.data || []);
-      setPagination(response.data.pagination || null);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: "10",
+      });
+      if (search) params.set("search", search);
+      if (categoryId) params.set("category_id", categoryId);
+      if (accessFilter === "exclusive") params.set("is_exclusive", "true");
+      if (accessFilter === "public") params.set("is_exclusive", "false");
+
+      const response = await skyshareApi.get(`/admin/articles?${params.toString()}`);
+      const items: Article[] = response.data?.data || [];
+      setDataarticles(items);
+      setPagination(response.data?.pagination || null);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to load articles:", error);
       setDataarticles([]);
       setPagination(null);
     } finally {
-      setIsDeleting(false);
+      setIsLoadingArticles(false);
     }
   };
 
@@ -78,10 +95,10 @@ function CmsArticleDashboardTable() {
   // Fetch articles when query, category, or page changes (with debouncing for search)
   useEffect(() => {
     const timer = setTimeout(() => {
-      getDataArticles(currentPage, searchQuery, selectedCategory);
+      getDataArticles(currentPage, searchQuery, selectedCategory, exclusiveFilter);
     }, 300);
     return () => clearTimeout(timer);
-  }, [currentPage, searchQuery, selectedCategory]);
+  }, [currentPage, searchQuery, selectedCategory, exclusiveFilter]);
 
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
@@ -102,12 +119,12 @@ function CmsArticleDashboardTable() {
     if (!selectedArticleId) return;
     setIsDeleting(true);
     try {
-      await skyshareApi.delete(`/article/${selectedArticleId}`);
+      await skyshareApi.delete(`/admin/articles/${selectedArticleId}`);
       logActivity(`Menghapus artikel (ID: ${selectedArticleId})`);
       setIsConfirmOpen(false);
-      getDataArticles(currentPage, searchQuery, selectedCategory);
+      getDataArticles(currentPage, searchQuery, selectedCategory, exclusiveFilter);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to delete article:", error);
     } finally {
       setIsDeleting(false);
     }
@@ -139,7 +156,7 @@ function CmsArticleDashboardTable() {
             </div>
 
             {/* Search and Category Filter Controls */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               {/* Search Bar */}
               <div className="md:col-span-2 relative">
                 <input
@@ -172,6 +189,28 @@ function CmsArticleDashboardTable() {
                   ))}
                 </select>
               </div>
+
+              {/* Access Type Filter (Public vs Exclusive) */}
+              <div className="relative">
+                <select
+                  value={exclusiveFilter}
+                  onChange={(e) => {
+                    setCustomFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full h-12 px-4 border-2 border-black rounded-xl outline-none focus:bg-gray-50 transition-colors font-bold text-sm cursor-pointer appearance-none bg-white"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 16px center",
+                    backgroundSize: "16px"
+                  }}
+                >
+                  <option value="all">Semua Akses</option>
+                  <option value="public">Publik</option>
+                  <option value="exclusive">Eksklusif Program</option>
+                </select>
+              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -185,8 +224,32 @@ function CmsArticleDashboardTable() {
                     <th className="pl-4 py-4 text-center font-bold text-sm">Manage</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {dataArticles.length > 0 ? (
+                <tbody className="divide-y divide-gray-100" role="status" aria-busy={isLoadingArticles}>
+                  {isLoadingArticles ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i} className="hover:bg-gray-50/50">
+                        <td className="pr-4 py-5">
+                          <Skeleton className="h-4 w-6" />
+                        </td>
+                        <td className="pr-4 py-5">
+                          <Skeleton className="h-4 w-24" />
+                        </td>
+                        <td className="pr-20 py-5 space-y-1.5">
+                          <Skeleton className="h-4 w-64" />
+                          <Skeleton className="h-3 w-32" />
+                        </td>
+                        <td className="pr-4 py-5 text-center">
+                          <Skeleton className="h-6 w-20 rounded-md mx-auto" />
+                        </td>
+                        <td className="pl-4 py-5 text-center">
+                          <div className="flex justify-center gap-4">
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                            <Skeleton className="h-8 w-8 rounded-lg" />
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : dataArticles.length > 0 ? (
                     dataArticles.map((article, index) => (
                       <tr key={article.id} className="hover:bg-gray-50 transition-colors">
                         <td className="pr-4 py-6 text-sm font-bold text-black">{(currentPage - 1) * 10 + index + 1}</td>
@@ -199,6 +262,13 @@ function CmsArticleDashboardTable() {
                           <div className="max-w-[250px] truncate">
                             <span className="hover:underline decoration-2 decoration-orange-400">{article.title}</span>
                           </div>
+                          {article.is_exclusive && (
+                            <div className="mt-1 flex items-center gap-1">
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800 border border-purple-300">
+                                Eksklusif{article.program_title ? `: ${article.program_title}` : " Program"}
+                              </span>
+                            </div>
+                          )}
 
                           {/* Premium Custom Neobrutalist Tooltip with Dynamic Positioning and Smooth Animation */}
                           <div className={`absolute left-0 bg-white border-2 border-black rounded-lg p-3 z-50 min-w-[280px] max-w-[380px] whitespace-normal pointer-events-none transition-all duration-200 ease-out shadow-[4px_4px_0_#000] transform ${index < 5

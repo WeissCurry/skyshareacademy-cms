@@ -2,6 +2,8 @@ import { useState, useEffect, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import skyshareApi from "@shared/api/skyshareApi";
 import { logActivity } from "@shared/utils/useActivityLogger";
+import { fetchPrograms } from "@features/mentor-access/api";
+import type { ProgramItem } from "@features/mentor-access/types";
 import type { EventFormData } from "../types/event";
 
 
@@ -21,18 +23,29 @@ export function useEventAddForm() {
     thumbnail_url: null,
     documentation_urls: [],
     target_role: "all",
+    program_id: null,
     is_active: true,
     cta_link: "",
     cta_label: "",
   });
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>("");
+
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl && imagePreviewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
+
   const [urlValue, setUrlValue] = useState<string>("");
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [mediaImages, setMediaImages] = useState<MediaImage[]>([]);
+  const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [isMediaLoading, setIsMediaLoading] = useState<boolean>(false);
 
   const fetchMedia = async () => {
@@ -47,9 +60,18 @@ export function useEventAddForm() {
     }
   };
 
+  const loadPrograms = async () => {
+    try {
+      const data = await fetchPrograms();
+      setPrograms(data);
+    } catch (err) {
+      console.error("Failed to load programs for event:", err);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
-      await fetchMedia();
+      await Promise.all([fetchMedia(), loadPrograms()]);
     };
     init();
   }, []);
@@ -58,15 +80,25 @@ export function useEventAddForm() {
     const file = e.target.files?.[0];
     if (file) {
       setFormData((prev) => ({ ...prev, thumbnail_url: file }));
-      setImagePreviewUrl(URL.createObjectURL(file));
+      setImagePreviewUrl((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return URL.createObjectURL(file);
+      });
       setUrlValue("");
     }
   };
 
   const handleUrlChange = (val: string) => {
+    setImagePreviewUrl((prev) => {
+      if (prev && prev.startsWith("blob:")) {
+        URL.revokeObjectURL(prev);
+      }
+      return val;
+    });
     setUrlValue(val);
     setFormData((prev) => ({ ...prev, thumbnail_url: val }));
-    setImagePreviewUrl(val);
   };
 
   const addDocumentationUrls = (urls: string[]) => {
@@ -140,6 +172,9 @@ export function useEventAddForm() {
     }
     payload.append("event_type", formData.event_type || "workshop");
     payload.append("target_role", formData.target_role || "all");
+    if (formData.program_id) {
+      payload.append("program_id", String(formData.program_id));
+    }
     payload.append("is_active", String(formData.is_active));
     payload.append(
       "documentation_urls",
@@ -172,6 +207,7 @@ export function useEventAddForm() {
       isCancelModalOpen,
       errorMessage,
       mediaImages,
+      programs,
       isMediaLoading,
     },
     actions: {

@@ -51,6 +51,7 @@ export default function CmsEventEditForm() {
 
   const currentProgram =
     TARGET_PROGRAMS.find((p) => p.id === formData.target_role) || TARGET_PROGRAMS[0];
+  const selectedCohort = state.programs.find((p) => p.id === formData.program_id);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -171,8 +172,63 @@ export default function CmsEventEditForm() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormValue({ title: e.target.value })}
-                placeholder="Contoh: UI/UX Masterclass Batch 4..."
+                placeholder="Contoh: Pertemuan 1 Kelas Intermediate Angkatan 2..."
               />
+              {/* Quick Cohort Preset Titles */}
+              {selectedCohort && (
+                <div className="mt-3 p-3 bg-amber-50 border-2 border-black rounded-xl shadow-[2px_2px_0_#000]">
+                  <div className="flex flex-wrap items-center justify-between gap-1 mb-2">
+                    <span className="text-xs font-black text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>⚡</span> Template Sesi Cepat ({selectedCohort.title})
+                    </span>
+                    {formData.title.match(/Pertemuan (\d+)/i) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const match = formData.title.match(/Pertemuan (\d+)/i);
+                          if (match) {
+                            const nextNum = parseInt(match[1], 10) + 1;
+                            setFormValue({
+                              title: formData.title.replace(/Pertemuan \d+/i, `Pertemuan ${nextNum}`),
+                            });
+                          }
+                        }}
+                        className="text-[11px] font-bold px-2 py-0.5 bg-secondary-1 text-white border border-black rounded-md hover:bg-secondary-2 transition-colors active:translate-y-0.5 shadow-[1px_1px_0_#000]"
+                      >
+                        +1 Sesi Berikutnya
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "Pertemuan 1",
+                      "Pertemuan 2",
+                      "Pertemuan 3",
+                      "Pertemuan 4",
+                      "Pertemuan 5",
+                      "Pertemuan 6",
+                      "Technical Meeting",
+                      "Final",
+                      "Pengumuman Kelulusan",
+                    ].map((preset) => {
+                      const generated =
+                        preset === "Pengumuman Kelulusan"
+                          ? `Pengumuman Kelulusan Bagi ${selectedCohort.title}`
+                          : `${preset} ${selectedCohort.title}`;
+                      return (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setFormValue({ title: generated })}
+                          className="text-xs font-bold px-2.5 py-1 bg-white border border-black hover:bg-primary-1 hover:text-white rounded-lg transition-colors text-neutral-800 shadow-[1px_1px_0_#000]"
+                        >
+                          {preset}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </FormField>
 
             {/* Grid Tanggal, Kategori, Target Program */}
@@ -243,6 +299,31 @@ export default function CmsEventEditForm() {
               </div>
             </FormField>
           </div>
+
+            {/* Optional Program Selector (Gated Access per Contract) */}
+            <FormField
+              label="Program / Cohort Terkait"
+              optional
+              optionalNote="(Pilih jika event ini adalah sesi kelas cohort mentor tertentu)"
+            >
+              <select
+                value={formData.program_id || ""}
+                onChange={(e) =>
+                  setFormValue({ program_id: parseInt(e.target.value, 10) || null })
+                }
+                className="w-full px-4 py-3 bg-white border-2 border-gray-300 rounded-xl text-sm font-bold focus:border-black outline-none transition-colors cursor-pointer"
+              >
+                <option value="">-- Tanpa Program (Event Terbuka / Publik) --</option>
+                {state.programs.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    Cohort: {p.title} {p.is_active ? "" : "(Nonaktif)"}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 font-medium mt-1">
+                Jika dihubungkan ke program, event ini berfungsi sebagai sesi kelas bagi cohort terkait dan hanya dapat diakses oleh mentor yang memiliki enrollment aktif.
+              </p>
+            </FormField>
 
             {/* Deskripsi Event */}
             <FormField label="Deskripsi Event">

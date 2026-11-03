@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FiEdit2, FiTrash2, FiCalendar, FiUsers } from "react-icons/fi";
 import type { CmsEvent } from "../types/event";
+import Skeleton from "@shared/ui/Skeleton";
 
 interface EventListTableProps {
   events: CmsEvent[];
@@ -22,9 +23,54 @@ export default function EventListTable({
 
   if (isLoading) {
     return (
-      <div className="bg-white border-2 border-black rounded-2xl p-12 text-center shadow-sm">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-primary-1 border-t-transparent mb-3" />
-        <p className="text-gray-500 font-medium">Memuat data event...</p>
+      <div role="status" aria-busy="true" className="bg-white border-2 border-black rounded-2xl overflow-hidden shadow-sm">
+        <span className="sr-only">Memuat data event...</span>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b-2 border-black text-xs font-bold uppercase tracking-wider text-gray-600">
+                <th className="py-3.5 px-4 w-12">No.</th>
+                <th className="py-3.5 px-4 w-28">Poster</th>
+                <th className="py-3.5 px-4 min-w-[200px]">Informasi Event</th>
+                <th className="py-3.5 px-4">Tanggal</th>
+                <th className="py-3.5 px-4">Target Program</th>
+                <th className="py-3.5 px-4 text-center">Status</th>
+                <th className="py-3.5 px-4 text-center w-28">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 text-sm">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i} className="hover:bg-gray-50/50">
+                  <td className="py-4 px-4">
+                    <Skeleton className="h-4 w-6" />
+                  </td>
+                  <td className="py-4 px-4">
+                    <Skeleton className="w-20 h-14 rounded-lg" />
+                  </td>
+                  <td className="py-4 px-4 space-y-2">
+                    <Skeleton className="h-4 w-48" />
+                    <Skeleton className="h-3 w-64" />
+                  </td>
+                  <td className="py-4 px-4">
+                    <Skeleton className="h-4 w-24" />
+                  </td>
+                  <td className="py-4 px-4">
+                    <Skeleton className="h-6 w-28 rounded-md" />
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <Skeleton className="h-6 w-16 rounded-full mx-auto" />
+                  </td>
+                  <td className="py-4 px-4 text-center">
+                    <div className="inline-flex gap-2 justify-center">
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                      <Skeleton className="h-8 w-8 rounded-lg" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -146,6 +192,11 @@ export default function EventListTable({
                       <FiUsers className="text-[10px] shrink-0" />
                       <span>{role.label}</span>
                     </span>
+                    {ev.program_id && (
+                      <span className="block mt-1 text-[10px] font-black text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 truncate max-w-[140px]">
+                        {ev.program_title || `Program #${ev.program_id}`}
+                      </span>
+                    )}
                   </td>
                   <td className="py-4 px-4 text-center">
                     <button

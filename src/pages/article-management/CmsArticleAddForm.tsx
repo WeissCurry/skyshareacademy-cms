@@ -41,6 +41,7 @@ function CmsArticleAddForm() {
     selectedCategory,
     mediaImages,
     isMediaLoading,
+    errorMessage,
   } = state;
 
   const {
@@ -79,6 +80,11 @@ function CmsArticleAddForm() {
           </div>
 
           <div className="bg-neutral-white mt-8 border-2 border-black rounded-xl p-8 w-full overflow-hidden space-y-8 shadow-sm">
+            {errorMessage && (
+              <div role="alert" className="p-4 bg-red-50 border-2 border-red-500 rounded-xl text-red-800 text-sm font-bold flex justify-between items-center">
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             {/* Heading Image */}
             <FormField label="Upload gambar heading" required>
@@ -242,6 +248,57 @@ function CmsArticleAddForm() {
               )}
               </div>
             </FormField>
+
+            {/* Exclusive Article & Program Binding */}
+            <div className="p-4 bg-gray-50 border-2 border-black rounded-xl space-y-3 shadow-[2px_2px_0_#000]">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="exclusive-article-checkbox"
+                  checked={articleForm.is_exclusive}
+                  onChange={(e) =>
+                    setFormValue({
+                      is_exclusive: e.target.checked,
+                      program_id: e.target.checked ? articleForm.program_id || (state.programs[0]?.id || null) : null,
+                    })
+                  }
+                  className="w-4 h-4 rounded border-2 border-black text-primary-1 focus:ring-primary-1 cursor-pointer"
+                />
+                <label
+                  htmlFor="exclusive-article-checkbox"
+                  className="text-sm font-bold text-gray-900 cursor-pointer flex items-center gap-2"
+                >
+                  <span>Artikel Eksklusif Program (Gated Access)</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded font-black bg-purple-100 text-purple-800 border border-purple-300">
+                    Khusus Mentor Terdaftar
+                  </span>
+                </label>
+              </div>
+
+              {articleForm.is_exclusive && (
+                <div className="pt-2 border-t border-gray-200">
+                  <FormField label="Pilih Program Pengikat" required>
+                    <select
+                      value={articleForm.program_id || ""}
+                      onChange={(e) =>
+                        setFormValue({ program_id: parseInt(e.target.value, 10) || null })
+                      }
+                      className="w-full px-4 py-2.5 bg-white border-2 border-black rounded-xl text-sm font-bold focus:outline-none cursor-pointer"
+                    >
+                      <option value="">-- Pilih Program --</option>
+                      {state.programs.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.title} {p.is_active ? "" : "(Nonaktif)"}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 font-medium mt-1">
+                      Hanya mentor dengan status KYC Approved dan enrollment aktif pada program ini yang dapat membaca artikel ini.
+                    </p>
+                  </FormField>
+                </div>
+              )}
+            </div>
 
             {/* Content */}
             <FormField label="Berikan isi" required className="min-w-0">
