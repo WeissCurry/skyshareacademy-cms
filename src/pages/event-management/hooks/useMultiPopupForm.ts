@@ -159,11 +159,37 @@ export function useMultiPopupForm() {
         cta_link: p.cta_link ? ensureHttps(p.cta_link) : "",
       }));
 
-      await skyshareApi.put("/popup-config", {
+      const response = await skyshareApi.put("/popup-config", {
         is_active: config.is_active,
         randomize: config.randomize,
         popups: sanitizedPopups,
       });
+
+      const serverData = response.data?.data;
+      if (serverData) {
+        let parsedPopups: PopupItem[] = sanitizedPopups;
+        if (Array.isArray(serverData.popups)) {
+          parsedPopups = serverData.popups;
+        } else if (typeof serverData.popups === "string") {
+          try {
+            parsedPopups = JSON.parse(serverData.popups);
+          } catch {
+            parsedPopups = sanitizedPopups;
+          }
+        }
+
+        const savedConfig: PopupConfigData = {
+          id: serverData.id,
+          is_active: Boolean(serverData.is_active),
+          randomize: Boolean(serverData.randomize),
+          popups: parsedPopups,
+        };
+        setConfig(savedConfig);
+        setInitialConfig(savedConfig);
+      } else {
+        setConfig((prev) => ({ ...prev, popups: sanitizedPopups }));
+        setInitialConfig({ ...config, popups: sanitizedPopups });
+      }
 
       try {
         await logActivity(
@@ -173,7 +199,6 @@ export function useMultiPopupForm() {
         console.error("Failed to log activity:", logErr);
       }
 
-      setInitialConfig(config);
       setIsSaveModalOpen(true);
     } catch (error: unknown) {
       console.error("Gagal menyimpan konfigurasi popup:", error);
