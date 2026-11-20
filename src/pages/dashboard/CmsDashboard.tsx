@@ -25,6 +25,7 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import { type ActivityLogEntry } from "@shared/utils/useActivityLogger";
+import { toLocalDateKey } from "./utils/dateUtils";
 
 interface TodayStats {
   pageviews: number;
