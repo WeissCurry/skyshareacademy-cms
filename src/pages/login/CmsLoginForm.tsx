@@ -18,6 +18,7 @@ function CmsLoginForm() {
     isErrorModalOpen,
     isLoading,
     errorMessage,
+    lockoutSeconds,
   } = state;
 
   const {
@@ -66,25 +67,37 @@ function CmsLoginForm() {
               Sesi Anda telah berakhir. Silakan masuk kembali.
             </div>
           )}
+        {lockoutSeconds > 0 && (
+          <div
+            role="alert"
+            className="mb-4 p-3 bg-amber-50 border-2 border-amber-400 rounded-lg text-xs font-bold text-amber-900"
+          >
+            {errorMessage || `Terlalu banyak permintaan. Silakan tunggu ${lockoutSeconds} detik sebelum mencoba lagi.`}
+          </div>
+        )}
         <input
           onChange={(e) => setEmail(e.target.value)}
           type="text"
           placeholder="Email"
-          className="px-4 py-2 mb-4 rounded-md w-full block border border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-1 outline-none"
+          disabled={lockoutSeconds > 0}
+          className="px-4 py-2 mb-4 rounded-md w-full block border border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-1 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
         <input
           onChange={(e) => setPassword(e.target.value)}
           type="password"
           placeholder="Password"
-          className="px-4 py-2 mb-6 rounded-md w-full block border border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-1 outline-none"
+          disabled={lockoutSeconds > 0}
+          className="px-4 py-2 mb-6 rounded-md w-full block border border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-1 outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
 
         <button
           type="submit"
           className="bg-primary-1 w-full py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isLoading}
+          disabled={isLoading || lockoutSeconds > 0}
         >
-          <p className="font-bold text-white">Login</p>
+          <p className="font-bold text-white">
+            {lockoutSeconds > 0 ? `Coba lagi dalam ${lockoutSeconds}s` : "Login"}
+          </p>
           <img className="w-5 -rotate-90" src={ArrowLeft} alt="" />
         </button>
       </form>
