@@ -26,6 +26,7 @@ import {
 } from "react-icons/fi";
 import { type ActivityLogEntry } from "@shared/utils/useActivityLogger";
 import TrendChart, { type TimeSeriesPoint } from "./components/TrendChart";
+import VisitorInsights from "./components/VisitorInsights";
 import { toLocalDateKey } from "./utils/dateUtils";
 
 interface TrendComparisonData {
@@ -359,6 +360,7 @@ export default function CmsDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterDays, setFilterDays] = useState(30);
+  const [insightsRefreshTrigger, setInsightsRefreshTrigger] = useState(0);
   const [svgContent, setSvgContent] = useState<string>("");
   const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
   const [isFullscreenTrendOpen, setIsFullscreenTrendOpen] = useState(false);
@@ -1082,7 +1084,10 @@ export default function CmsDashboard() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => fetchDashboardData(true)}
+                    onClick={() => {
+                      fetchDashboardData(true);
+                      setInsightsRefreshTrigger((prev) => prev + 1);
+                    }}
                     disabled={loading}
                     className="p-1 bg-white border border-black rounded-md hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     title="Perbarui Metrik"
@@ -1321,6 +1326,12 @@ export default function CmsDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Visitor Insights Section */}
+          <VisitorInsights
+            filterDays={filterDays}
+            refreshTrigger={insightsRefreshTrigger}
+          />
 
           {/* Row 5: System Activity Log (Changelog / Audit Trail) */}
           <div className="bg-neutral-white border-2 border-black rounded-2xl p-5 mb-8 shadow-sm">
