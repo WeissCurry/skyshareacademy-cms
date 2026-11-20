@@ -25,7 +25,17 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import { type ActivityLogEntry } from "@shared/utils/useActivityLogger";
+import TrendChart, { type TimeSeriesPoint } from "./components/TrendChart";
 import { toLocalDateKey } from "./utils/dateUtils";
+
+interface TrendComparisonData {
+  uniqueChangePct: number | null;
+  viewsChangePct: number | null;
+  avgUniqueChangePct: number | null;
+  hasPreviousPeriod: boolean;
+}
+
+export type { TimeSeriesPoint };
 
 interface TodayStats {
   pageviews: number;
@@ -38,12 +48,6 @@ interface PerformanceStats {
   avg_lcp: number;
   avg_cls: number;
   avg_fid: number;
-}
-
-interface TimeSeriesPoint {
-  date: string;
-  pageviews: number;
-  unique_visitors: number;
 }
 
 interface TopPage {
@@ -355,12 +359,21 @@ export default function CmsDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterDays, setFilterDays] = useState(30);
-  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
   const [svgContent, setSvgContent] = useState<string>("");
   const [isFullscreenMapOpen, setIsFullscreenMapOpen] = useState(false);
+  const [isFullscreenTrendOpen, setIsFullscreenTrendOpen] = useState(false);
+  const trendModalTriggerRef = useRef<HTMLButtonElement>(null);
+  const trendModalCloseButtonRef = useRef<HTMLButtonElement>(null);
+  const trendModalContentRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDownloadMenuOpen, setIsDownloadMenuOpen] = useState(false);
   const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+  // Comparison data for trend (7 & 30 days)
+  const [trendComparison, setTrendComparison] = useState<
+    Record<number, TrendComparisonData>
+  >({});
+  const trendComparisonCacheRef = useRef<Record<number, TrendComparisonData>>({});
 
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -398,7 +411,11 @@ export default function CmsDashboard() {
       .catch((err) => console.error("Failed to load idmap.svg:", err));
   }, []);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (clearComparisonCache = false) => {
+    if (clearComparisonCache) {
+      trendComparisonCacheRef.current = {};
+      setTrendComparison({});
+    }
     try {
       setLoading(true);
       const response = await skyshareApi.get(`/analytics/dashboard?days=${filterDays}`);
@@ -435,6 +452,154 @@ export default function CmsDashboard() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDownloadMenuOpen]);
+
+  // Lock body scroll when any fullscreen modal is open
+  useEffect(() => {
+    if (isFullscreenTrendOpen || isFullscreenMapOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isFullscreenTrendOpen, isFullscreenMapOpen]);
+
+  // Handle ESC key for trend fullscreen modal & restore focus
+  useEffect(() => {
+    if (!isFullscreenTrendOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsFullscreenTrendOpen(false);
+        trendModalTriggerRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isFullscreenTrendOpen]);
+
+  // Auto-focus to close button when trend modal opens
+  useEffect(() => {
+    if (isFullscreenTrendOpen) {
+      trendModalCloseButtonRef.current?.focus();
+    }
+  }, [isFullscreenTrendOpen]);
+
+  // Focus trap inside trend fullscreen modal (Tab / Shift+Tab)
+  const handleModalKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+
+    const modal = trendModalContentRef.current;
+    if (!modal) return;
+
+    const focusableElements = modal.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (e.shiftKey) {
+      if (document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement.focus();
+      }
+    } else {
+      if (document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement.focus();
+      }
+    }
+  }, []);
+
+  const handleCloseTrendModal = useCallback(() => {
+    setIsFullscreenTrendOpen(false);
+    trendModalTriggerRef.current?.focus();
+  }, []);
+
+  // Fetch previous period comparison (non-blocking, memoized per filterDays)
+  useEffect(() => {
+    if (filterDays !== 7 && filterDays !== 30) return;
+    if (trendComparisonCacheRef.current[filterDays]) return;
+
+    let cancelled = false;
+    const controller = new AbortController();
+    const doubleDays = filterDays * 2;
+
+    skyshareApi
+      .get(`/analytics/dashboard?days=${doubleDays}`, {
+        signal: controller.signal,
+      })
+      .then((res) => {
+        if (cancelled) return;
+        const rawSeries: TimeSeriesPoint[] = res.data?.data?.timeSeries || [];
+        const dateMap = new Map<string, TimeSeriesPoint>();
+        rawSeries.forEach((p) => {
+          dateMap.set(toLocalDateKey(p.date), p);
+        });
+
+        const padded: TimeSeriesPoint[] = [];
+        for (let i = 0; i < doubleDays; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() - (doubleDays - 1 - i));
+          const dateStr = toLocalDateKey(d);
+          const existing = dateMap.get(dateStr);
+          if (existing) {
+            padded.push({ ...existing, date: dateStr });
+          } else {
+            padded.push({ date: dateStr, pageviews: 0, unique_visitors: 0 });
+          }
+        }
+
+        const prevHalf = padded.slice(0, filterDays);
+        const currHalf = padded.slice(filterDays);
+
+        const prevUnique = prevHalf.reduce(
+          (sum, p) => sum + (p.unique_visitors || 0),
+          0
+        );
+        const currUnique = currHalf.reduce(
+          (sum, p) => sum + (p.unique_visitors || 0),
+          0
+        );
+        const prevViews = prevHalf.reduce(
+          (sum, p) => sum + (p.pageviews || 0),
+          0
+        );
+        const currViews = currHalf.reduce(
+          (sum, p) => sum + (p.pageviews || 0),
+          0
+        );
+
+        const calcPct = (curr: number, prev: number): number | null => {
+          if (prev === 0) return null;
+          return Math.round(((curr - prev) / prev) * 100);
+        };
+
+        const result: TrendComparisonData = {
+          uniqueChangePct: calcPct(currUnique, prevUnique),
+          viewsChangePct: calcPct(currViews, prevViews),
+          avgUniqueChangePct: calcPct(
+            currUnique / filterDays,
+            prevUnique / filterDays
+          ),
+          hasPreviousPeriod: true,
+        };
+
+        if (cancelled) return;
+        trendComparisonCacheRef.current[filterDays] = result;
+        setTrendComparison((prev) => ({ ...prev, [filterDays]: result }));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.debug("Failed to load trend comparison:", err);
+      });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [filterDays]);
 
   // Use the premium flat skeleton loader when loading
   if (loading && !data) {
@@ -521,52 +686,83 @@ export default function CmsDashboard() {
     return points;
   })();
 
-  // SVG Chart Scaling
-  const svgWidth = 800;
-  const svgHeight = 250;
-  const paddingX = 40;
-  const paddingY = 20;
+  const currentTrendComparison: TrendComparisonData | null =
+    filterDays === 90
+      ? {
+          uniqueChangePct: null,
+          viewsChangePct: null,
+          avgUniqueChangePct: null,
+          hasPreviousPeriod: false,
+        }
+      : trendComparison[filterDays] ?? null;
 
-  const getCoordinates = (points: TimeSeriesPoint[]) => {
-    if (points.length === 0) return [];
-    const maxUnique = Math.max(...points.map((p) => p.unique_visitors), 1);
-    const maxViews = Math.max(...points.map((p) => p.pageviews), 1);
+  const peakInfo = (() => {
+    if (chartPoints.length === 0) return null;
+    const peak = chartPoints.reduce((max, current) =>
+      (current.unique_visitors || 0) > (max.unique_visitors || 0) ? current : max
+    , chartPoints[0]);
+    if (!peak) return null;
+    const dateFormatted = new Date(peak.date).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+    });
+    return `Puncak: ${dateFormatted} · ${(peak.unique_visitors || 0).toLocaleString("id-ID")} pengunjung unik`;
+  })();
 
-    if (points.length === 1) {
-      const p = points[0];
-      const x = svgWidth / 2;
-      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxUnique) * (svgHeight - 2 * paddingY);
-      const yViews = svgHeight - paddingY - (p.pageviews / maxViews) * (svgHeight - 2 * paddingY);
-      return [{ x, yUnique, yViews, ...p }];
+  const renderComparisonBadge = () => {
+    if (!currentTrendComparison) return null;
+
+    if (currentTrendComparison.hasPreviousPeriod === false) {
+      return (
+        <span
+          title="Data lebih dari 90 hari tidak disimpan"
+          className="text-[9px] font-black px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-300 cursor-help shrink-0"
+        >
+          —
+        </span>
+      );
     }
 
-    return points.map((p, i) => {
-      const x = paddingX + (i / (points.length - 1)) * (svgWidth - 2 * paddingX);
-      const yUnique = svgHeight - paddingY - (p.unique_visitors / maxUnique) * (svgHeight - 2 * paddingY);
-      const yViews = svgHeight - paddingY - (p.pageviews / maxViews) * (svgHeight - 2 * paddingY);
-      return { x, yUnique, yViews, ...p };
-    });
-  };
+    const pct = currentTrendComparison.uniqueChangePct;
 
-  const coords = getCoordinates(chartPoints);
+    if (pct === null) {
+      if (totalUniqueVisitors > 0) {
+        return (
+          <span
+            title="Periode sebelumnya: 0 (tidak ada basis perbandingan)"
+            className="text-[9px] font-black px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 cursor-help shrink-0"
+          >
+            Baru
+          </span>
+        );
+      }
+      return (
+        <span
+          title="Periode sebelumnya: 0 (tidak ada basis perbandingan)"
+          className="text-[9px] font-black px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-300 cursor-help shrink-0"
+        >
+          —
+        </span>
+      );
+    }
 
-  const generateAreaPath = (points: typeof coords, type: "unique" | "views") => {
-    if (points.length === 0) return "";
-    let path = `M ${points[0].x} ${svgHeight - paddingY}`;
-    points.forEach((p) => {
-      path += ` L ${p.x} ${type === "unique" ? p.yUnique : p.yViews}`;
-    });
-    path += ` L ${points[points.length - 1].x} ${svgHeight - paddingY} Z`;
-    return path;
-  };
+    const isPositive = pct > 0;
+    const isZero = pct === 0;
 
-  const generateLinePath = (points: typeof coords, type: "unique" | "views") => {
-    if (points.length === 0) return "";
-    let path = `M ${points[0].x} ${type === "unique" ? points[0].yUnique : points[0].yViews}`;
-    points.forEach((p) => {
-      path += ` L ${p.x} ${type === "unique" ? p.yUnique : p.yViews}`;
-    });
-    return path;
+    return (
+      <span
+        title={`${isPositive ? "+" : ""}${pct}% dibanding periode ${filterDays} hari sebelumnya`}
+        className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 ${
+          isPositive
+            ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+            : isZero
+            ? "bg-gray-100 text-gray-700 border-gray-300"
+            : "bg-rose-100 text-rose-800 border-rose-300"
+        }`}
+      >
+        {isPositive ? "↑ +" : isZero ? "• " : "↓ "}{pct}%
+      </span>
+    );
   };
 
   const getFcpStatus = (val: number) => {
@@ -770,7 +966,10 @@ export default function CmsDashboard() {
                   {filterDays} Hari
                 </span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{totalUniqueVisitors}</h3>
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tight">{totalUniqueVisitors}</h3>
+                {renderComparisonBadge()}
+              </div>
               <p className="text-gray-500 text-xs font-bold mt-1">Total Kunjungan</p>
               <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 text-gray-500 text-[10px] font-bold">
                 <span>Rerata Harian:</span>
@@ -844,153 +1043,32 @@ export default function CmsDashboard() {
                       </span>
                     )}
                   </div>
-                  <div className="flex gap-3 text-[10px] font-bold self-start sm:self-auto">
-                    <span className="flex items-center gap-1 text-secondary-1">
-                      <span className="w-2.5 h-2.5 bg-secondary-1 rounded-full inline-block border border-black"></span>
-                      Kunjungan
-                    </span>
-                    <span className="flex items-center gap-1 text-primary-1">
-                      <span className="w-2.5 h-2.5 bg-primary-1 rounded-full inline-block border border-black"></span>
-                      Pageviews
-                    </span>
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <button
+                      ref={trendModalTriggerRef}
+                      type="button"
+                      onClick={() => setIsFullscreenTrendOpen(true)}
+                      className="p-1.5 sm:p-2 bg-white border-2 border-black rounded-lg hover:bg-gray-100 active:translate-x-[1.5px] active:translate-y-[1.5px] transition-all flex items-center justify-center shadow-[1.5px_1.5px_0px_#000] active:shadow-none"
+                      title="Perbesar Layar Grafik"
+                      aria-label="Perbesar Layar Grafik Tren"
+                    >
+                      <FiMaximize2 className="w-3.5 h-3.5 text-black" />
+                    </button>
                   </div>
                 </div>
 
-                {/* SVG Area Chart */}
-                <div className="relative pt-2">
-                  <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
-                    <defs>
-                      <linearGradient id="uniqueGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#34BCEE" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#34BCEE" stopOpacity="0.0" />
-                      </linearGradient>
-                      <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FEA02F" stopOpacity="0.15" />
-                        <stop offset="100%" stopColor="#FEA02F" stopOpacity="0.0" />
-                      </linearGradient>
-                    </defs>
-
-                    <line x1={paddingX} y1={paddingY} x2={svgWidth - paddingX} y2={paddingY} stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3" />
-                    <line x1={paddingX} y1={svgHeight / 2} x2={svgWidth - paddingX} y2={svgHeight / 2} stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3 3" />
-                    <line x1={paddingX} y1={svgHeight - paddingY} x2={svgWidth - paddingX} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} />
-
-                    <path d={generateAreaPath(coords, "unique")} fill="url(#uniqueGrad)" />
-                    <path d={generateAreaPath(coords, "views")} fill="url(#viewsGrad)" />
-
-                    <path d={generateLinePath(coords, "unique")} fill="none" stroke="#34BCEE" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
-                    <path d={generateLinePath(coords, "views")} fill="none" stroke="#FEA02F" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 2" />
-
-                    {coords.map((p, i) => (
-                      <g
-                        key={i}
-                        onMouseEnter={() => setHoveredPoint(i)}
-                        onMouseLeave={() => setHoveredPoint(null)}
-                        className="cursor-pointer"
-                      >
-                        <rect x={p.x - 12} y={0} width={24} height={svgHeight} fill="transparent" />
-                        {hoveredPoint === i && (
-                          <line x1={p.x} y1={paddingY} x2={p.x} y2={svgHeight - paddingY} stroke="#000" strokeWidth={1.5} strokeDasharray="4 4" />
-                        )}
-                        <circle cx={p.x} cy={p.yUnique} r={hoveredPoint === i ? 6 : 4} fill="#34BCEE" stroke="#000" strokeWidth={2} />
-                        <circle cx={p.x} cy={p.yViews} r={hoveredPoint === i ? 6 : 4} fill="#FEA02F" stroke="#000" strokeWidth={2} />
-                      </g>
-                    ))}
-
-                    {/* Native SVG Tooltip (Scales perfectly and never gets cropped) */}
-                    {hoveredPoint !== null && coords[hoveredPoint] && (() => {
-                      const p = coords[hoveredPoint];
-                      const tooltipX = Math.min(Math.max(p.x, 70), svgWidth - 70);
-                      const tooltipY = Math.max(Math.min(p.yUnique, p.yViews) - 85, 10);
-                      return (
-                        <g pointerEvents="none">
-                          {/* Shadow Offset Rect for Neobrutalist look */}
-                          <rect
-                            x={tooltipX - 56}
-                            y={tooltipY + 4}
-                            width={120}
-                            height={70}
-                            rx={10}
-                            fill="#000000"
-                          />
-                          {/* Foreground White Rect */}
-                          <rect
-                            x={tooltipX - 60}
-                            y={tooltipY}
-                            width={120}
-                            height={70}
-                            rx={10}
-                            fill="#ffffff"
-                            stroke="#000000"
-                            strokeWidth={2}
-                          />
-                          {/* Date text */}
-                          <text
-                            x={tooltipX}
-                            y={tooltipY + 18}
-                            textAnchor="middle"
-                            fontSize={10}
-                            fontFamily="sans-serif"
-                            fontWeight="bold"
-                            fill="#6b7280"
-                          >
-                            {new Date(p.date).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                          </text>
-                          {/* Unik label & value */}
-                          <text
-                            x={tooltipX - 45}
-                            y={tooltipY + 38}
-                            textAnchor="start"
-                            fontSize={11}
-                            fontFamily="sans-serif"
-                            fontWeight="bold"
-                            fill="#34BCEE"
-                          >
-                            Unik:
-                          </text>
-                          <text
-                            x={tooltipX + 45}
-                            y={tooltipY + 38}
-                            textAnchor="end"
-                            fontSize={11}
-                            fontFamily="sans-serif"
-                            fontWeight="black"
-                            fill="#34BCEE"
-                          >
-                            {p.unique_visitors}
-                          </text>
-                          {/* Views label & value */}
-                          <text
-                            x={tooltipX - 45}
-                            y={tooltipY + 54}
-                            textAnchor="start"
-                            fontSize={11}
-                            fontFamily="sans-serif"
-                            fontWeight="bold"
-                            fill="#FEA02F"
-                          >
-                            Views:
-                          </text>
-                          <text
-                            x={tooltipX + 45}
-                            y={tooltipY + 54}
-                            textAnchor="end"
-                            fontSize={11}
-                            fontFamily="sans-serif"
-                            fontWeight="black"
-                            fill="#FEA02F"
-                          >
-                            {p.pageviews}
-                          </text>
-                        </g>
-                      );
-                    })()}
-                  </svg>
-                </div>
+                {/* Extracted Interactive Trend Chart */}
+                <TrendChart
+                  points={chartPoints}
+                  height={250}
+                  filterDays={filterDays}
+                />
               </div>
 
-              <div className="border-t border-gray-100 pt-3 flex flex-wrap justify-between gap-1 text-[10px] text-gray-500 font-bold mt-4">
-                <span>📅 Mulai: {new Date(chartPoints[0]?.date).toLocaleDateString("id-ID")}</span>
-                <span>📅 Akhir: {new Date(chartPoints[chartPoints.length - 1]?.date).toLocaleDateString("id-ID")}</span>
+              <div className="border-t border-gray-100 pt-3 flex flex-wrap justify-between items-center gap-2 text-[10px] text-gray-500 font-bold mt-4">
+                <span>📅 Mulai: {chartPoints[0] ? new Date(chartPoints[0].date).toLocaleDateString("id-ID") : "-"}</span>
+                {peakInfo && <span>{peakInfo}</span>}
+                <span>📅 Akhir: {chartPoints[chartPoints.length - 1] ? new Date(chartPoints[chartPoints.length - 1].date).toLocaleDateString("id-ID") : "-"}</span>
               </div>
             </div>
 
@@ -1003,7 +1081,8 @@ export default function CmsDashboard() {
                     <h4 className="font-bold text-xs md:text-sm whitespace-nowrap overflow-hidden text-ellipsis">Performa</h4>
                   </div>
                   <button
-                    onClick={fetchDashboardData}
+                    type="button"
+                    onClick={() => fetchDashboardData(true)}
                     disabled={loading}
                     className="p-1 bg-white border border-black rounded-md hover:bg-gray-50 active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     title="Perbarui Metrik"
@@ -1534,6 +1613,148 @@ export default function CmsDashboard() {
             <div className="pt-4 border-t-2 border-black mt-4 flex justify-between items-center text-[10px] text-gray-500 font-bold">
               <span>🇮🇩 Data Wilayah Indonesia ({filterDays} Hari Terakhir)</span>
               <span>Total: {activeData.provinces?.length || 0} Provinsi Tercatat</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen Interactive Trend Modal */}
+      {isFullscreenTrendOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 md:p-8 animate-backdrop-in"
+          onClick={handleCloseTrendModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="trend-modal-title"
+        >
+          <div
+            ref={trendModalContentRef}
+            onKeyDown={handleModalKeyDown}
+            className="bg-background border-4 border-black rounded-3xl p-4 sm:p-6 shadow-[8px_8px_0px_rgba(0,0,0,1)] w-full max-w-[1250px] h-[92vh] sm:h-[90vh] flex flex-col justify-between animate-modal-in overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b-2 border-black mb-4 shrink-0">
+              <div>
+                <h2
+                  id="trend-modal-title"
+                  className="text-lg sm:text-xl md:text-2xl font-black flex items-center gap-2 text-black"
+                >
+                  <img className="w-5 h-5 md:w-6 md:h-6 shrink-0" src={EditIcon} alt="" />
+                  Detail Tren Pengunjung ({filterDays} Hari Terakhir)
+                </h2>
+                <p className="text-gray-500 text-xs font-bold mt-1">
+                  Visualisasi grafik skala terpadu dan riwayat data pengunjung harian.
+                </p>
+              </div>
+              <button
+                ref={trendModalCloseButtonRef}
+                type="button"
+                onClick={handleCloseTrendModal}
+                className="p-1.5 md:p-2 bg-white border-2 border-black rounded-xl hover:bg-rose-50 hover:text-rose-600 active:translate-x-[1.5px] active:translate-y-[1.5px] transition-all shadow-[2px_2px_0px_#000] active:shadow-none"
+                aria-label="Tutup modal"
+              >
+                <FiX className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Content Container */}
+            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4 min-h-0">
+              {/* Taller Trend Chart */}
+              <div className="bg-white border-2 border-black rounded-2xl p-3 sm:p-5 shadow-sm">
+                <TrendChart
+                  points={chartPoints}
+                  height={340}
+                  filterDays={filterDays}
+                />
+              </div>
+
+              {/* Scrollable Daily Data Table */}
+              <div className="bg-white border-2 border-black rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-black text-xs sm:text-sm text-black flex items-center gap-2">
+                    <span>📋 Log Data Harian</span>
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-300">
+                      {chartPoints.length} Hari
+                    </span>
+                  </h3>
+                  <span className="text-[10px] text-gray-500 font-bold hidden sm:inline">
+                    💡 Hari terbaru berada di urutan teratas
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto overflow-y-auto max-h-[220px] border-2 border-black rounded-xl">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-background text-black font-black border-b-2 border-black sticky top-0 z-10">
+                        <th className="py-2 px-3 text-[11px] whitespace-nowrap">Tanggal</th>
+                        <th className="py-2 px-3 text-right text-[11px] whitespace-nowrap">Pengunjung Unik</th>
+                        <th className="py-2 px-3 text-right text-[11px] whitespace-nowrap">Pageviews</th>
+                        <th className="py-2 px-3 text-right text-[11px] whitespace-nowrap">Rasio Views/User</th>
+                        <th className="py-2 px-3 text-center text-[11px] whitespace-nowrap">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {[...chartPoints].reverse().map((p) => {
+                        const isToday =
+                          toLocalDateKey(p.date) === toLocalDateKey(new Date());
+                        const ratio =
+                          p.unique_visitors > 0
+                            ? (p.pageviews / p.unique_visitors).toFixed(1)
+                            : "0.0";
+
+                        return (
+                          <tr
+                            key={p.date}
+                            className={`hover:bg-amber-50/40 transition-colors ${
+                              isToday ? "bg-amber-50/20 font-bold" : ""
+                            }`}
+                          >
+                            <td className="py-2 px-3 font-bold text-gray-800 whitespace-nowrap">
+                              {new Date(p.date).toLocaleDateString("id-ID", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td className="py-2 px-3 text-right font-black text-[#0284c7] whitespace-nowrap">
+                              {p.unique_visitors.toLocaleString("id-ID")}
+                            </td>
+                            <td className="py-2 px-3 text-right font-black text-[#d97706] whitespace-nowrap">
+                              {p.pageviews.toLocaleString("id-ID")}
+                            </td>
+                            <td className="py-2 px-3 text-right font-bold text-gray-600 whitespace-nowrap">
+                              {ratio}x
+                            </td>
+                            <td className="py-2 px-3 text-center whitespace-nowrap">
+                              {isToday ? (
+                                <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-black">
+                                  Hari Ini (Sementara)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400 font-bold">
+                                  Final
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="pt-3 border-t-2 border-black mt-3 flex flex-wrap justify-between items-center text-[10px] text-gray-500 font-bold shrink-0 gap-2">
+              <span>📈 Tren Pengunjung & Pageviews ({filterDays} Hari Terakhir)</span>
+              {peakInfo && <span>{peakInfo}</span>}
+              <span>
+                Total: {chartPoints.reduce((acc, p) => acc + (p.unique_visitors || 0), 0).toLocaleString("id-ID")} Unik |{" "}
+                {chartPoints.reduce((acc, p) => acc + (p.pageviews || 0), 0).toLocaleString("id-ID")} Pageviews
+              </span>
             </div>
           </div>
         </div>
