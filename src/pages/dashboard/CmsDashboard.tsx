@@ -110,7 +110,7 @@ const handleDownloadReport = (
   points: TimeSeriesPoint[],
   type: "full" | "summary" | "trend" | "pages" | "traffic" | "provinces" | "all_separate" = "full"
 ) => {
-  const dateStr = new Date().toISOString().split("T")[0];
+  const dateStr = toLocalDateKey(new Date());
   const now = new Date().toLocaleDateString("id-ID");
 
   if (type === "summary") {
@@ -494,20 +494,15 @@ export default function CmsDashboard() {
     const points: TimeSeriesPoint[] = [];
     const dateMap = new Map<string, TimeSeriesPoint>();
 
-    // Index existing records from the backend by YYYY-MM-DD
+    // Index existing records from the backend by local YYYY-MM-DD
     (activeData.timeSeries || []).forEach((p) => {
-      try {
-        const key = new Date(p.date).toISOString().split("T")[0];
-        dateMap.set(key, p);
-      } catch {
-        dateMap.set(p.date, p);
-      }
+      dateMap.set(toLocalDateKey(p.date), p);
     });
 
     for (let i = 0; i < filterDays; i++) {
       const d = new Date();
       d.setDate(d.getDate() - (filterDays - 1 - i));
-      const dateStr = d.toISOString().split("T")[0];
+      const dateStr = toLocalDateKey(d);
 
       const existing = dateMap.get(dateStr);
       if (existing) {
